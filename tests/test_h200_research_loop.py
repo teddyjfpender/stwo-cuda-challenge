@@ -189,7 +189,7 @@ class H200ExperimentTests(unittest.TestCase):
             manifest = root / "manifest.json"
             manifest.write_text(json.dumps({"cases": [
                 {"id": "pie:test", "family": "pie"},
-                {"id": "pipeline:test", "family": "pipeline"}]}))
+                {"id": "pipeline:test", "family": "pipeline", "mode": "batch_integrated"}]}))
             args = Namespace(out=root / "out", manifest=manifest,
                              baseline=root / "baseline", candidate=root / "candidate",
                              fixtures=root, preprocessed=root / "asset", artifacts=root,
@@ -198,8 +198,7 @@ class H200ExperimentTests(unittest.TestCase):
                              target_case="pipeline:test", rounds=1, full_rounds=1,
                              full_if_promising=False, hypothesis="source overlap",
                              stage="full-command", min_stage_gain=0.0,
-                             max_companion_regression=.05, candidate_lookahead=True,
-                             candidate_retain_fixed_host=True)
+                             max_companion_regression=.05, candidate_lookahead=True)
             seen = []
 
             def fake_case(case, source, _fixtures, _out, _verifier, _registry, _nvml, env):
@@ -222,8 +221,12 @@ class H200ExperimentTests(unittest.TestCase):
             for arm, env in seen:
                 self.assertEqual(env.get("STWO_CAIRO_CUDA_SOURCE_LOOKAHEAD"),
                                  "1" if arm == "candidate" else None)
-                self.assertEqual(env.get("STWO_CAIRO_CUDA_RETAIN_FIXED_HOST"),
-                                 "1" if arm == "candidate" else None)
+            args.target_case = "pie:test"
+            args.out = root / "invalid"
+            with patch.object(experiment, "preflight") as prepared:
+                with self.assertRaisesRegex(ValueError, "batch-integrated pipeline target"):
+                    experiment.run_experiment(args)
+                prepared.assert_not_called()
 
     def test_source_identity_captures_dirty_patch_and_binary_hash(self):
         with tempfile.TemporaryDirectory() as temporary:

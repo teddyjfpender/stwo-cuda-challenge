@@ -100,13 +100,29 @@ guards full-command time on the other case. `--min-target-command-gain`
 defaults to zero, so a faster internal stage with a slower target command
 cannot trigger the full basket. Set a positive threshold when the hypothesis
 predicts a minimum cold-command gain.
-The experimental source-lookahead and cross-root fixed-host cache are opt-in
-candidate options: use `--candidate-lookahead` or
-`--candidate-retain-fixed-host` for a direct A/B. They are injected only into
-the candidate process and recorded in `experiment.json`; the pinned baseline
-uses its ordinary path. A standalone PIE cannot exercise either batch option.
-Use a pipeline batch for lookahead and a multi-root campaign for fixed-host
-retention. These direct options do not alter the judge's environment or score.
+The experimental source-lookahead option can be measured with
+`--candidate-lookahead` on the integrated pipeline case. It is injected only
+into the candidate process and recorded in `experiment.json`; the pinned
+baseline uses its ordinary path. A standalone PIE cannot exercise this batch
+option. It does not alter the judge's environment or score. Cross-root fixed
+host retention is a separate draft experiment; the current public basket has
+no multi-root campaign case, so this driver does not claim to measure it.
+For the draft lookahead candidate, use the two-leaf integrated pipeline as the
+target and reject it if its cold command does not improve:
+
+```sh
+python3 scripts/h200_experiment.py --baseline workspace/baseline \
+  --candidate workspace/stwo-zig --out /external/runs/lookahead-01 \
+  --hypothesis 'prepare the next compact CPI while the current leaf proves' \
+  --smoke-companion pipeline:two-leaf-batch-integrated \
+  --target-case pipeline:two-leaf-batch-integrated \
+  --stage cairo_leaf_ingress_ns_sum --min-stage-gain 0.05 \
+  --min-target-command-gain 0.02 --candidate-lookahead
+```
+
+The `--candidate-lookahead` switch is research-only. To qualify a future
+ranked candidate, the reviewed source would need to make the winning path its
+default inside the existing scoring clock and pass the complete judge basket.
 
 `experiment.json` records preflight/build identities and the stated timing
 boundary; `runs.jsonl` survives a later failure; `gate.json` says whether the

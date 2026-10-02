@@ -25,10 +25,10 @@ and exact verifier results. An NVML `memory_trace.tsv` gives 10 ms whole-device
 samples relative to command start, so memory growth can be located alongside
 the CPU/GPU timeline. The `.nsys-rep` file and CSV exports include a
 GPU trace, kernel summary, CUDA API summary, and NVTX ranges when available.
-Use `--lookahead` or `--retain-fixed-host` only when profiling those opt-in
-candidate paths; both options are recorded in the receipt and remain inside
-the measured command. Lookahead requires a multi-PIE pipeline, while
-fixed-host retention requires a multi-root campaign.
+Use `--lookahead` only when profiling the opt-in integrated multi-PIE path;
+the option is recorded in the receipt and remains inside the measured
+command. The current public basket has no multi-root campaign, so this tool
+cannot assess the separate fixed-host retention experiment.
 The profiler holds the same exclusive host lock as the A/B experiment driver,
 and refuses a non-idle GPU before profiling.
 Nsight Systems follows child processes for pipeline cases on the workstation

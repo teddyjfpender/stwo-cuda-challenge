@@ -53,6 +53,9 @@ def _run_profile_locked(args: argparse.Namespace) -> dict:
     case = next((item for item in manifest["cases"] if item["id"] == args.case_id), None)
     if case is None:
         raise ValueError("unknown public case ID")
+    if getattr(args, "lookahead", False) and (
+            case["family"] != "pipeline" or case.get("mode") != "batch_integrated"):
+        raise ValueError("source lookahead requires a batch-integrated pipeline case")
     source = args.source.resolve()
     start = time.monotonic()
     prepared = preflight(mode="direct", source=source, fixtures=args.fixtures.resolve(),
@@ -67,8 +70,6 @@ def _run_profile_locked(args: argparse.Namespace) -> dict:
     env = candidate_env(os.environ, args.preprocessed, args.artifacts)
     if getattr(args, "lookahead", False):
         env["STWO_CAIRO_CUDA_SOURCE_LOOKAHEAD"] = "1"
-    if getattr(args, "retain_fixed_host", False):
-        env["STWO_CAIRO_CUDA_RETAIN_FIXED_HOST"] = "1"
     check_host_idle()
     nvml = Nvml(config["hardware"]["deviceBytes"])
     try:
@@ -107,8 +108,7 @@ def _run_profile_locked(args: argparse.Namespace) -> dict:
     memory = memory_peak(trace)
     receipt = {"schema": "stwo-h200-profile-v1", "qualification": "unranked-profiler-diagnostic",
                "case_id": args.case_id, "source": identity, "preflight": prepared,
-               "source_options": {"lookahead": getattr(args, "lookahead", False),
-                                  "retain_fixed_host": getattr(args, "retain_fixed_host", False)},
+               "source_options": {"lookahead": getattr(args, "lookahead", False)},
                "preparation_s": preparation_s,
                "profiled_command_s": row["time_s"],
                "profile_overhead_warning": "Nsight collection and export alter command time; use unprofiled paired runs for performance claims",
@@ -137,8 +137,6 @@ def main() -> None:
                         help="exclusive host lock shared with h200_experiment.py")
     parser.add_argument("--lookahead", action="store_true",
                         help="profile the source-lookahead candidate option")
-    parser.add_argument("--retain-fixed-host", action="store_true",
-                        help="profile retained fixed host data across campaign roots")
     parser.add_argument("--fixtures", type=Path, default=ROOT / "data/inputs")
     parser.add_argument("--manifest", type=Path, default=ROOT / "fixtures/public-v1.json")
     parser.add_argument("--preprocessed", type=Path,

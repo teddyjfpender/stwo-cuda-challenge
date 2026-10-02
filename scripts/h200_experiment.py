@@ -167,6 +167,10 @@ def _run_experiment_locked(args: argparse.Namespace) -> dict:
     if target_case not in smoke_ids:
         raise ValueError("target case must be one of the two smoke cases")
     validate_stage(case_map[target_case]["family"], args.stage)
+    if getattr(args, "candidate_lookahead", False) and (
+            case_map[target_case]["family"] != "pipeline" or
+            case_map[target_case].get("mode") != "batch_integrated"):
+        raise ValueError("candidate source lookahead requires a batch-integrated pipeline target")
     companion_case = args.smoke_companion if target_case == args.smoke_pie else args.smoke_pie
     paths = {"baseline": args.baseline.resolve(), "candidate": args.candidate.resolve()}
     preparation_started = time.monotonic_ns()
@@ -192,8 +196,7 @@ def _run_experiment_locked(args: argparse.Namespace) -> dict:
               "min_stage_gain": args.min_stage_gain,
               "min_target_command_gain": min_command_gain,
               "max_companion_regression": args.max_companion_regression,
-              "candidate_options": {"source_lookahead": getattr(args, "candidate_lookahead", False),
-                                    "retain_fixed_host": getattr(args, "candidate_retain_fixed_host", False)},
+              "candidate_options": {"source_lookahead": getattr(args, "candidate_lookahead", False)},
               "timing_boundaries": {
                   "preparation": "fixture/build/preflight before measured proof commands; not timed",
                   "cold_input_to_publication": "NVML-sampled fresh process from adapted CPI to published proof and exit",
@@ -205,8 +208,6 @@ def _run_experiment_locked(args: argparse.Namespace) -> dict:
     candidate_options = {}
     if getattr(args, "candidate_lookahead", False):
         candidate_options["STWO_CAIRO_CUDA_SOURCE_LOOKAHEAD"] = "1"
-    if getattr(args, "candidate_retain_fixed_host", False):
-        candidate_options["STWO_CAIRO_CUDA_RETAIN_FIXED_HOST"] = "1"
     envs = {"baseline": common_env, "candidate": {**common_env, **candidate_options}}
     config = json.loads((ROOT / "benchmark.json").read_text())
     nvml = Nvml(config["hardware"]["deviceBytes"])
@@ -301,8 +302,6 @@ def main() -> None:
                         help="the smoke PIE or fold/pipeline case whose stated stage must improve")
     parser.add_argument("--candidate-lookahead", action="store_true",
                         help="enable opt-in in-command source lookahead only for the candidate")
-    parser.add_argument("--candidate-retain-fixed-host", action="store_true",
-                        help="retain authenticated host fixed data across candidate campaign roots")
     parser.add_argument("--rounds", type=int, default=2)
     parser.add_argument("--full-if-promising", action="store_true")
     parser.add_argument("--full-rounds", type=int, default=1)
