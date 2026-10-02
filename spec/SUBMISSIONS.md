@@ -36,7 +36,11 @@ whole-device peaks, regressions, and exact proof checks.
    The editable checkout starts with the reviewed
    [accepted frontier](../frontier/manifest.json) applied over the immutable
    source pin. `workspace/baseline` remains clean. `setup --base` leaves a
-   fresh checkout at the original pin for comparison.
+   fresh checkout at the original pin for comparison. The current cumulative
+   frontier includes challenge PR #6 and upstream `stwo-zig` PR #205. Pull
+   challenge `main` and rerun `setup` to advance an unchanged older frontier.
+   If you have source edits, capture them first and apply them to a fresh
+   checkout; setup will not overwrite participant work.
 2. Edit production prover code **only** under these `benchmark.json`
    `editablePaths` in `workspace/stwo-zig`:
 
@@ -52,10 +56,20 @@ whole-device peaks, regressions, and exact proof checks.
    edit surface. Do not change the challenge's fixture manifest, security,
    verifier, scoring, timers, or judge. The capture command refreshes derived
    CUDA manifests; do not hand-edit them.
-3. Use the smallest relevant compile or focused test, then a public smoke
-   case. On a prepared H200, run `python3 challenge.py setup --build` and
+3. Write a hypothesis with a target phase, predicted full-command gain and
+   memory effect. Use the smallest relevant compile or focused test. The
+   operator can run `scripts/h200_preflight.py --mode prepare` on a CPU host
+   with the persistent volume to verify fixtures and release assets before
+   renting GPU time. Before proving, run `--mode direct` (and `--mode judge`
+   with the pinned sandbox image for a ranked host). On a prepared H200, run
+   `python3 challenge.py setup --build` and
    `python3 challenge.py benchmark --tier smoke --track balanced`. Run
-   `--tier qualify` for the complete basket when the focused checks pass;
+   one independently verified PIE and a fold/pipeline case, then repeated
+   baseline/candidate measurements on an otherwise idle H200. Record source
+   and binary IDs, proof hashes, stage times, external command time, and
+   whole-device peak. `scripts/h200_experiment.py` gates the full basket on
+   the target command and companion case. Run `--tier qualify` for the
+   complete basket only when those focused checks show a credible gain;
    use `--tier rank` for paired measurements. Record the exact case, hardware,
    samples, end-to-end time, peak device bytes, proof checks, and regressions.
    Local measurements are research evidence, not leaderboard scores.

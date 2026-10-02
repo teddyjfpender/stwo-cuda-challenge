@@ -10,6 +10,12 @@ whether setup has created the checkout. There is no `/workspaces/stwo-zig` path.
 
 The pinned source is
 [`b2873365`](https://github.com/teddyjfpender/stwo-zig/tree/b2873365dc28ed4bc4b27de10e01ea0beeef7c93).
+Setup overlays the cumulative [accepted frontier](../frontier/manifest.json):
+challenge PR #6 plus the ingress changes merged in upstream `stwo-zig` PR #205.
+The pinned commit remains the clean judge baseline; do not reset the editable
+checkout to upstream `main`. After pulling challenge `main`, rerun `setup` to
+pick up the latest frontier. An unchanged older frontier advances in place;
+capture any participant edits first because setup will not overwrite them.
 Edit **only** these paths inside `workspace/stwo-zig`. The named files are starting
 points, not a requirement to change all of them:
 
@@ -17,6 +23,7 @@ points, not a requirement to change all of them:
 | --- | --- |
 | Cairo proving lifecycle, batching, and output | [`src/products/cairo_cuda/app.zig`](https://github.com/teddyjfpender/stwo-zig/blob/b2873365dc28ed4bc4b27de10e01ea0beeef7c93/src/products/cairo_cuda/app.zig), `publication.zig`, `cli.zig` in the same directory. |
 | Cairo witness, memory, trace, and FRI | `src/integrations/cairo_cuda/executor/proof_session.zig`, `resident_plan.zig`, `trace_commit.zig`, `pcs_fri_controller.zig`, and `ingress/writer_inputs.zig`. |
+| Cairo ingress and fixed-data reuse | `src/integrations/cairo_cuda/canonical_source.zig`, `executor/ingress/controller_bundle.zig`, `executor/preprocessed_cache.zig`, and `src/products/cairo_cuda/ingress_jobs.zig`. The latter comes from the accepted frontier, not the original pin. Its source lookahead and cross-root host retention are opt-in and H200-unmeasured. |
 | Wrap and fold proving | `src/integrations/circuit_cuda/resident_prover.zig`, `resident_pipeline.zig`, `resident_memory_plan.zig`, and `native/circuit_grind.cu`. |
 | Recursive pipeline CLI and proof publication | `src/products/circuit_recursion_cuda/main.zig` and `verified_sink.zig`. |
 | Shared CUDA allocation, transfers, and scheduling | `src/backends/cuda/runtime/execution_plan.zig`, `device_admission.zig`, `execution_cache.zig`, and the kernels below `src/backends/cuda/`. |

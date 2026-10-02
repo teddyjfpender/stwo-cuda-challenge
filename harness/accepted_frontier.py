@@ -13,6 +13,32 @@ def _git(workspace: Path, *args: str) -> subprocess.CompletedProcess[str]:
                           capture_output=True, check=False)
 
 
+def _migrate_unchanged_frontier(root: Path, workspace: Path, marker: Path,
+                                previous_digest: str, current_patch: Path,
+                                current_digest: str) -> bool:
+    """Advance a prior frontier only when its removal leaves a clean checkout."""
+    old_patch = root / "frontier/history" / f"{previous_digest}.patch"
+    if (not old_patch.is_file() or
+            hashlib.sha256(old_patch.read_bytes()).hexdigest() != previous_digest or
+            _git(workspace, "apply", "--reverse", "--check", str(old_patch)).returncode != 0):
+        return False
+    if _git(workspace, "apply", "--reverse", str(old_patch)).returncode != 0:
+        return False
+    if _git(workspace, "status", "--porcelain", "--untracked-files=normal").stdout.strip():
+        restored = _git(workspace, "apply", str(old_patch))
+        if restored.returncode != 0:
+            raise SystemExit(f"could not restore previous frontier: {restored.stderr.strip()}")
+        return False
+    applied = _git(workspace, "apply", str(current_patch))
+    if applied.returncode != 0:
+        restored = _git(workspace, "apply", str(old_patch))
+        if restored.returncode != 0:
+            raise SystemExit(f"could not restore previous frontier: {restored.stderr.strip()}")
+        raise SystemExit(f"new frontier failed after clean migration: {applied.stderr.strip()}")
+    marker.write_text(json.dumps({"patchSha256": current_digest}) + "\n")
+    return True
+
+
 def apply_frontier(root: Path, workspace: Path, baseline: Path, config: dict) -> None:
     manifest_path = root / "frontier/manifest.json"
     patch = root / "frontier/changes.patch"
@@ -35,15 +61,22 @@ def apply_frontier(root: Path, workspace: Path, baseline: Path, config: dict) ->
     if not marker.is_absolute():
         marker = workspace / marker
     tracked_dirty = bool(_git(workspace, "diff", "--name-only", "HEAD").stdout.strip())
-    if marker.is_file() and json.loads(marker.read_text()).get("patchSha256") == digest and tracked_dirty:
-        print(f"Accepted frontier PR #{manifest['prNumber']} already applied")
-        return
+    if marker.is_file():
+        previous_digest = json.loads(marker.read_text()).get("patchSha256")
+        if previous_digest == digest and tracked_dirty:
+            print(f"Accepted frontier PR #{manifest['prNumber']} already applied")
+            return
+        if (previous_digest != digest and previous_digest == manifest.get("parentPatchSha256")
+                and _migrate_unchanged_frontier(root, workspace, marker, previous_digest,
+                                                patch, digest)):
+            print(f"Advanced accepted frontier to PR #{manifest['prNumber']} ({digest[:12]})")
+            return
     if _git(workspace, "apply", "--reverse", "--check", str(patch)).returncode == 0:
         marker.write_text(json.dumps({"patchSha256": digest}) + "\n")
         print(f"Accepted frontier PR #{manifest['prNumber']} already applied")
         return
     if tracked_dirty:
-        raise SystemExit("editable workspace has changes; capture them or use setup --base in a fresh checkout")
+        raise SystemExit("editable workspace has changes beyond the accepted frontier; capture them before starting a fresh checkout")
     check = _git(workspace, "apply", "--check", str(patch))
     if check.returncode != 0:
         raise SystemExit(f"accepted frontier does not apply: {check.stderr.strip()}")

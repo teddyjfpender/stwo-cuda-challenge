@@ -11,6 +11,11 @@ explanation and measured results in `candidate/NOTES.md`.
 Setup applies the reviewed `frontier/changes.patch` to the editable checkout
 while leaving `workspace/baseline` at the immutable source pin. Capture keeps
 that frontier in the cumulative patch so each PR builds on accepted work.
+The current frontier includes challenge PR #6 and upstream `stwo-zig` PR #205.
+After pulling challenge `main`, rerun `setup` to advance an unchanged previous
+frontier. If you have participant edits, capture them before creating a fresh
+checkout; setup refuses to overwrite them. PR #205's opt-in ingress work has
+local compile/unit checks but no H200 speed or memory claim.
 
 Use GitHub Discussions to debate architecture and design patterns, publish
 reproducible public profiling results, and ask setup or verification questions.

@@ -21,6 +21,11 @@ The editable checkout begins with the reviewed
 original pin. Capture produces a cumulative patch containing the frontier and
 your changes. Use `setup --base` only in a fresh checkout when inspecting the
 original source.
+The current frontier includes challenge PR #6 and upstream `stwo-zig` PR #205.
+After pulling challenge `main`, rerun `setup` to advance an unchanged old
+frontier. Capture source edits first and transfer them to a fresh checkout;
+setup refuses to overwrite participant changes. PR #205's ingress options are
+locally checked but have no H200 speed or memory claim.
 
 Use [GitHub Discussions](https://github.com/teddyjfpender/stwo-cuda-challenge/discussions)
 to compare design alternatives and profiler evidence. An Ideas thread should
@@ -45,6 +50,11 @@ operator-only H200 setup.
 The [fixed-artifact release](../../spec/RELEASE_ARTIFACTS.md) can supply
 hash-verified Rust verifiers and canonical preprocessing data on a supported
 Linux host; setup falls back to pinned source builds if no release is pinned.
+On a mounted persistent volume, the operator should first run
+`python3 scripts/h200_preflight.py --mode prepare` on a CPU host to verify
+those assets and public fixtures before renting GPU time. `--mode direct`
+then checks the live H200, and `--mode judge --image SHA256_ID` also checks
+the sandbox image before any ranked proof. Keep one GPU experiment at a time.
 An operator should run
 `python3 scripts/h200_preflight.py --mode direct` before direct diagnostics;
 `scripts/h200_experiment.py` then records a paired PIE and fold/pipeline

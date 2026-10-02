@@ -42,5 +42,7 @@ from gaps or dominant ranges, change one source path, then use the unprofiled
 `h200_experiment.py` repeated A/B gate and exact proof verification. Only run
 the ten-case basket after the focused gate passes. For memory changes, compare
 whole-device NVML peaks and the resident allocation plan, not just one CUDA
-arena. A later resident-service epoch may report warm proof time; this script
+arena. The [Cairo-to-circuit memory audit](H200_MEMORY_AUDIT.md) identifies
+the handoff and the first lifetime questions to test. A later resident-service
+epoch may report warm proof time; this script
 does not invent it or move package creation before the current `.cpi` clock.

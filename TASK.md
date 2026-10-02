@@ -19,6 +19,11 @@ over the immutable pinned prover source. `challenge.py capture` emits a
 **cumulative** patch against the original pin, including the frontier and your
 new work; do not strip the inherited changes. To inspect the original baseline
 in a fresh checkout, use `challenge.py setup --base`.
+The current frontier includes challenge PR #6 and upstream `stwo-zig` PR #205.
+After updating challenge `main`, rerun `setup`: an unchanged old frontier
+advances automatically. If you have edits, capture your patch first and apply
+your changes to a fresh checkout; setup refuses to discard them. PR #205's
+opt-in ingress paths are locally checked, but H200 performance is unmeasured.
 The five allowed CUDA directories and their purposes are listed in
 `spec/SUBMISSIONS.md` and
 `benchmark.json`. Use CPU, Metal, and Rust implementations for understanding,

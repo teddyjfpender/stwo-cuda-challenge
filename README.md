@@ -19,16 +19,18 @@ accepts no ranked submissions; it links to this repository for research PRs
 and Discussions.
 The reviewed [PR status](data/reports/submission-review-2026-10-02.tsv) and
 [per-case research measurements](data/reports/submission-research-2026-10-02.tsv)
-for PRs #3, #4, and #6 are published separately from signed scores. PR #6 is
-the current [accepted starting frontier](frontier/manifest.json); this is an
-unranked source promotion, not a signed leaderboard result.
+for challenge PRs #3, #4, and #6 are published separately from signed scores.
+The current [accepted starting frontier](frontier/manifest.json) includes
+challenge PR #6 and the locally qualified ingress changes merged upstream in
+`stwo-zig` PR #205. PR #205 has no H200 measurement or ranked promotion; its
+optional ingress paths are research starting points, not claimed speedups.
 PR #4's narrower [PoW primitive results](data/reports/submission-pow-primitives-2026-10-02.tsv)
 are retained alongside its full-command regressions.
 
 The prover's CUDA implementation lives in upstream `stwo-zig`. This challenge
 pins one commit from its `main` branch and checks it out under
 `workspace/stwo-zig` after `python3 challenge.py setup`. Setup overlays the
-reviewed CUDA [frontier patch](frontier/changes.patch) by default; `--base`
+reviewed cumulative CUDA [frontier patch](frontier/changes.patch) by default; `--base`
 leaves a fresh checkout at the original pin. Participants submit cumulative
 changes to the allowed CUDA paths as
 `candidate/changes.patch` in their challenge-repository PRs. The judge applies
@@ -97,6 +99,10 @@ timer, a source-only static estimate, or an unverified proof.
 2. Run `python3 challenge.py paths`, then work in `workspace/stwo-zig` under
    the [allowed CUDA source paths](spec/CODE_MAP.md). The checkout already
    contains the accepted frontier; the baseline remains the original pin.
+   After pulling challenge `main`, rerun `python3 challenge.py setup` to pick
+   up a newer frontier. An unchanged previous frontier advances automatically;
+   if you have source edits, capture them first and move them onto a fresh
+   checkout. Setup will not overwrite participant changes.
    Explore architecture
    hypotheses first, test whether independent wins compose, then refine the
    surviving design. Name the expected stage and minimum gain; run relevant

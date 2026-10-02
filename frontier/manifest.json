@@ -1,11 +1,12 @@
 {
   "schema": "stwo-cuda-frontier-v1",
   "sourceCommit": "b2873365dc28ed4bc4b27de10e01ea0beeef7c93",
-  "prNumber": 6,
-  "prUrl": "https://github.com/teddyjfpender/stwo-cuda-challenge/pull/6",
-  "headSha": "d2c86880a68afbd20b4c4699773aaa8f8357f677",
-  "patchSha256": "4815583a5d09c9d3c79dfc4449b21d4c00af1798eaa445666fe6c174497330e1",
-  "parentPatchSha256": null,
-  "qualification": "direct-unranked-unsandboxed",
+  "prNumber": 205,
+  "prUrl": "https://github.com/teddyjfpender/stwo-zig/pull/205",
+  "headSha": "9368ccb5741881becad7488034e915740a09a930",
+  "upstreamMergeCommit": "466a0733612b302b66cf2ae42a397c1401860473",
+  "patchSha256": "3fde9ec2c731684a60b0f8b04064f8c3a5bc88f004c4f6eb8a4c88c0b976fd59",
+  "parentPatchSha256": "4815583a5d09c9d3c79dfc4449b21d4c00af1798eaa445666fe6c174497330e1",
+  "qualification": "local-compile-and-unit-tests; H200-unmeasured",
   "ranking": "unranked"
 }

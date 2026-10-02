@@ -1,0 +1,247 @@
+diff --git a/src/integrations/cairo_cuda/executor/ingress/controller_bundle.zig b/src/integrations/cairo_cuda/executor/ingress/controller_bundle.zig
+index 86b8b323..7ddc82f4 100644
+--- a/src/integrations/cairo_cuda/executor/ingress/controller_bundle.zig
++++ b/src/integrations/cairo_cuda/executor/ingress/controller_bundle.zig
+@@ -265,6 +265,7 @@ pub const Bound = struct {
+         preprocessed_path: []const u8,
+         preprocessed_artifact_identity: ?[32]u8 = null,
+         preprocessed_column_identities: []const []const u8,
++        preprocessed_prefetch: ?*const preprocessed_cache.Prefetched = null,
+         /// The caller must retain the same prepared arena with immutable
+         /// process-cache coefficients. This receipt is not a proof input.
+         resident_preprocessed: ?preprocessed_cache.Receipt = null,
+@@ -371,7 +372,7 @@ pub const Bound = struct {
+                     return error.PreprocessedArtifactIdentityMismatch;
+             }
+             break :cached receipt;
+-        } else try preprocessed_cache.load(
++        } else try preprocessed_cache.loadWithPrefetch(
+             request.allocator,
+             session,
+             inputs.preprocessed_path,
+@@ -379,6 +380,7 @@ pub const Bound = struct {
+             inputs.preprocessed_column_identities,
+             self.preprocessed_commit.prepared,
+             &self.preprocessed_commit,
++            inputs.preprocessed_prefetch,
+         );
+         if (!std.mem.eql(u8, &preprocessed.commitment_identity, &self.preprocessed_commit.prepared.identity) or
+             preprocessed.column_count != inputs.preprocessed_column_identities.len or
+diff --git a/src/integrations/cairo_cuda/executor/preprocessed_cache.zig b/src/integrations/cairo_cuda/executor/preprocessed_cache.zig
+index 213f84b0..63daf7a8 100644
+--- a/src/integrations/cairo_cuda/executor/preprocessed_cache.zig
++++ b/src/integrations/cairo_cuda/executor/preprocessed_cache.zig
+@@ -109,6 +109,38 @@ pub fn deviceImageKey(path: []const u8, identities: []const []const u8, prepared
+ pub const format_magic = "STWZPPC\x00";
+ pub const format_version: u32 = 1;
+ 
++/// Owns the exact artifact bytes consumed by a later proof. Reading and
++/// hashing them before dynamic source preparation lets cold proofs overlap
++/// fixed-asset I/O with request compilation. The digest is of these retained
++/// bytes, so a file replacement cannot change the bytes admitted below.
++pub const Prefetched = struct {
++    allocator: std.mem.Allocator,
++    path: []const u8,
++    bytes: []u8,
++    identity: proof_ir.Digest,
++
++    pub fn read(allocator: std.mem.Allocator, path: []const u8) !Prefetched {
++        const file = try std.fs.cwd().openFile(path, .{});
++        defer file.close();
++        const size = (try file.stat()).size;
++        if (size < 16 or size > 4 << 30) return error.InvalidPreprocessedArtifact;
++        const length = std.math.cast(usize, size) orelse return error.PreprocessedArtifactOverflow;
++        const bytes = try allocator.alloc(u8, length);
++        errdefer allocator.free(bytes);
++        if (try file.readAll(bytes) != length) return error.InvalidPreprocessedArtifact;
++        var trailing: [1]u8 = undefined;
++        if (try file.read(&trailing) != 0) return error.InvalidPreprocessedArtifact;
++        var hash = std.crypto.hash.sha2.Sha256.init(.{});
++        hash.update(bytes);
++        return .{ .allocator = allocator, .path = path, .bytes = bytes, .identity = hash.finalResult() };
++    }
++
++    pub fn deinit(self: *Prefetched) void {
++        self.allocator.free(self.bytes);
++        self.* = undefined;
++    }
++};
++
+ pub const Receipt = struct {
+     artifact_identity: proof_ir.Digest,
+     commitment_identity: proof_ir.Digest,
+@@ -137,6 +169,19 @@ pub fn load(
+     expected_identities: anytype,
+     prepared: *const trace_commit.Prepared,
+     bound: *const trace_commit.Bound,
++) !Receipt {
++    return loadWithPrefetch(allocator, session, path, expected_artifact_identity, expected_identities, prepared, bound, null);
++}
++
++pub fn loadWithPrefetch(
++    allocator: std.mem.Allocator,
++    session: anytype,
++    path: []const u8,
++    expected_artifact_identity: ?proof_ir.Digest,
++    expected_identities: anytype,
++    prepared: *const trace_commit.Prepared,
++    bound: *const trace_commit.Bound,
++    prefetched: ?*const Prefetched,
+ ) !Receipt {
+     if (prepared.tree_ordinal != 0 or
+         prepared.input_form != .coefficients or
+@@ -146,14 +191,18 @@ pub fn load(
+     {
+         return error.InvalidPreprocessedCacheBinding;
+     }
+-    const file = try std.fs.cwd().openFile(path, .{});
+-    defer file.close();
++    if (prefetched) |snapshot| {
++        if (!std.mem.eql(u8, snapshot.path, path)) return error.InvalidPreprocessedCacheBinding;
++    }
++    const file: ?std.fs.File = if (prefetched == null) try std.fs.cwd().openFile(path, .{}) else null;
++    defer if (file) |open_file| open_file.close();
+     var reader_buffer: [1 << 20]u8 = undefined;
+-    var reader = file.readerStreaming(&reader_buffer);
++    var reader = if (file) |open_file| open_file.readerStreaming(&reader_buffer) else undefined;
+     var artifact_hash = std.crypto.hash.sha2.Sha256.init(.{});
+     var hashing_buffer: [4096]u8 = undefined;
+-    var hashing_reader = reader.interface.hashed(&artifact_hash, &hashing_buffer);
+-    const stream = &hashing_reader.reader;
++    var hashing_reader = if (file != null) reader.interface.hashed(&artifact_hash, &hashing_buffer) else undefined;
++    var memory_reader = if (prefetched) |snapshot| std.Io.Reader.fixed(snapshot.bytes) else undefined;
++    const stream: *std.Io.Reader = if (prefetched != null) &memory_reader else &hashing_reader.reader;
+     const profile_setting = std.process.getEnvVarOwned(allocator, "STWO_CAIRO_CUDA_PROFILE_PREPROCESSED") catch null;
+     defer if (profile_setting) |value| allocator.free(value);
+     const profile = profile_setting != null and std.mem.eql(u8, profile_setting.?, "1");
+@@ -232,7 +281,7 @@ pub fn load(
+     // Hash the same raw bytes that were parsed and uploaded, before SIMD
+     // canonicalization. This avoids a separate whole-artifact read and binds
+     // the receipt to consumed content rather than an earlier file snapshot.
+-    const artifact_identity = artifact_hash.finalResult();
++    const artifact_identity = if (prefetched) |snapshot| snapshot.identity else artifact_hash.finalResult();
+     if (profile) std.debug.print("cairo-cuda preprocessed-profile read_ns={} validate_ns={} transpose_ns={} upload_ns={} words={}\n", .{
+         read_ns, validate_ns, transpose_ns, upload_ns, coefficient_words,
+     });
+diff --git a/src/products/cairo_cuda/app.zig b/src/products/cairo_cuda/app.zig
+index 07a15d39..8d2b1d66 100644
+--- a/src/products/cairo_cuda/app.zig
++++ b/src/products/cairo_cuda/app.zig
+@@ -9,6 +9,7 @@ const Decoded = stwo.integration.canonical_verify.Decoded;
+ const ProofCapture = stwo.frontend.witness.resident_verifier.ProofCapture;
+ pub const NativeRuntime = stwo.backend.runtime.NativeRuntime;
+ const DeviceImage = stwo.executor.preprocessed_cache.DeviceImage;
++const Prefetched = stwo.executor.preprocessed_cache.Prefetched;
+ const CanonicalAssets = stwo.integration.canonical_source.Assets;
+ 
+ /// The verified proof and its authenticated openings are borrowed only during
+@@ -28,6 +29,40 @@ const ResidentStatic = struct {
+     receipt: stwo.executor.preprocessed_cache.Receipt,
+ };
+ 
++const PrefetchJob = struct {
++    allocator: std.mem.Allocator,
++    path: []const u8,
++    thread: ?std.Thread = null,
++    snapshot: ?Prefetched = null,
++    failure: ?anyerror = null,
++
++    fn start(self: *PrefetchJob) !void {
++        self.thread = try std.Thread.spawn(.{}, read, .{self});
++    }
++
++    fn read(self: *PrefetchJob) void {
++        self.snapshot = Prefetched.read(self.allocator, self.path) catch |err| {
++            self.failure = err;
++            return;
++        };
++    }
++
++    fn wait(self: *PrefetchJob) !*const Prefetched {
++        if (self.thread) |thread| {
++            thread.join();
++            self.thread = null;
++        }
++        if (self.failure) |err| return err;
++        if (self.snapshot) |*snapshot| return snapshot;
++        return error.MissingPreprocessedPrefetch;
++    }
++
++    fn deinit(self: *PrefetchJob) void {
++        if (self.thread) |thread| thread.join();
++        if (self.snapshot) |*snapshot| snapshot.deinit();
++    }
++};
++
+ /// Retains authenticated source assets and the checked fixed device image
+ /// across separate batches on one resident runtime. Dynamic PIE inputs,
+ /// transcripts, and proof transactions remain request-local.
+@@ -127,17 +162,25 @@ fn runItems(allocator: std.mem.Allocator, items: []const BatchItem, mode: Mode,
+         break :blk try publication.sha256File(executable);
+     };
+     var startup = try std.time.Timer.start();
++    var first_paths = try @import("canonical_paths.zig").Paths.init(
++        allocator,
++        items[0].request.input,
++        items[0].request.circuit_registry,
++    );
++    defer first_paths.deinit();
++    var prefetch = PrefetchJob{ .allocator = allocator, .path = first_paths.preprocessed };
++    defer prefetch.deinit();
++    const needs_prefetch = if (persistent) |session|
++        session.resident_static == null and
++            (session.device_image == null or session.device_image.?.receipt == null)
++    else
++        true;
++    if (needs_prefetch) try prefetch.start();
+     var local_assets: ?CanonicalAssets = null;
+     defer if (local_assets) |*assets| assets.deinit();
+     const assets_slot = if (persistent) |session| &session.assets else &local_assets;
+     var asset_init_ns: u64 = 0;
+     if ((items.len > 1 or persistent != null) and assets_slot.* == null) {
+-        var first_paths = try @import("canonical_paths.zig").Paths.init(
+-            allocator,
+-            items[0].request.input,
+-            items[0].request.circuit_registry,
+-        );
+-        defer first_paths.deinit();
+         assets_slot.* = try CanonicalAssets.load(allocator, first_paths.source);
+         asset_init_ns = startup.lap();
+     }
+@@ -164,7 +207,7 @@ fn runItems(allocator: std.mem.Allocator, items: []const BatchItem, mode: Mode,
+     const static_slot = if (persistent) |session| &session.resident_static else &local_static;
+     for (items, 0..) |item, index| {
+         const assets: ?*const CanonicalAssets = if (assets_slot.*) |*shared| shared else null;
+-        const receipt = try proveOnce(allocator, runtime, static_slot, if (use_device_image) image_slot else null, item.request, executable_digest, @intCast(if (mode == .repeated) index + 1 else 1), if (index == 0) runtime_init_ns else 0, if (index == 0) asset_init_ns else 0, item.sink, external_runtime != null, assets);
++        const receipt = try proveOnce(allocator, runtime, static_slot, if (use_device_image) image_slot else null, item.request, executable_digest, @intCast(if (mode == .repeated) index + 1 else 1), if (index == 0) runtime_init_ns else 0, if (index == 0) asset_init_ns else 0, item.sink, external_runtime != null, assets, if (index == 0 and needs_prefetch) &prefetch else null);
+         if (mode == .repeated) {
+             if (expected_digest) |expected| {
+                 if (!std.mem.eql(u8, &expected, &receipt.proof_sha256)) return error.NondeterministicCairoCudaProof;
+@@ -206,6 +249,7 @@ fn proveOnce(
+     sink: ?VerifiedLeafSink,
+     release_arena_for_sink: bool,
+     assets: ?*const CanonicalAssets,
++    prefetch: ?*PrefetchJob,
+ ) !publication.Receipt {
+     var timer = try std.time.Timer.start();
+     var phase: []const u8 = "resolve_input";
+@@ -316,6 +360,11 @@ fn proveOnce(
+         if (std.mem.eql(u8, &cached.arena_key, &arena_key)) cached.receipt else null
+     else
+         null;
++    const prefetched = if (cached_preprocessed == null and
++        (device_image == null or device_image.?.receipt == null))
++        if (prefetch) |job| try job.wait() else null
++    else
++        null;
+     const static_receipt = try controllers.initializeStatic(
+         &transaction,
+         provider,
+@@ -326,6 +375,7 @@ fn proveOnce(
+             .inverse_twiddles = twiddles.inverseWords(),
+             .preprocessed_path = paths.preprocessed,
+             .preprocessed_column_identities = diagnostic.fixed.preprocessed_identities,
++            .preprocessed_prefetch = prefetched,
+             .resident_preprocessed = cached_preprocessed,
+             .device_image = device_image,
+         },
