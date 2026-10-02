@@ -83,7 +83,7 @@ evidence and promotion decisions before publishing the site snapshot:
 ```sh
 python3 service/site_export.py --source workspace/baseline \
   --state /operator/state --public-key /operator/operator-public.pem \
-  --website-root /path/to/autoresearch-web \
+  --challenge-root . \
   --promotions /operator/promotions.json
 ```
 
@@ -92,11 +92,13 @@ names, for example `{"ID": ["latency"]}`. The exporter checks each selected
 track was promotable against baseline in the signed judge receipt. A later
 leader still requires a fresh head-to-head measurement and operator review;
 the site never infers that promotion from public case rows. The export verifies
-the Ed25519 signature and immutable PR/commit/patch/epoch binding, copies the
-redacted signed receipts and public key, and writes `scorecards.json`. Commit
-those generated website files to its repository; Vercel deploys that commit.
-The site build verifies every receipt signature again. It does not show ranked
-entries while the challenge status is `staging`.
+the Ed25519 signature and immutable PR/commit/patch/epoch binding, then writes
+`data/site/scorecards.json`, the redacted signed receipts, and the public key
+to this repository. Review and commit those files to challenge `main`. The
+website reads one immutable challenge commit through GitHub every five minutes
+and verifies each receipt signature and displayed score at render time. It
+does not show ranked entries while the challenge status is `staging`.
+`--website-root` remains available for an older static snapshot.
 
 ## Bring up the judge
 
@@ -133,10 +135,10 @@ entries while the challenge status is `staging`.
 
 ## Connect `autoresearch-web`
 
-The website imports contract and measured research files from a local
-challenge checkout. It also fetches recent public PR metadata from GitHub,
+The website fetches the contract, baseline reports, research TSVs, and signed
+scorecard feed directly from one immutable commit of this repository. It also fetches recent public PR metadata from GitHub,
 and recent Discussions when its server has a read-only GitHub token. Its
-`scorecards.json` is empty because no signed rank receipt exists yet. The
+`data/site/scorecards.json` is empty because no signed rank receipt exists yet. The
 manual export above provides a verified receipt-to-site path; the site remains
 a public, read-only projection, separate from judge state and secrets. The
 staging deployment is
@@ -156,12 +158,13 @@ staging deployment is
    PR descriptions and claimed improvements are
    **untrusted claims**, displayed as such.
 2. The manual exporter publishes **redacted** receipt JSON, detached
-   signatures, the operator public key, and a derived scorecard file. It never
+   signatures, the operator public key, and a derived scorecard file into
+   `data/site/` in this repository. It never
    copies SQLite, the shared bearer token, signing key, private case IDs, or
-   unredacted evidence. The website build rejects a changed or unsigned
+   unredacted evidence. The website rejects a changed or unsigned
    receipt. Its aggregate score comes from the signed judge output, including
    hidden holdouts; it must never rescore only the public per-case rows.
-3. Rank results appear only after an operator-reviewed export and a website
+3. Rank results appear only after an operator-reviewed export and a challenge
    commit. The derived card retains receipt digest and PR URL for audit. The
    staging site still suppresses ranking until the H200 and scoring activation
    gates are met; merely opening a PR or publishing a research measurement

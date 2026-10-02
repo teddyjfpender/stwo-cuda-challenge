@@ -97,7 +97,12 @@ class SiteExportTests(unittest.TestCase):
             website = root / "website"
             (website / "apps/web/src/data/imported/stwo-cuda").mkdir(parents=True)
             (website / "apps/web/package.json").write_text("{}")
-            cards = export(store, public_key, website, {SUBMISSION: ["latency"]})
+            challenge = root / "challenge"
+            (challenge / "fixtures").mkdir(parents=True)
+            (challenge / "benchmark.json").write_text("{}")
+            (challenge / "fixtures/public-v1.json").write_text("{}")
+            cards = export(store, public_key, website, {SUBMISSION: ["latency"]},
+                           challenge_root=challenge)
             self.assertEqual(cards[0]["rTime"], 0.8)
             self.assertEqual(cards[0]["submittedAt"], "2026-10-02T11:00:00Z")
             self.assertEqual(cards[0]["promotedTracks"], ["latency"])
@@ -106,6 +111,10 @@ class SiteExportTests(unittest.TestCase):
                               f"{digest}.json").read_bytes(), data)
             self.assertEqual(json.loads((website / "apps/web/src/data/imported/stwo-cuda/scorecards.json")
                                         .read_text())[0]["receiptSha256"], digest)
+            self.assertEqual(json.loads((challenge / "data/site/scorecards.json")
+                                        .read_text())[0]["receiptSha256"], digest)
+            self.assertEqual((challenge / "data/site/receipts" /
+                              f"{digest}.json").read_bytes(), data)
             receipt_path.write_bytes(data + b" ")
             with self.assertRaisesRegex(Exception, "changed"):
                 export(store, public_key, website, {})

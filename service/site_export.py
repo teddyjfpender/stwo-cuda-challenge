@@ -99,11 +99,22 @@ def checked_card(store: Store, mapping: dict, public_key: Path,
     return card, receipt_path, signature_path
 
 
-def export(store: Store, public_key: Path, website_root: Path, promotions: dict) -> list[dict]:
-    imported = website_root / "apps/web/src/data/imported/stwo-cuda"
-    public = website_root / "apps/web/public/receipts"
-    if not imported.is_dir() or not (website_root / "apps/web/package.json").is_file():
-        raise IntakeError("website root does not contain the Stwo CUDA data import")
+def export(store: Store, public_key: Path, website_root: Path | None,
+           promotions: dict, *, challenge_root: Path | None = None) -> list[dict]:
+    if website_root is None and challenge_root is None:
+        raise IntakeError("a website or challenge publication root is required")
+    targets = []
+    if website_root is not None:
+        imported = website_root / "apps/web/src/data/imported/stwo-cuda"
+        public = website_root / "apps/web/public/receipts"
+        if not imported.is_dir() or not (website_root / "apps/web/package.json").is_file():
+            raise IntakeError("website root does not contain the Stwo CUDA data import")
+        targets.append((imported, public))
+    if challenge_root is not None:
+        if not (challenge_root / "benchmark.json").is_file() or not (challenge_root / "fixtures/public-v1.json").is_file():
+            raise IntakeError("challenge root does not contain the pinned contract")
+        site = challenge_root / "data/site"
+        targets.append((site, site / "receipts"))
     manifest = json.loads((ROOT / "fixtures/public-v1.json").read_text())
     public_ids = {case["id"] for case in manifest["cases"]}
     with store.db() as connection:
@@ -126,25 +137,27 @@ def export(store: Store, public_key: Path, website_root: Path, promotions: dict)
     if set(promotions) - seen:
         raise IntakeError("promotion decision references an unpublished rank receipt")
     cards.sort(key=lambda card: (card["submittedAt"], card["id"]))
-    public.mkdir(parents=True, exist_ok=True)
-    key_target = imported / "operator-public.pem"
     key_data = public_key.read_bytes()
-    if key_target.exists() and key_target.read_bytes() != key_data:
-        raise IntakeError("website operator public key differs")
-    if not key_target.exists():
-        key_target.write_bytes(key_data)
-    for path in files:
-        target = public / path.name
-        if target.exists() and target.read_bytes() != path.read_bytes():
-            raise IntakeError(f"published receipt differs: {target.name}")
-        if not target.exists():
-            shutil.copyfile(path, target)
-    target = imported / "scorecards.json"
     data = json.dumps(cards, indent=2, sort_keys=True) + "\n"
-    with tempfile.NamedTemporaryFile(mode="w", dir=imported, delete=False) as temporary:
-        temporary.write(data)
-        staged = Path(temporary.name)
-    os.replace(staged, target)
+    for imported, public in targets:
+        imported.mkdir(parents=True, exist_ok=True)
+        public.mkdir(parents=True, exist_ok=True)
+        key_target = imported / "operator-public.pem"
+        if key_target.exists() and key_target.read_bytes() != key_data:
+            raise IntakeError("published operator public key differs")
+        if not key_target.exists():
+            key_target.write_bytes(key_data)
+        for path in files:
+            target = public / path.name
+            if target.exists() and target.read_bytes() != path.read_bytes():
+                raise IntakeError(f"published receipt differs: {target.name}")
+            if not target.exists():
+                shutil.copyfile(path, target)
+        target = imported / "scorecards.json"
+        with tempfile.NamedTemporaryFile(mode="w", dir=imported, delete=False) as temporary:
+            temporary.write(data)
+            staged = Path(temporary.name)
+        os.replace(staged, target)
     return cards
 
 
@@ -153,7 +166,9 @@ def main() -> None:
     parser.add_argument("--state", type=Path, required=True)
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--public-key", type=Path, required=True)
-    parser.add_argument("--website-root", type=Path, required=True)
+    parser.add_argument("--website-root", type=Path)
+    parser.add_argument("--challenge-root", type=Path,
+                        help="publish signed scorecards for the website's GitHub API feed")
     parser.add_argument("--promotions", type=Path,
                         help="operator-reviewed JSON: submission ID to promoted track names")
     args = parser.parse_args()
@@ -162,7 +177,7 @@ def main() -> None:
     if not isinstance(decisions, dict):
         parser.error("promotions must be a JSON object")
     cards = export(Store(args.state, args.source, config), args.public_key,
-                   args.website_root, decisions)
+                   args.website_root, decisions, challenge_root=args.challenge_root)
     print(json.dumps({"exported": len(cards), "promoted": sum(len(x["promotedTracks"]) for x in cards)}, indent=2))
 
 
