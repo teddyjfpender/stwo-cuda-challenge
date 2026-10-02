@@ -1,5 +1,6 @@
 {
   "schema": "stwo-cuda-site-sources-v1",
+  "activation": "data/site/activation.json",
   "benchmark": "benchmark.json",
   "fixture": "fixtures/public-v1.json",
   "report": "data/reports/h200-direct-2026-10-02.json",

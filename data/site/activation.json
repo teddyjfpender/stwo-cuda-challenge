@@ -1,0 +1,46 @@
+{
+  "schema": "stwo-cuda-site-activation-v1",
+  "status": "staging",
+  "gates": [
+    {
+      "name": "Proof-only scoring contract",
+      "status": "pending",
+      "evidence": "Six Cairo PIE proof-stage timers are retained, but wrap, fold, and pipeline proof-only timers are not. The implemented h200-v1 judge scores adapted-input-to-publication time. A reviewed new epoch, complete timers, and fresh baselines are required before a proof-only leaderboard can launch."
+    },
+    {
+      "name": "Contract and data",
+      "status": "done",
+      "evidence": "All 60 public files hash-verified on a healthy H200; contract CI passes."
+    },
+    {
+      "name": "Independent verifiers",
+      "status": "done",
+      "evidence": "Both pinned Rust verifiers accepted every Cairo proof in two direct H200 rounds."
+    },
+    {
+      "name": "Public proofs and folds",
+      "status": "done",
+      "evidence": "Six PIEs, both folds and both pipeline modes reproduced exact reference hashes on H200."
+    },
+    {
+      "name": "Private holdout",
+      "status": "partial",
+      "evidence": "An 18-case holdout passes hash preflight locally; not yet mounted on a judge."
+    },
+    {
+      "name": "Paired scoring",
+      "status": "partial",
+      "evidence": "Tracks, guards, ABBA, A/A and bootstrap pass scorer tests; no paired H200 rounds yet."
+    },
+    {
+      "name": "Intake and dispatch",
+      "status": "partial",
+      "evidence": "Intake, trusted builder, tiered receipts and signing pass locally; no self-hosted runner is configured."
+    },
+    {
+      "name": "Candidate isolation",
+      "status": "pending",
+      "evidence": "CPU sandbox probe passed; GPU isolation on the actual H200 runner is still to qualify."
+    }
+  ]
+}
