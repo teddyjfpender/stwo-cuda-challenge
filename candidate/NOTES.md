@@ -14,7 +14,7 @@ The hypothesis is that the independent fixed-asset read/hash can run alongside d
 
 ## Evidence
 
-Pinned source commit: `b2873365dc28ed4bc4b27de10e01ea0beeef7c93`. Hardware: one NVIDIA H200 per direct run, SM 90, 143,771 MiB device memory. The direct qualification script measures the whole prover command from launch to exit and samples whole-device NVML memory every 10 ms. Cairo `ingress_ns` and `proof_execute_and_decode_ns` come from the candidate's backend report and are separate from that full-command timer. All results below are unranked and unsandboxed research measurements. They are single samples, not a paired score; the full-basket before and after runs used two H200 pods.
+Pinned source commit: `b2873365dc28ed4bc4b27de10e01ea0beeef7c93`. Hardware: one NVIDIA H200 per direct run, SM 90, 143,771 MiB device memory. The direct qualification script measures the whole prover command from launch to exit and samples whole-device NVML memory every 10 ms. Cairo `ingress_ns` and `proof_execute_and_decode_ns` come from the candidate's backend report and are separate from that full-command timer. All results below are unranked and unsandboxed research measurements. They are single samples, not a paired score. The full-basket arms below used the same second H200 pod at different times while CUDA builds were also running.
 
 The focused same-host smoke pair on `pie:15581148_15581148` passed the pinned independent Rust verifier and exact canonical proof hash:
 
@@ -27,20 +27,20 @@ The focused same-host smoke pair on `pie:15581148_15581148` passed the pinned in
 | Whole-device peak | 84,530,954,240 bytes | 84,530,954,240 bytes |
 | Planned arena | 82,697,758,816 bytes | 82,697,758,816 bytes |
 
-One direct full public basket pass per arm produced the following diagnostics. Each cell is full-command seconds / whole-device peak GiB. Because these arms were on different pods, differences include host, storage, and concurrent-build variation; they are not a ranking or a paired estimate.
+One direct full public basket pass per arm on the same H200 produced the following diagnostics. Each cell is full-command seconds / whole-device peak GiB. The candidate arm ran before the baseline arm; this is not an ABBA paired measurement, and concurrent builds add variance. The descriptive equal-family geometric mean command-time reduction is 8.7%, not an official score.
 
 | Public case | Baseline | Candidate |
 | --- | ---: | ---: |
-| `pie:15582797_15582797` | 8.030 / 84.26 | 5.925 / 84.27 |
-| `pie:15603744_15603744` | 7.774 / 83.54 | 7.378 / 83.55 |
-| `pie:15581148_15581148` | 7.474 / 78.73 | 6.776 / 79.25 |
-| `pie:15590913_15590913` | 8.125 / 97.98 | 6.526 / 97.99 |
-| `pie:15588777_15588780` | 9.877 / 124.85 | 7.627 / 124.86 |
-| `pie:15591789_15591789` | 8.526 / 108.26 | 7.277 / 108.27 |
-| `recursion:two-leaf-wrap-fold` | 2.778 / 27.39 | 2.430 / 27.40 |
-| `recursion:eight-distinct-pie-fold` | 8.325 / 27.39 | 7.930 / 27.40 |
-| `pipeline:two-leaf-root` | 18.237 / 64.67 | 17.792 / 64.68 |
-| `pipeline:two-leaf-batch-integrated` | 15.182 / 38.44 | 13.739 / 38.46 |
+| `pie:15582797_15582797` | 7.885 / 84.27 | 5.925 / 84.27 |
+| `pie:15603744_15603744` | 8.378 / 83.55 | 7.378 / 83.55 |
+| `pie:15581148_15581148` | 7.277 / 78.74 | 6.776 / 79.25 |
+| `pie:15590913_15590913` | 8.728 / 97.99 | 6.526 / 97.99 |
+| `pie:15588777_15588780` | 9.830 / 124.86 | 7.627 / 124.86 |
+| `pie:15591789_15591789` | 8.127 / 108.27 | 7.277 / 108.27 |
+| `recursion:two-leaf-wrap-fold` | 2.524 / 27.40 | 2.430 / 27.40 |
+| `recursion:eight-distinct-pie-fold` | 8.281 / 27.40 | 7.930 / 27.40 |
+| `pipeline:two-leaf-root` | 18.646 / 64.68 | 17.792 / 64.68 |
+| `pipeline:two-leaf-batch-integrated` | 14.287 / 38.46 | 13.739 / 38.46 |
 
 All six PIEs passed the pinned independent Rust verifier, matched the reference proof SHA-256, and reported the canonical security profile with no CPU proving fallback. Both recursive folds and both pipelines matched the public root, output, and packed hashes; pipeline Cairo leaves also passed Rust verification. The public fixture hash check passed for all 60 files. Focused local checks passed: `zig build check-cairo-cuda-local -Doptimize=ReleaseFast`, `zig build test-cairo-preprocessed-cache -Doptimize=ReleaseFast`, and `zig build test-cairo-cuda-local -Doptimize=ReleaseFast`. `python3 challenge.py capture` produced a 12,454-byte patch affecting only the three paths above and confirmed CUDA source closure.
 
@@ -56,4 +56,4 @@ Research and implementation were performed by OpenAI Codex (GPT-6) using the Cod
 
 ## Submission
 
-The review PR will link this patch and these notes. GitHub rejected a personal fork because the authenticated account already owns the parent repository, so the review PR uses a branch in the challenge repository. Ranked H200 intake remains in staging; there is no submission ID or signed rank receipt, and these local timings do not establish leaderboard placement.
+[Review PR #6](https://github.com/teddyjfpender/stwo-cuda-challenge/pull/6) links this patch and these notes. GitHub rejected a personal fork because the authenticated account already owns the parent repository, so the review PR uses a branch in the challenge repository. Ranked H200 intake remains in staging; there is no submission ID or signed rank receipt, and these local timings do not establish leaderboard placement.
