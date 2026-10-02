@@ -84,9 +84,9 @@ timer, a source-only static estimate, or an unverified proof.
    checked preprocessing asset, verifiers, and baseline build on a reusable
    volume. Set `STWO_CUDA_BUILD_CACHE_ROOT` to a persistent directory;
    setup shares its archive/cubin and ccache entries between baseline and
-   candidate builds while targeting only SM 90. Once the reviewed
-   [fixed-artifact release](spec/RELEASE_ARTIFACTS.md) is pinned, setup also
-   downloads hash-verified Rust verifiers and canonical preprocessing data
+   candidate builds while targeting only SM 90. The reviewed
+   [fixed-artifact release](spec/RELEASE_ARTIFACTS.md) lets setup
+   download hash-verified Rust verifiers and canonical preprocessing data
    instead of rebuilding those unchanged inputs. The operator runs
    `scripts/h200_preflight.py --mode direct` before
    research proofs. A separate ranked judge host also needs Docker/NVIDIA,
