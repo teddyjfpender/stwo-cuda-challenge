@@ -24,6 +24,29 @@ SECURITY = {"query_count": 70, "query_pow_bits": 26,
             "channel_salt": 0, "preprocessed_variant": "canonical"}
 
 
+def cairo_phase_seconds(trial: dict) -> dict[str, float]:
+    return {key: trial[key] / 1e9 for key in
+            ("ingress_ns", "proof_execute_and_decode_ns",
+             "adapted_input_until_publication_ns", "source_lookahead_prepare_ns",
+             "source_lookahead_wait_ns") if key in trial}
+
+
+def circuit_phase_seconds(logs: list[Path]) -> dict[str, float]:
+    totals = {"circuit_resident_ns": 0, "circuit_verify_ns": 0,
+              "circuit_convert_ns": 0}
+    count = 0
+    for log in logs:
+        content = log.read_text(errors="replace")
+        for resident, verify, convert in re.findall(
+                r"circuit-proof .*?resident_ns=(\d+) verify_ns=(\d+) convert_ns=(\d+)",
+                content):
+            totals["circuit_resident_ns"] += int(resident)
+            totals["circuit_verify_ns"] += int(verify)
+            totals["circuit_convert_ns"] += int(convert)
+            count += 1
+    return {key: value / 1e9 for key, value in totals.items()} if count else {}
+
+
 def check_report(path: Path, input_digest: str) -> int:
     report = json.loads(path.read_text())
     trials = report.get("completed_trials", [])
@@ -52,7 +75,8 @@ def check_root(case: dict, directory: Path) -> None:
 
 def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
                  verifier: Path, registry_verifier: Path, nvml: Nvml,
-                 env: dict[str, str]) -> dict:
+                 env: dict[str, str], *, command_prefix: list[str] | None = None,
+                 capture_memory_trace: bool = False) -> dict:
     case_dir = out / case["id"].replace(":", "_")
     case_dir.mkdir(parents=True)
     measure_dir = out / "_measurements" / case_dir.name
@@ -61,24 +85,32 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
     phase_seconds = {}
     ingress_stage_seconds = {}
     proof_hashes = {}
+    verifier_results = {}
+
+    def execute(command: list[str]) -> dict:
+        wrapped = [*(command_prefix or ()), *command]
+        if capture_memory_trace:
+            return run(wrapped, measure_dir, nvml, env, cwd=source, capture_memory_trace=True)
+        return run(wrapped, measure_dir, nvml, env, cwd=source)
+
     if case["family"] == "pie":
         input_path = checked_file(fixtures, case["input"])
         proof, report = case_dir / "proof.json", case_dir / "backend.json"
         command = [str(source / "zig-out/bin/stwo-cairo-cuda"), "prove",
                    "--backend", "cuda", "--input", str(input_path),
                    "--output", str(proof), "--report-out", str(report), "--repeat", "1"]
-        measured = run(command, measure_dir, nvml, env, cwd=source)
+        measured = execute(command)
         proof_verifier(verifier, proof, case_dir / "verification")
         if sha(proof) != case["expected_proof_sha256"]:
             raise RuntimeError(f"canonical Cairo proof differs: {case['id']}")
         plan = check_report(report, case["input"]["sha256"])
         trial = json.loads(report.read_text())["completed_trials"][0]
-        phase_seconds = {key: trial[key] / 1e9 for key in
-                         ("ingress_ns", "proof_execute_and_decode_ns",
-                          "adapted_input_until_publication_ns") if key in trial}
+        phase_seconds = cairo_phase_seconds(trial)
         ingress_stage_seconds = {key: value / 1e9 for key, value in
                                  trial.get("ingress_timings", {}).items()}
         proof_hashes = {"proof.json": sha(proof)}
+        verifier_results = {"official_rust_cairo": "accepted",
+                            "canonical_proof_digest": "matched"}
     elif case["family"] == "recursion":
         leaves = [str(checked_file(fixtures, item)) for item in case["inputs"]]
         manifest = case_dir / "leaves.json"
@@ -87,10 +119,13 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
                    "--manifest", str(manifest), "--proof", str(case_dir / "root.proof"),
                    "--outputs", str(case_dir / "root_outputs.json"),
                    "--packed", str(case_dir / "root_packed.json")]
-        measured = run(command, measure_dir, nvml, env, cwd=source)
+        measured = execute(command)
         check_root(case, case_dir)
         proof_hashes = {name: sha(case_dir / name) for name in
                         ("root.proof", "root_outputs.json", "root_packed.json")}
+        phase_seconds = circuit_phase_seconds([measure_dir / "process.log"])
+        verifier_results = {"canonical_root_digests": "matched",
+                            "independent_circuit_verifier": "not_run_by_direct_qualifier"}
         arenas = [int(value) for value in re.findall(
             r"circuit-proof .*arena_bytes=(\d+)",
             (measure_dir / "process.log").read_text(errors="replace"))]
@@ -108,7 +143,7 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
         command = [sys.executable, str(ROOT / "harness/run_pipeline.py"),
                    "--source", str(source), "--fixtures", str(fixtures),
                    "--case", str(case_file), "--out", str(result)]
-        measured = run(command, measure_dir, nvml, env, cwd=source)
+        measured = execute(command)
         receipt = json.loads((result / "receipt.json").read_text())
         if (receipt.get("schema") != "stwo-cuda-external-pipeline-v1" or
                 receipt.get("backend") != "cuda-resident" or
@@ -121,7 +156,11 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
             raise RuntimeError(f"pipeline receipt root differs: {case['id']}")
         proof_hashes = {name: sha(result / name) for name in
                         ("root.proof", "root_outputs.json", "root_packed.json")}
+        verifier_results = {"canonical_root_digests": "matched",
+                            "registry_rust_cairo_leaves": "accepted",
+                            "independent_circuit_verifier": "not_run_by_direct_qualifier"}
         arenas = []
+        leaf_phases = []
         for index, item in enumerate(case["inputs"]):
             proof = result / f"leaf-{index}.cairo_proof.json"
             registry_proof_verifier(registry_verifier, proof,
@@ -129,6 +168,8 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
             proof_hashes[f"leaf-{index}.cairo_proof.json"] = sha(proof)
             arenas.append(check_report(result / f"leaf-{index}.cairo_report.json",
                                        item["sha256"]))
+            leaf_phases.append(cairo_phase_seconds(json.loads(
+                (result / f"leaf-{index}.cairo_report.json").read_text())["completed_trials"][0]))
         profiles = []
         for log in receipt["logs"]:
             content = Path(log).read_text(errors="replace")
@@ -139,6 +180,12 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
             arenas.extend(int(arena) for _, arena in matches)
         if profiles != ["internal"] * len(case["inputs"]) + ["root"] * (len(case["inputs"]) - 1):
             raise RuntimeError(f"pipeline circuit telemetry differs: {case['id']}")
+        phase_seconds = circuit_phase_seconds([Path(log) for log in receipt["logs"]])
+        phase_seconds.update({f"cairo_leaf_{key}_sum": sum(leaf.get(key, 0) for leaf in leaf_phases)
+                              for key in ("ingress_ns", "proof_execute_and_decode_ns",
+                                          "adapted_input_until_publication_ns",
+                                          "source_lookahead_prepare_ns",
+                                          "source_lookahead_wait_ns")})
         plan = max(arenas)
     else:
         raise ValueError(f"unknown case family: {case['family']}")
@@ -149,6 +196,7 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
             "phase_seconds": phase_seconds,
             "ingress_stage_seconds": ingress_stage_seconds,
             "proof_sha256": proof_hashes,
+            "verifier_results": verifier_results,
             "peak_device_bytes": measured["peak_device_bytes"],
             "idle_device_bytes": measured["idle_device_bytes"],
             "nvml_samples": measured["nvml_samples"],

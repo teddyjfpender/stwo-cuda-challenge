@@ -147,7 +147,8 @@ class Nvml:
 
 
 def run(command: list[str], out: Path, nvml: Nvml, env: dict, *, timeout: int = 900,
-        container: bool = False, cwd: Path | None = None) -> dict:
+        container: bool = False, cwd: Path | None = None,
+        capture_memory_trace: bool = False) -> dict:
     out = out.resolve()
     out.mkdir(parents=True)
     out.chmod(0o700 if container else 0o777)
@@ -193,13 +194,17 @@ def run(command: list[str], out: Path, nvml: Nvml, env: dict, *, timeout: int = 
     peak = initial
     samples = 0
     sample_error = None
+    memory_trace: list[tuple[int, int]] = []
 
     def sample() -> None:
         nonlocal peak, samples, sample_error
         while not stop.is_set():
             try:
-                peak = max(peak, nvml.read().used)
+                used = nvml.read().used
+                peak = max(peak, used)
                 samples += 1
+                if capture_memory_trace:
+                    memory_trace.append((time.monotonic_ns(), used))
             except RuntimeError as error:
                 sample_error = str(error)
                 return
@@ -245,6 +250,12 @@ def run(command: list[str], out: Path, nvml: Nvml, env: dict, *, timeout: int = 
     finally:
         stop.set()
         watcher.join()
+        if capture_memory_trace:
+            with (out / "memory_trace.tsv").open("w") as trace:
+                trace.write("elapsed_ns\tused_device_bytes\n")
+                for sampled_ns, used in memory_trace:
+                    if sampled_ns >= started:
+                        trace.write(f"{sampled_ns - started}\t{used}\n")
         if container_id:
             subprocess.run(["docker", "rm", "--force", container_id],
                            capture_output=True, timeout=30, check=False)

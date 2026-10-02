@@ -14,7 +14,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from harness.kernel_closure import verify as verify_kernel_closure
 from harness.cuda_toolchain import cuda_build_options
-PREPROCESSED_SHA256 = "4d4fda06dfa3bca19554510a158f6c50abad06a74d29c17885ed4cbb88ada34d"
+from scripts.release_artifacts import (PREPROCESSED_SHA256,
+                                       install as install_rust_release,
+                                       install_preprocessed)
 CAIRO_ARTIFACTS = (
     "official/air_template_library_v1.json",
     "official/witness_programs_v1.bin",
@@ -67,17 +69,19 @@ def prepare_cuda_artifacts(baseline: Path) -> None:
 
 def prepare_judge_assets(baseline: Path) -> None:
     """Build pinned independent verifiers and the shared canonical coefficient asset."""
-    if not shutil.which("cargo"):
-        raise SystemExit("Cargo is required for the pinned Rust verifiers")
     official_target = ROOT / ".cache/rust-official"
     registry_target = ROOT / ".cache/rust-registry"
-    run("cargo", "build", "--release", "--locked", "--manifest-path",
-        str(baseline / "tools/stwo-cairo-official-verifier-rs/Cargo.toml"),
-        "--target-dir", str(official_target))
-    run("cargo", "+nightly-2026-01-15", "build", "--release", "--locked",
-        "--bin", "verify_cairo_cuda_json", "--manifest-path",
-        str(baseline / "tools/stwo-circuit-oracle-rs/Cargo.toml"),
-        "--target-dir", str(registry_target))
+    source_commit = json.loads((ROOT / "benchmark.json").read_text())["sourceCommit"]
+    if not install_rust_release(source_commit, ROOT, ROOT / "release-artifacts.lock.json"):
+        if not shutil.which("cargo"):
+            raise SystemExit("Cargo is required when pinned Rust release artifacts are unavailable")
+        run("cargo", "build", "--release", "--locked", "--manifest-path",
+            str(baseline / "tools/stwo-cairo-official-verifier-rs/Cargo.toml"),
+            "--target-dir", str(official_target))
+        run("cargo", "+nightly-2026-01-15", "build", "--release", "--locked",
+            "--bin", "verify_cairo_cuda_json", "--manifest-path",
+            str(baseline / "tools/stwo-circuit-oracle-rs/Cargo.toml"),
+            "--target-dir", str(registry_target))
     for path in (official_target / "release/stwo-cairo-official-verifier",
                  registry_target / "release/verify_cairo_cuda_json"):
         if not path.is_file():
@@ -85,9 +89,10 @@ def prepare_judge_assets(baseline: Path) -> None:
     asset = ROOT / ".cache/preprocessed-canonical.bin"
     if not asset.is_file() or sha(asset) != PREPROCESSED_SHA256:
         asset.unlink(missing_ok=True)
-        run("zig", "build", "cairo-preprocessed-export", "-Doptimize=ReleaseFast", cwd=baseline)
-        run(str(baseline / "zig-out/bin/cairo-preprocessed-export"), str(asset),
-            "canonical", cwd=baseline)
+        if not install_preprocessed(source_commit, asset, ROOT / "release-artifacts.lock.json"):
+            run("zig", "build", "cairo-preprocessed-export", "-Doptimize=ReleaseFast", cwd=baseline)
+            run(str(baseline / "zig-out/bin/cairo-preprocessed-export"), str(asset),
+                "canonical", cwd=baseline)
         if sha(asset) != PREPROCESSED_SHA256:
             asset.unlink(missing_ok=True)
             raise SystemExit("canonical preprocessed asset differs from the pinned reference")

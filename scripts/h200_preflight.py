@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail early on missing direct-diagnostic or sandboxed-judge prerequisites.
+"""Fail early on missing preparation, direct, or sandboxed-judge prerequisites.
 
 This is an operator convenience check, not a qualification or ranked receipt.
 It reads and hashes public assets before opening CUDA. Judge mode additionally
@@ -7,6 +7,7 @@ checks the exact local Docker image and exercises the sandbox/quota probe.
 """
 
 import argparse
+import errno
 import json
 import os
 from pathlib import Path
@@ -21,6 +22,10 @@ from harness.sandbox import IMAGE, RUNTIME_FILES
 from harness.cuda_toolchain import cuda_build_options
 from scripts.public_blobs import items
 from scripts.setup import PREPROCESSED_SHA256, CAIRO_ARTIFACTS
+
+
+BUILD_PROCESSES = frozenset({"zig", "nvcc", "ptxas", "cicc", "fatbinary",
+                             "cc1plus", "cargo", "rustc"})
 
 
 def command_output(*command: str) -> str:
@@ -59,6 +64,78 @@ def check_mount_capability() -> None:
         raise RuntimeError("judge needs root or passwordless sudo for output-image mounts")
 
 
+def check_no_other_builds(proc: Path = Path("/proc")) -> None:
+    """Reject noisy Linux build hosts before the first measured command."""
+    if not proc.is_dir():
+        raise RuntimeError("H200 measurement preflight requires Linux /proc")
+    own_pid = os.getpid()
+    conflicts = []
+    for entry in proc.iterdir():
+        if not entry.name.isdecimal() or int(entry.name) == own_pid:
+            continue
+        try:
+            raw = (entry / "cmdline").read_bytes().split(b"\0", 1)[0]
+        except OSError as error:
+            if error.errno not in (errno.ENOENT, errno.EACCES, errno.EPERM, errno.ESRCH):
+                raise
+            continue
+        name = os.fsdecode(raw).rsplit("/", 1)[-1]
+        if name in BUILD_PROCESSES:
+            conflicts.append((int(entry.name), name))
+    if conflicts:
+        sample = ", ".join(f"{name} pid={pid}" for pid, name in conflicts[:5])
+        raise RuntimeError(f"concurrent build processes on H200 host: {sample}")
+
+
+def check_no_gpu_processes() -> None:
+    """An idle-memory reading alone can miss another live CUDA context."""
+    if not shutil.which("nvidia-smi"):
+        raise RuntimeError("nvidia-smi is required to check GPU process exclusivity")
+    output = command_output("nvidia-smi", "--query-compute-apps=pid",
+                            "--format=csv,noheader,nounits")
+    pids = [line.strip() for line in output.splitlines() if line.strip()]
+    if pids and not (len(pids) == 1 and pids[0].startswith("No running processes")):
+        raise RuntimeError(f"GPU has active compute processes: {', '.join(pids[:5])}")
+
+
+def check_host_idle() -> None:
+    """Call before each direct proof; preflight alone cannot reserve a host."""
+    check_no_other_builds()
+    check_no_gpu_processes()
+
+
+def check_build_cache() -> dict:
+    """Report the actual writable cache used across baseline/candidate builds."""
+    paths = {"archive": Path(os.environ["STWO_CUDA_ARCHIVE_CACHE"])}
+    if os.environ.get("STWO_CUDA_CCACHE", "1") != "0":
+        paths["ccache"] = Path(os.environ["CCACHE_DIR"])
+    resolved = {}
+    for name, path in paths.items():
+        if not path.is_dir() or not os.access(path, os.W_OK | os.X_OK):
+            raise RuntimeError(f"CUDA {name} cache is unavailable or unwritable: {path}")
+        resolved[name] = str(path.resolve())
+    return resolved
+
+
+def file_identity(path: Path) -> dict:
+    """Cheap invalidation key for already hash-checked, shared direct-run inputs."""
+    resolved = path.resolve(strict=True)
+    stat = resolved.stat()
+    if not resolved.is_file():
+        raise RuntimeError(f"shared asset is not a file: {resolved}")
+    return {"path": str(resolved), "device": stat.st_dev, "inode": stat.st_ino,
+            "bytes": stat.st_size, "mtime_ns": stat.st_mtime_ns,
+            "ctime_ns": stat.st_ctime_ns}
+
+
+def shared_asset_snapshot(manifest: Path, preprocessed: Path,
+                          fixtures: Path, fixture_items: list[dict]) -> dict:
+    return {"manifest": file_identity(manifest),
+            "preprocessed": file_identity(preprocessed),
+            "fixtures": {item["path"]: file_identity(fixtures / item["path"])
+                         for item in fixture_items}}
+
+
 def check_source(source: Path, commit: str, artifacts: Path) -> dict:
     head = command_output("git", "-C", str(source), "rev-parse", "HEAD")
     if head != commit:
@@ -89,7 +166,8 @@ def check_source(source: Path, commit: str, artifacts: Path) -> dict:
 def preflight(*, mode: str, source: Path, fixtures: Path, manifest: Path,
               preprocessed: Path, artifacts: Path, verifier: Path,
               registry_verifier: Path, case_ids: set[str] | None = None,
-              image: str | None = None, probe: bool = True) -> dict:
+              image: str | None = None, probe: bool = True,
+              shared_asset_attestation: dict | None = None) -> dict:
     config = json.loads((ROOT / "benchmark.json").read_text())
     contract = json.loads(manifest.read_text())
     if (contract["contract_epoch"] != config["contractEpoch"] or
@@ -104,25 +182,51 @@ def preflight(*, mode: str, source: Path, fixtures: Path, manifest: Path,
         # Check the failure seen by participants before hashing a multi-GB asset.
         image_id = check_image(image)
         check_mount_capability()
-    elif mode != "direct":
-        raise RuntimeError("mode must be direct or judge")
+    elif mode not in ("prepare", "direct"):
+        raise RuntimeError("mode must be prepare, direct, or judge")
+    if shared_asset_attestation is not None and mode != "direct":
+        raise RuntimeError("shared asset reuse is only allowed for direct diagnostics")
     for tool in ("git", "zig", "nvcc", "cargo"):
         if not shutil.which(tool):
             raise RuntimeError(f"required toolchain command missing: {tool}")
     if command_output("zig", "version") != "0.15.2":
         raise RuntimeError("Zig 0.15.2 is required")
     build_options = cuda_build_options()
+    caches = check_build_cache()
     result = {"schema": "stwo-h200-preflight-v1", "mode": mode,
               "qualification": "prerequisites-only", "contract_epoch": config["contractEpoch"],
               "cases": [case["id"] for case in selected],
               "toolchain": {tool: command_output(tool, "--version").splitlines()[0]
                             for tool in ("nvcc", "cargo")},
               "cuda_build_options": build_options,
-              "cuda_archive_cache": os.environ["STWO_CUDA_ARCHIVE_CACHE"],
-              "ccache_dir": os.environ.get("CCACHE_DIR"),
+              "build_cache": caches,
               "sources": check_source(source, config["sourceCommit"], artifacts)}
-    if not preprocessed.is_file() or sha(preprocessed) != PREPROCESSED_SHA256:
-        raise RuntimeError("canonical preprocessing asset missing or hash differs")
+    fixture_items = items(contract, case_ids)
+    if shared_asset_attestation is None:
+        if not preprocessed.is_file() or sha(preprocessed) != PREPROCESSED_SHA256:
+            raise RuntimeError("canonical preprocessing asset missing or hash differs")
+        for item in fixture_items:
+            checked_file(fixtures, item)
+        result["shared_asset_verification"] = "full-sha256"
+    else:
+        prior = shared_asset_attestation
+        current_snapshot = shared_asset_snapshot(manifest, preprocessed, fixtures,
+                                                 fixture_items)
+        prior_snapshot = prior.get("shared_asset_snapshot", {})
+        prior_fixtures = prior_snapshot.get("fixtures", {})
+        selected_paths = {item["path"] for item in fixture_items}
+        if (prior.get("mode") != "direct" or
+                prior.get("shared_asset_verification") != "full-sha256" or
+                prior.get("contract_epoch") != config["contractEpoch"] or
+                not set(result["cases"]) <= set(prior.get("cases", [])) or
+                current_snapshot["manifest"] != prior_snapshot.get("manifest") or
+                current_snapshot["preprocessed"] != prior_snapshot.get("preprocessed") or
+                current_snapshot["fixtures"] !=
+                {key: prior_fixtures[key] for key in selected_paths if key in prior_fixtures}):
+            raise RuntimeError("shared direct-run assets changed or lack a full SHA-256 attestation")
+        result["shared_asset_verification"] = "reused-full-sha256-with-file-identity"
+    result["shared_asset_snapshot"] = shared_asset_snapshot(manifest, preprocessed,
+                                                             fixtures, fixture_items)
     for binary in (source / "zig-out/bin/stwo-cairo-cuda",
                    source / "zig-out/bin/stwo-circuit-recursion-cuda", verifier,
                    registry_verifier):
@@ -132,9 +236,6 @@ def preflight(*, mode: str, source: Path, fixtures: Path, manifest: Path,
         source / "zig-out/bin/stwo-cairo-cuda",
         source / "zig-out/bin/stwo-circuit-recursion-cuda", verifier, registry_verifier)}
     result["preprocessed_sha256"] = PREPROCESSED_SHA256
-    fixture_items = items(contract, case_ids)
-    for item in fixture_items:
-        checked_file(fixtures, item)
     result["verified_fixture_files"] = len(fixture_items)
     if mode == "judge":
         result["sandbox_image_id"] = image_id
@@ -142,17 +243,21 @@ def preflight(*, mode: str, source: Path, fixtures: Path, manifest: Path,
             from scripts.probe_sandbox import probe as probe_sandbox
             probe_sandbox(image)
             result["sandbox_probe"] = "passed"
-    nvml = Nvml(config["hardware"]["deviceBytes"])
-    try:
-        result["idle_device_bytes"] = nvml.read().used
-    finally:
-        nvml.close()
+    if mode != "prepare":
+        check_host_idle()
+        nvml = Nvml(config["hardware"]["deviceBytes"])
+        try:
+            result["idle_device_bytes"] = nvml.read().used
+        finally:
+            nvml.close()
+    else:
+        result["gpu_check"] = "deferred to direct or judge preflight"
     return result
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode", choices=("direct", "judge"), required=True)
+    parser.add_argument("--mode", choices=("prepare", "direct", "judge"), required=True)
     parser.add_argument("--source", type=Path, default=ROOT / "workspace/baseline")
     parser.add_argument("--fixtures", type=Path, default=ROOT / "data/inputs")
     parser.add_argument("--manifest", type=Path, default=ROOT / "fixtures/public-v1.json")

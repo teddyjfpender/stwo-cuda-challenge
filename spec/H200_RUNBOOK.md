@@ -21,7 +21,10 @@ use these numbers as ranked scores. Use `--case-id ID` to narrow a smoke run.
 Use an H200 network volume or other persistent filesystem for the verified
 fixture store, source checkouts, `.cache` (including the 2.17 GB canonical
 preprocessing asset and compiled Rust verifiers), Zig/CUDA toolchains, build
-cache, and external run journals. A pod's ephemeral root filesystem is not the
+cache, and external run journals. The
+[fixed-artifact release](RELEASE_ARTIFACTS.md) lets setup fetch the pinned
+Rust verifiers and preprocessing data directly; keep the verified copies on
+the volume for later runs. A pod's ephemeral root filesystem is not the
 cache: stopping or replacing a pod can lose twenty minutes or more of rebuild
 and transfer work. Mount the volume at the **same path** on replacement pods,
 then recheck pinned hashes; persistence does not make a file trustworthy. Keep
@@ -36,23 +39,38 @@ unavailable. Keep the same persistent volume mountable by a fresh compatible
 pod. Preserve one active experiment journal outside Git and never run a second
 build or proof on the measurement GPU during an A/B comparison.
 
-Before the first proof, run one of these checks. Both verify Zig 0.15.2,
-nvcc/Cargo availability, the pinned source and runtime files, staged AIR
-bundles, canonical preprocessing hash, executable/verifier hashes, selected
-fixture hashes, H200 capacity, and idle whole-device usage. The judge check
-also fails early if Docker, its exact pinned image, output-image mount
-capability, or the filesystem/network/quota isolation probe is missing.
+After the one-time build and fixture transfer, run `prepare` against the
+persistent volume. It checks Zig 0.15.2, the CUDA build options (SM 90,
+ccache and nvcc threads), writable build caches, the pinned source and
+runtime files, staged AIR bundles, canonical preprocessing hash,
+executable/verifier hashes, and selected fixture hashes. It needs no GPU, so
+these multi-gigabyte checks can finish before renting the H200. Repeat this
+check after replacing a volume or changing any pinned asset.
+
+Immediately before the first proof, run `direct` or `judge` on the H200.
+Both repeat the asset checks and additionally require the contracted H200
+capacity, low idle whole-device usage, no live GPU compute context, and no
+other build process on the host. The judge check **first** fails if Docker or
+its exact pinned image is missing, then checks output-image mount capability
+and exercises the filesystem/network/quota isolation probe. A direct pass
+never implies judge readiness.
 
 ```sh
+python3 scripts/h200_preflight.py --mode prepare --source workspace/baseline \
+  --out /external/runs/prepared-volume.json
 python3 scripts/h200_preflight.py --mode direct --source workspace/baseline \
   --out /external/runs/baseline-preflight.json
 python3 scripts/h200_preflight.py --mode judge --source workspace/baseline \
   --image "$STWO_SANDBOX_IMAGE" --out /external/runs/judge-preflight.json
 ```
 
-The first command is for a restricted Runpod research pod; its success does
-not qualify the sandbox or permit ranked results. If the second command fails,
-fix that host/image before invoking `harness/run_arm.py` or dispatching smoke.
+`prepare` can run on a CPU setup host with the mounted volume. `direct` is for
+a restricted Runpod research pod; its success does not qualify the sandbox or
+permit ranked results. If `judge` fails, fix that host/image before invoking
+`harness/run_arm.py` or dispatching smoke. Keep all H200 A/B work under the
+same `STWO_H200_HOST_LOCK` (default `/tmp/stwo-h200-host.lock`) and keep other
+builds off the host until the experiment exits; a preflight alone cannot
+reserve an otherwise idle GPU for the whole comparison.
 The preflight receipt labels itself `prerequisites-only`. It is deliberately
 separate from both exact proof qualification and a signed judge receipt.
 
@@ -76,12 +94,28 @@ python3 scripts/h200_experiment.py --baseline workspace/baseline \
 
 For a recursion or pipeline hypothesis, select that case with
 `--smoke-companion` and also set `--target-case` to the same ID. The PIE then
-acts as the full-command regression guard. The gate always tests the declared
-stage on the chosen target and full-command time on the other case.
+acts as the full-command regression guard. The gate tests the declared stage
+**and** externally timed full-command time on the chosen target. It also
+guards full-command time on the other case. `--min-target-command-gain`
+defaults to zero, so a faster internal stage with a slower target command
+cannot trigger the full basket. Set a positive threshold when the hypothesis
+predicts a minimum cold-command gain.
+The experimental source-lookahead and cross-root fixed-host cache are opt-in
+candidate options: use `--candidate-lookahead` or
+`--candidate-retain-fixed-host` for a direct A/B. They are injected only into
+the candidate process and recorded in `experiment.json`; the pinned baseline
+uses its ordinary path. A standalone PIE cannot exercise either batch option.
+Use a pipeline batch for lookahead and a multi-root campaign for fixed-host
+retention. These direct options do not alter the judge's environment or score.
 
 `experiment.json` records preflight/build identities and the stated timing
 boundary; `runs.jsonl` survives a later failure; `gate.json` says whether the
 full basket was admitted. Use a fresh output directory for every experiment.
+The direct A/B driver hashes shared fixtures and the canonical preprocessing
+asset once, then checks path, inode, size, and timestamps before reusing that
+attestation for the other arm. It still checks each arm's source and binaries.
+Judge preflight and ranked execution always rehash their inputs independently;
+this direct-only shortcut is not a ranked acceptance gate.
 The full basket is one paired diagnostic pass by default; choose more rounds
 explicitly when variance matters. Its output remains unsandboxed and unranked.
 For a concrete rejection budget, PR #3's retained small-PIE samples took
@@ -102,6 +136,9 @@ request protocol and judge-owned timer do not yet exist. Package creation,
 fixture transfer, and compilation cannot silently move before the `h200-v1`
 clock or become a proof-stage rank; changing that boundary requires the
 reviewed next epoch in [`PROOF_STAGE_EPOCH.md`](PROOF_STAGE_EPOCH.md).
+For a one-case CPU/GPU timeline and whole-device memory trajectory, use
+[`H200_PROFILING.md`](H200_PROFILING.md). Nsight-instrumented wall time is
+diagnostic and must not be mixed into the unprofiled A/B gate or ranked score.
 
 ## Prepare the host once
 

@@ -41,11 +41,18 @@ H200 host, use `setup --build`, then `benchmark --tier smoke`, followed by
 qualification. Every case must produce its canonical, independently verified
 proof at the fixed security settings. Consult [README.md](../../README.md) for
 host prerequisites and [spec/H200_RUNBOOK.md](../../spec/H200_RUNBOOK.md) for
-operator-only H200 setup. An operator should run
+operator-only H200 setup.
+The [fixed-artifact release](../../spec/RELEASE_ARTIFACTS.md) can supply
+hash-verified Rust verifiers and canonical preprocessing data on a supported
+Linux host; setup falls back to pinned source builds if no release is pinned.
+An operator should run
 `python3 scripts/h200_preflight.py --mode direct` before direct diagnostics;
 `scripts/h200_experiment.py` then records a paired PIE and fold/pipeline
 smoke with source/binary identity and opens the full basket only if the stated
-gain gate passes. A restricted research pod cannot stand in for a sandboxed
+stage, target command, and companion guard pass. For a verified CUDA/NVTX
+timeline and whole-device memory trace, follow
+[spec/H200_PROFILING.md](../../spec/H200_PROFILING.md); its instrumented time is
+diagnostic. A restricted research pod cannot stand in for a sandboxed
 ranked judge.
 
 Keep proof-stage telemetry separate from ranked adapted-input-to-publication

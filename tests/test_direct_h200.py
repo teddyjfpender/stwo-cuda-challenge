@@ -24,7 +24,8 @@ class DirectH200Tests(unittest.TestCase):
                     "input": {"path": "pie.cpi", "sha256": direct.sha(input_file)},
                     "expected_proof_sha256": direct.sha(expected_proof)}
 
-            def fake_run(command, measure_dir, _nvml, _env, *, cwd):
+            def fake_run(command, measure_dir, _nvml, _env, *, cwd, capture_memory_trace=False):
+                self.assertFalse(capture_memory_trace)
                 self.assertFalse(measure_dir.exists())
                 self.assertNotEqual(measure_dir, output / "pie_test")
                 self.assertEqual(cwd, source)
@@ -48,6 +49,8 @@ class DirectH200Tests(unittest.TestCase):
             self.assertEqual(row["time_s"], 0.25)
             self.assertEqual(row["planned_arena_bytes"], 123)
             self.assertTrue(row["verified"])
+            self.assertEqual(row["verifier_results"]["official_rust_cairo"], "accepted")
+            self.assertEqual(row["proof_sha256"]["proof.json"], direct.sha(expected_proof))
 
     def test_rejects_noncanonical_security_profile(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -59,6 +62,16 @@ class DirectH200Tests(unittest.TestCase):
                 "protocol": {**direct.SECURITY, "query_count": 69}}]}))
             with self.assertRaisesRegex(RuntimeError, "security profile"):
                 direct.check_report(report, "00" * 32)
+
+    def test_circuit_phase_parser_reports_diagnostics_only(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            log = Path(temporary) / "fold.log"
+            log.write_text("circuit-cuda circuit-proof profile=internal "
+                           "resident_ns=2000000000 verify_ns=300000000 "
+                           "convert_ns=100000000 arena_bytes=123\n")
+            self.assertEqual(direct.circuit_phase_seconds([log]), {
+                "circuit_resident_ns": 2.0, "circuit_verify_ns": 0.3,
+                "circuit_convert_ns": 0.1})
 
 
 if __name__ == "__main__":

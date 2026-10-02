@@ -1,0 +1,77 @@
+name: Build fixed asset release
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fixed-rust:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install pinned Rust toolchains
+        run: |
+          rustup toolchain install 1.96.0 --profile minimal
+          rustup toolchain install nightly-2026-01-15 --profile minimal
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.15.2
+      - name: Build fixed artifacts from source pin
+        run: |
+          set -euo pipefail
+          source_commit="$(python3 -c 'import json; print(json.load(open("benchmark.json"))["sourceCommit"])')"
+          git clone --filter=blob:none --no-checkout https://github.com/teddyjfpender/stwo-zig.git source
+          git -C source fetch origin "$source_commit"
+          git -C source checkout --detach "$source_commit"
+          test "$(git -C source rev-parse HEAD)" = "$source_commit"
+          cargo +1.96.0 build --release --locked \
+            --manifest-path source/tools/stwo-cairo-official-verifier-rs/Cargo.toml \
+            --target-dir rust-official
+          cargo +nightly-2026-01-15 build --release --locked \
+            --bin verify_cairo_cuda_json \
+            --manifest-path source/tools/stwo-circuit-oracle-rs/Cargo.toml \
+            --target-dir rust-registry
+          mkdir -p dist
+          cp rust-official/release/stwo-cairo-official-verifier dist/
+          cp rust-registry/release/verify_cairo_cuda_json dist/
+          (cd source && zig build cairo-preprocessed-export -Doptimize=ReleaseFast)
+          source/zig-out/bin/cairo-preprocessed-export dist/preprocessed-canonical.bin canonical
+          python3 scripts/release_artifacts.py manifest \
+            --source-commit "$source_commit" \
+            --official dist/stwo-cairo-official-verifier \
+            --registry dist/verify_cairo_cuda_json \
+            --preprocessed dist/preprocessed-canonical.bin \
+            --official-toolchain "$(rustc +1.96.0 --version)" \
+            --registry-toolchain "$(rustc +nightly-2026-01-15 --version)" \
+            --zig-toolchain "$(zig version)" \
+            --out dist/manifest.json
+          tag="fixed-rust-${source_commit:0:12}-linux-x86_64-glibc-2-39-v1"
+          python3 scripts/release_artifacts.py lock \
+            --source-commit "$source_commit" --tag "$tag" \
+            --manifest dist/manifest.json --out dist/release-artifacts.lock.json
+          echo "TAG=$tag" >> "$GITHUB_ENV"
+      - name: Publish immutable versioned release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; use a new version suffix for a new build" >&2
+            exit 1
+          fi
+          gh release create "$TAG" \
+            dist/manifest.json \
+            dist/stwo-cairo-official-verifier \
+            dist/verify_cairo_cuda_json \
+            dist/preprocessed-*.part \
+            --target "$GITHUB_SHA" \
+            --title "Fixed Rust verifiers ($TAG)" \
+            --notes "Pinned verifier binaries and canonical preprocessing chunks built from the benchmark source commit on ubuntu-24.04. Consumers verify the repository-pinned manifest and asset hashes before use."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rust-release-pin
+          path: dist/release-artifacts.lock.json

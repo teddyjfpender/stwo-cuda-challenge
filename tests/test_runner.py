@@ -59,6 +59,16 @@ class RunnerTests(unittest.TestCase):
             self.assertGreaterEqual(result["nvml_samples"], 2)
             self.assertEqual(result["exit_code"], 0)
 
+    def test_diagnostic_memory_trace_records_whole_device_samples(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "trial"
+            run([sys.executable, "-c", "import time; time.sleep(.06)"],
+                output, FakeNvml(), {}, timeout=3, capture_memory_trace=True)
+            rows = (output / "memory_trace.tsv").read_text().splitlines()
+            self.assertEqual(rows[0], "elapsed_ns\tused_device_bytes")
+            self.assertGreaterEqual(len(rows), 2)
+            self.assertTrue(all(row.split("\t")[1] == "10000" for row in rows[1:]))
+
     def test_each_run_has_private_working_and_cache_directories(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "trial"

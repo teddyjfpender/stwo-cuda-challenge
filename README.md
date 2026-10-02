@@ -84,7 +84,10 @@ timer, a source-only static estimate, or an unverified proof.
    checked preprocessing asset, verifiers, and baseline build on a reusable
    volume. Set `STWO_CUDA_BUILD_CACHE_ROOT` to a persistent directory;
    setup shares its archive/cubin and ccache entries between baseline and
-   candidate builds while targeting only SM 90. The operator runs
+   candidate builds while targeting only SM 90. Once the reviewed
+   [fixed-artifact release](spec/RELEASE_ARTIFACTS.md) is pinned, setup also
+   downloads hash-verified Rust verifiers and canonical preprocessing data
+   instead of rebuilding those unchanged inputs. The operator runs
    `scripts/h200_preflight.py --mode direct` before
    research proofs. A separate ranked judge host also needs Docker/NVIDIA,
    mount privileges, and the pinned sandbox image; its
@@ -112,6 +115,9 @@ timer, a source-only static estimate, or an unverified proof.
    hashes, and whole-device peak for every run. A trusted `rank` run separately
    performs three ABBA rounds and emits signed scores only on a qualified
    sandboxed judge; direct results remain research evidence.
+   For a verified one-case GPU timeline and 10 ms whole-device memory trace,
+   use the [profiling runbook](spec/H200_PROFILING.md) before choosing a kernel
+   or buffer-lifetime experiment. Profiled wall time is diagnostic.
 
 On a prepared H200 host, the local loop is:
 
