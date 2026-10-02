@@ -1,1 +1,1 @@
-{"platforms":{},"schema":1,"source_commit":"b2873365dc28ed4bc4b27de10e01ea0beeef7c93"}
+{"platforms":{"linux-x86_64-glibc-2.39":{"manifest_sha256":"661f4480e49e9d05446f2cf73b1185a563b1d7c330cd9c3dd7fec74062610277","tag":"fixed-rust-b2873365dc28-linux-x86_64-glibc-2-39-v1"}},"schema":1,"source_commit":"b2873365dc28ed4bc4b27de10e01ea0beeef7c93"}
