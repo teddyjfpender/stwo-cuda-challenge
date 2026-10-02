@@ -74,10 +74,14 @@ timer, a source-only static estimate, or an unverified proof.
 
 ## Development loop
 
-1. Prepare Zig 0.15.2, CUDA/nvcc, Cargo, `nightly-2026-01-15`, and
+1. Prepare Zig 0.15.2, CUDA/nvcc, ccache 4.0+, Cargo,
+   `nightly-2026-01-15`, and
    `git lfs pull` on a Linux H200 workspace. Keep the toolchain, fixtures,
    checked preprocessing asset, verifiers, and baseline build on a reusable
-   volume. The operator runs `scripts/h200_preflight.py --mode direct` before
+   volume. Set `STWO_CUDA_BUILD_CACHE_ROOT` to a persistent directory;
+   setup shares its archive/cubin and ccache entries between baseline and
+   candidate builds while targeting only SM 90. The operator runs
+   `scripts/h200_preflight.py --mode direct` before
    research proofs. A separate ranked judge host also needs Docker/NVIDIA,
    mount privileges, and the pinned sandbox image; its
    `--mode judge --image SHA256_ID` preflight fails before proof work if those

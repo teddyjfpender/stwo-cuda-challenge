@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from harness.run_arm import Nvml, checked_file, sha
 from harness.sandbox import IMAGE, RUNTIME_FILES
+from harness.cuda_toolchain import cuda_build_options
 from scripts.public_blobs import items
 from scripts.setup import PREPROCESSED_SHA256, CAIRO_ARTIFACTS
 
@@ -110,11 +111,15 @@ def preflight(*, mode: str, source: Path, fixtures: Path, manifest: Path,
             raise RuntimeError(f"required toolchain command missing: {tool}")
     if command_output("zig", "version") != "0.15.2":
         raise RuntimeError("Zig 0.15.2 is required")
+    build_options = cuda_build_options()
     result = {"schema": "stwo-h200-preflight-v1", "mode": mode,
               "qualification": "prerequisites-only", "contract_epoch": config["contractEpoch"],
               "cases": [case["id"] for case in selected],
               "toolchain": {tool: command_output(tool, "--version").splitlines()[0]
                             for tool in ("nvcc", "cargo")},
+              "cuda_build_options": build_options,
+              "cuda_archive_cache": os.environ["STWO_CUDA_ARCHIVE_CACHE"],
+              "ccache_dir": os.environ.get("CCACHE_DIR"),
               "sources": check_source(source, config["sourceCommit"], artifacts)}
     if not preprocessed.is_file() or sha(preprocessed) != PREPROCESSED_SHA256:
         raise RuntimeError("canonical preprocessing asset missing or hash differs")

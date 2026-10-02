@@ -27,6 +27,10 @@ and transfer work. Mount the volume at the **same path** on replacement pods,
 then recheck pinned hashes; persistence does not make a file trustworthy. Keep
 credentials and private fixtures outside public worktrees. Prepare and build
 before reserving expensive proof time where the provider permits CPU setup.
+Set `STWO_CUDA_BUILD_CACHE_ROOT` to a directory on that volume before
+`setup --build` or a trusted build. The toolchain helper creates a shared
+archive/cubin cache and a separate ccache directory there, so baseline and
+candidate builds can reuse unchanged work. Do not put this directory in Git.
 Do not rely on a particular stopped pod restarting: H200 capacity can be
 unavailable. Keep the same persistent volume mountable by a fresh compatible
 pod. Preserve one active experiment journal outside Git and never run a second
@@ -102,7 +106,8 @@ reviewed next epoch in [`PROOF_STAGE_EPOCH.md`](PROOF_STAGE_EPOCH.md).
 ## Prepare the host once
 
 1. Use one exclusive H200 SXM with the device capacity in `benchmark.json`.
-   Install Zig 0.15.2, CUDA/nvcc, Cargo, `nightly-2026-01-15`, Git LFS,
+   Install Zig 0.15.2, CUDA/nvcc, ccache 4.0 or newer, Cargo,
+   `nightly-2026-01-15`, Git LFS,
    OpenSSL with Ed25519 support, Docker Engine, the
    [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html),
    GitHub CLI, `e2fsprogs`, and `util-linux`. The judge process must run as
@@ -111,10 +116,30 @@ reviewed next epoch in [`PROOF_STAGE_EPOCH.md`](PROOF_STAGE_EPOCH.md).
    private fixtures, credentials, and the
    2 GiB canonical preprocessing asset outside this repository.
    `./setup.sh --build` resolves the explicit pinned CUDA build options from
-   `nvcc`, `g++`, `ar`, and the toolkit's `lib64`, targeting SM 90. Set
+   `nvcc`, `g++`, `ar`, and the toolkit's `lib64`, targeting **only SM 90**
+   through `-Dcuda-arch=90` (the pinned builder emits one
+   `-gencode arch=compute_90,code=sm_90` target). Set
    `STWO_CUDA_NVCC`, `STWO_CUDA_HOST_CXX`, `STWO_CUDA_AR`, `STWO_CUDA_HOME`,
    `STWO_CUDA_LIBRARY_DIR`, or the host runtime path overrides if auto-detection
-   differs; `STWO_CUDA_BUILD_JOBS` defaults to four.
+   differs; `STWO_CUDA_BUILD_JOBS` defaults to four concurrent nvcc processes.
+   The generated nvcc wrapper adds `--threads=N` to each compile and invokes
+   `ccache nvcc`; `STWO_CUDA_NVCC_THREADS` defaults to one or two according to
+   CPU count and build jobs. It rejects ccache older than 4.0. The
+   `STWO_CUDA_CCACHE=0` escape hatch retains the SM 90 and thread settings
+   when diagnosing cache behavior. `CCACHE_DIR` and
+   `STWO_CUDA_ARCHIVE_CACHE` can be set explicitly; otherwise both live under
+   `STWO_CUDA_BUILD_CACHE_ROOT`. Compare `ccache -s` before and after a
+   repeated build. The pinned builder also has its own content-addressed
+   archive/cubin cache; ccache helps when a source change invalidates that
+   archive but leaves individual compilations reusable.
+
+   NVIDIA documents [`--threads`](https://docs.nvidia.com/cuda/archive/12.8.0/cuda-compiler-driver-nvcc/index.html#threads-number-t)
+   as parallelizing nvcc compilation steps, particularly across multiple GPU
+   targets. With this single-SM build, the existing four independent nvcc
+   jobs and cache hits may matter more than nvcc's internal threads. Ccache's
+   [manual](https://ccache.dev/manual/4.10.html) documents nvcc support and
+   `CCACHE_BASEDIR` for sharing hits across absolute-path worktrees. Measure
+   build wall time and cache statistics before claiming a speedup.
    Setup stages the pinned Cairo AIR library, every digest-declared AIR bundle,
    witness programs, topology, and fixed/relation tables under
    `.cache/cuda-artifacts`. The sandbox separately stages their read-only source
