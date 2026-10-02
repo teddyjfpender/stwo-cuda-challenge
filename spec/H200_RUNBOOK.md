@@ -124,12 +124,14 @@ The `--candidate-lookahead` switch is research-only. To qualify a future
 ranked candidate, the reviewed source would need to make the winning path its
 default inside the existing scoring clock and pass the complete judge basket.
 
-`experiment.json` records preflight/build identities and the stated timing
-boundary; `runs.jsonl` survives a later failure; `gate.json` says whether the
-full basket was admitted. Use a fresh output directory for every experiment.
-The direct A/B driver hashes shared fixtures and the canonical preprocessing
-asset once, then checks path, inode, size, and timestamps before reusing that
-attestation for the other arm. It still checks each arm's source and binaries.
+`experiment.json` records smoke preflight/build identities and the stated
+timing boundary; `runs.jsonl` survives a later failure; `gate.json` says
+whether the full basket was admitted. Use a fresh output directory for every
+experiment. The direct A/B driver hashes smoke fixtures and the canonical
+preprocessing asset once, then checks path, inode, size, and timestamps before
+reusing that attestation for the other arm. Only after the gate passes does it
+hash the additional full-basket fixtures and save `full-preflight.json`.
+It still checks each arm's source and binaries.
 Judge preflight and ranked execution always rehash their inputs independently;
 this direct-only shortcut is not a ranked acceptance gate.
 The full basket is one paired diagnostic pass by default; choose more rounds

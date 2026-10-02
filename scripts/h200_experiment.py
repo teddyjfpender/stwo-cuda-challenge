@@ -181,7 +181,7 @@ def _run_experiment_locked(args: argparse.Namespace) -> dict:
             manifest=args.manifest.resolve(), preprocessed=args.preprocessed.resolve(),
             artifacts=args.artifacts.resolve(), verifier=args.verifier.resolve(),
             registry_verifier=args.registry_verifier.resolve(),
-            case_ids=None if arm == "baseline" and args.full_if_promising else set(smoke_ids),
+            case_ids=set(smoke_ids),
             shared_asset_attestation=preflights.get("baseline") if arm == "candidate" else None)
     identities = {arm: source_identity(paths[arm], preflights[arm]["binary_sha256"])
                   for arm in paths}
@@ -264,6 +264,19 @@ def _run_experiment_locked(args: argparse.Namespace) -> dict:
                     "passes": credible, "full_basket_requested": args.full_if_promising}
             (out / "gate.json").write_text(json.dumps(gate, indent=2, sort_keys=True) + "\n")
             if args.full_if_promising and credible:
+                full_preflights = {}
+                for arm, source in paths.items():
+                    full_preflights[arm] = preflight(
+                        mode="direct", source=source, fixtures=args.fixtures.resolve(),
+                        manifest=args.manifest.resolve(), preprocessed=args.preprocessed.resolve(),
+                        artifacts=args.artifacts.resolve(), verifier=args.verifier.resolve(),
+                        registry_verifier=args.registry_verifier.resolve(),
+                        shared_asset_attestation=(full_preflights.get("baseline")
+                                                  if arm == "candidate" else None))
+                    if source_identity(source, full_preflights[arm]["binary_sha256"]) != identities[arm]:
+                        raise RuntimeError(f"{arm} source changed before full-basket qualification")
+                (out / "full-preflight.json").write_text(
+                    json.dumps(full_preflights, indent=2, sort_keys=True) + "\n")
                 for round_number in range(args.full_rounds):
                     for arm in ("baseline", "candidate") if round_number % 2 == 0 else ("candidate", "baseline"):
                         for case in manifest["cases"]:

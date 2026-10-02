@@ -214,17 +214,28 @@ def preflight(*, mode: str, source: Path, fixtures: Path, manifest: Path,
                                                  fixture_items)
         prior_snapshot = prior.get("shared_asset_snapshot", {})
         prior_fixtures = prior_snapshot.get("fixtures", {})
-        selected_paths = {item["path"] for item in fixture_items}
         if (prior.get("mode") != "direct" or
-                prior.get("shared_asset_verification") != "full-sha256" or
+                prior.get("shared_asset_verification") not in
+                ("full-sha256", "incremental-full-sha256-with-file-identity",
+                 "reused-full-sha256-with-file-identity") or
                 prior.get("contract_epoch") != config["contractEpoch"] or
-                not set(result["cases"]) <= set(prior.get("cases", [])) or
                 current_snapshot["manifest"] != prior_snapshot.get("manifest") or
-                current_snapshot["preprocessed"] != prior_snapshot.get("preprocessed") or
-                current_snapshot["fixtures"] !=
-                {key: prior_fixtures[key] for key in selected_paths if key in prior_fixtures}):
+                current_snapshot["preprocessed"] != prior_snapshot.get("preprocessed")):
             raise RuntimeError("shared direct-run assets changed or lack a full SHA-256 attestation")
-        result["shared_asset_verification"] = "reused-full-sha256-with-file-identity"
+        newly_hashed = 0
+        for item in fixture_items:
+            path = item["path"]
+            identity = current_snapshot["fixtures"][path]
+            if identity == prior_fixtures.get(path):
+                continue
+            checked_file(fixtures, item)
+            if file_identity(fixtures / path) != identity:
+                raise RuntimeError(f"shared direct-run asset changed during hashing: {path}")
+            newly_hashed += 1
+        result["shared_asset_verification"] = (
+            "incremental-full-sha256-with-file-identity" if newly_hashed else
+            "reused-full-sha256-with-file-identity")
+        result["newly_hashed_fixture_files"] = newly_hashed
     result["shared_asset_snapshot"] = shared_asset_snapshot(manifest, preprocessed,
                                                              fixtures, fixture_items)
     for binary in (source / "zig-out/bin/stwo-cairo-cuda",

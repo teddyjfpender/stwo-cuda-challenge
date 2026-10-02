@@ -76,12 +76,17 @@ class H200PreflightTests(unittest.TestCase):
             config = json.loads((preflight.ROOT / "benchmark.json").read_text())
             fixture = root / "test.cpi"
             fixture.write_bytes(b"PIE")
+            second_fixture = root / "second.cpi"
+            second_fixture.write_bytes(b"second PIE")
             manifest = root / "manifest.json"
             manifest.write_text(json.dumps({"contract_epoch": config["contractEpoch"],
                                             "source_commit": config["sourceCommit"],
                                             "cases": [{"id": "pie:test", "family": "pie",
                                                        "input": {"path": "test.cpi",
-                                                                 "sha256": "a" * 64}}]}))
+                                                                 "sha256": preflight.sha(fixture)}},
+                                                      {"id": "pie:second", "family": "pie",
+                                                       "input": {"path": "second.cpi",
+                                                                 "sha256": preflight.sha(second_fixture)}}]}))
             asset = root / "asset"
             asset.write_bytes(b"fixed")
             for name in ("zig-out/bin/stwo-cairo-cuda",
@@ -113,26 +118,34 @@ class H200PreflightTests(unittest.TestCase):
                  patch.object(preflight, "cuda_build_options", return_value=["-Dcuda-arch=90"]), \
                  patch.object(preflight, "check_build_cache", return_value={"archive": "/cache"}), \
                  patch.object(preflight, "check_source", return_value={"source_commit": config["sourceCommit"]}), \
-                 patch.object(preflight, "checked_file") as checked, \
+                 patch.object(preflight, "checked_file", wraps=preflight.checked_file) as checked, \
                  patch.object(preflight, "sha", side_effect=digest) as hashed, \
                  patch.object(preflight, "Nvml", FakeNvml), \
                  patch.object(preflight, "check_host_idle"):
-                def run(prior=None):
+                def run(prior=None, case_ids=None):
                     return preflight.preflight(mode="direct", source=root, fixtures=root,
                                                manifest=manifest, preprocessed=asset,
                                                artifacts=root, verifier=root / "verifier",
                                                registry_verifier=root / "registry",
+                                               case_ids=case_ids,
                                                shared_asset_attestation=prior)
 
-                first = run()
-                second = run(first)
+                first = run(case_ids={"pie:test"})
+                second = run(first, case_ids={"pie:test"})
                 self.assertEqual(second["shared_asset_verification"],
                                  "reused-full-sha256-with-file-identity")
                 self.assertEqual(checked.call_count, 1)
                 self.assertEqual(sum(call.args[0] == asset for call in hashed.call_args_list), 1)
+                full = run(first)
+                self.assertEqual(full["shared_asset_verification"],
+                                 "incremental-full-sha256-with-file-identity")
+                self.assertEqual(full["newly_hashed_fixture_files"], 1)
+                self.assertEqual(checked.call_count, 2)
+                self.assertEqual(run(full)["shared_asset_verification"],
+                                 "reused-full-sha256-with-file-identity")
                 fixture.write_bytes(b"changed PIE")
-                with self.assertRaisesRegex(RuntimeError, "shared direct-run assets changed"):
-                    run(first)
+                with self.assertRaisesRegex(ValueError, "digest mismatch"):
+                    run(first, case_ids={"pie:test"})
 
     def test_judge_requires_image_before_toolchain_or_asset_hashing(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -269,8 +282,10 @@ class H200ExperimentTests(unittest.TestCase):
                              hypothesis="test source stage", stage="ingress_ns",
                              min_stage_gain=.1, max_companion_regression=.05)
             calls = []
+            preflight_calls = []
 
             def fake_preflight(*, source, **_kwargs):
+                preflight_calls.append((source.name, _kwargs.get("case_ids")))
                 return {"binary_sha256": {"product": source.name}}
 
             def fake_identity(source, _binary_sha256):
@@ -301,6 +316,9 @@ class H200ExperimentTests(unittest.TestCase):
                 gate = experiment.run_experiment(args)
             self.assertFalse(gate["passes"])
             self.assertEqual(len(calls), 8)  # ABBA smoke only; never the extra case.
+            self.assertEqual(preflight_calls, [
+                ("baseline", {"pie:test", "recursion:test"}),
+                ("candidate", {"pie:test", "recursion:test"})])
             self.assertFalse(any(case == "pipeline:extra" for case, _ in calls))
             self.assertEqual(len((root / "out/runs.jsonl").read_text().splitlines()), 8)
             args.out = root / "failed"
@@ -333,6 +351,8 @@ class H200ExperimentTests(unittest.TestCase):
             self.assertTrue(accepted["passes"])
             self.assertEqual(len((root / "accepted/runs.jsonl").read_text().splitlines()), 14)
             self.assertEqual(sum(case == "pipeline:extra" for case, _ in calls), 2)
+            self.assertTrue((root / "accepted/full-preflight.json").is_file())
+            self.assertEqual(preflight_calls[-2:], [("baseline", None), ("candidate", None)])
 
     def test_lock_excludes_a_second_experiment(self):
         with tempfile.TemporaryDirectory() as temporary:
