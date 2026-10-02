@@ -8,6 +8,9 @@ Replace this template for each candidate. Capture `changes.patch` with
 
 State the observed bottleneck, changed CUDA paths, design, and predicted effect
 on adapted-input-to-publication time and whole-device peak memory.
+List architecture alternatives explored, the measured phase each should
+change, the smallest falsifying test, and any independent improvements
+combined before smaller refinements.
 
 ## Evidence
 
@@ -15,6 +18,10 @@ List public case IDs, hardware, source commit, exact timer boundaries, sample
 counts, before/after time and memory, focused tests, Rust proof-verification
 results, root/output matches, and regressions. Mark unrun checks explicitly.
 Local timings are research evidence, not ranked results.
+State whether measurements were on an idle host and whether proof hashes and
+whole-device peaks were recorded automatically. Separate preparation,
+cold adapted-input-to-publication command, and warm proof timing; leave a
+boundary blank rather than moving work outside the clock.
 
 ## Tradeoffs and discussion
 

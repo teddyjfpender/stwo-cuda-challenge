@@ -23,13 +23,25 @@ name a measurable bottleneck, mechanism, prediction, and smallest falsifying
 case; Show and tell is for verified public measurements. Link useful threads
 from the eventual PR. Never post private fixtures, keys, or proof blobs.
 
+Search in three passes: explore architecture-level changes across the whole
+PIE/recursion/pipeline path, compose independent measured wins, then exploit
+the best combination with smaller improvements. For each hypothesis, write
+down the target phase, expected minimum full-command gain, memory effect, and
+one cheap case that could reject it. Compare alternatives before spending H200
+time on minor kernel tuning. Record failed compositions and regressions.
+
 Prefer a focused local check before a public H200 smoke case. On a prepared
 H200 host, use `setup --build`, then `benchmark --tier smoke`, followed by
 `benchmark --tier qualify` for the full basket. Use `--tier rank` only after
 qualification. Every case must produce its canonical, independently verified
 proof at the fixed security settings. Consult [README.md](../../README.md) for
 host prerequisites and [spec/H200_RUNBOOK.md](../../spec/H200_RUNBOOK.md) for
-operator-only H200 setup.
+operator-only H200 setup. An operator should run
+`python3 scripts/h200_preflight.py --mode direct` before direct diagnostics;
+`scripts/h200_experiment.py` then records a paired PIE and fold/pipeline
+smoke with source/binary identity and opens the full basket only if the stated
+gain gate passes. A restricted research pod cannot stand in for a sandboxed
+ranked judge.
 
 Keep proof-stage telemetry separate from ranked adapted-input-to-publication
 wall time. The measured phases are in [data/reports](../../data/reports/README.md).
@@ -41,10 +53,10 @@ Complete `candidate/NOTES.md`, commit and push it with
 `candidate/changes.patch` to a challenge fork, and open a PR against the
 challenge repository for review. Explain changed paths, mechanism, before and
 after public time and peak memory, checks, regressions, tradeoffs, any model or
-harness used, and related Discussions. Once intake is live, separately submit
-the fork's HTTPS URL and full immutable commit SHA to `POST /submissions` at
-the operator-provided endpoint. Intake currently does not consume PR numbers
-or start automatically on PR open. The trusted builder applies the patch and
-the judge issues smoke, qualify, and rank receipts; only a signed rank receipt
-is a leaderboard claim. [spec/JUDGE.md](../../spec/JUDGE.md) defines those
-stages. The current repository does not publish an intake endpoint.
+harness used, and related Discussions. For this internal challenge, the PR is
+the manual queue entry: the operator reviews it, freezes its exact head SHA
+with `service/pr_batch.py`, and later starts the trusted builder and judge.
+The optional HTTP intake is not needed for a PR submission. Opening a PR does
+not start paid GPU work or create a ranked score; only a signed judge receipt
+does. [spec/SUBMISSIONS.md](../../spec/SUBMISSIONS.md) defines the current
+sequence.

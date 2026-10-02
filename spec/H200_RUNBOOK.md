@@ -80,6 +80,15 @@ boundary; `runs.jsonl` survives a later failure; `gate.json` says whether the
 full basket was admitted. Use a fresh output directory for every experiment.
 The full basket is one paired diagnostic pass by default; choose more rounds
 explicitly when variance matters. Its output remains unsandboxed and unranked.
+For a concrete rejection budget, PR #3's retained small-PIE samples took
+about 31.5 seconds for one ABBA cycle and showed a 1.023 candidate/baseline
+command ratio on that case. Adding a two-leaf fold smoke at roughly 3 seconds
+per call would put an exploratory gate near 44 seconds; the measured direct
+ten-case baseline/candidate passes were about 94 and 81 seconds. This is an
+illustration from existing case timings, **not** a replayed #3 gate or a
+substitute for its final checks. A hypothesis targeting that PIE would have
+been rejected after the focused cycle rather than spending a full basket on
+an apparent regression.
 Candidate-reported ingress and proof timers are diagnostic; an editable prover
 can change them. The externally measured cold command and NVML peak remain the
 comparable values. Record **preparation**, **cold adapted-input to published

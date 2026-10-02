@@ -19,6 +19,15 @@ discussion is encouraged, not a prerequisite to run local tests. Keep private
 holdouts, credentials, proof blobs, and unpublished inputs out of Discussions
 and PRs. [`DISCUSSIONS.md`](DISCUSSIONS.md) describes the forms and evidence.
 
+Work through exploration, composition, then exploitation. Profile the
+complete PIE/recursion/pipeline path and propose several architecture-level
+changes with explicit expected phase, command-time and memory effects. Use
+focused checks to reject weak ideas early. Combine independently promising
+changes, remeasure interactions, and only then spend H200 time on small local
+refinements. Submission notes should include the prediction, the smallest
+falsifying test, combinations attempted, before/after full commands and
+whole-device peaks, regressions, and exact proof checks.
+
 ## Edit and validate
 
 1. Fork this challenge repository. Run `git lfs pull`,

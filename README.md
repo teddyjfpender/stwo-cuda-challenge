@@ -74,15 +74,20 @@ timer, a source-only static estimate, or an unverified proof.
 
 ## Development loop
 
-1. Prepare a Linux CUDA/H200 workspace with Zig 0.15.2, CUDA/nvcc, Cargo,
-   `nightly-2026-01-15`, Docker/NVIDIA Container Toolkit, and `git lfs pull`.
-   Build and pin the [judge sandbox image](spec/H200_RUNBOOK.md), then set
-   `STWO_SANDBOX_IMAGE` to its local SHA-256 image ID. `./setup.sh` creates separate
-   pinned baseline and editable source checkouts; it does not download private
-   PIEs.
+1. Prepare Zig 0.15.2, CUDA/nvcc, Cargo, `nightly-2026-01-15`, and
+   `git lfs pull` on a Linux H200 workspace. Keep the toolchain, fixtures,
+   checked preprocessing asset, verifiers, and baseline build on a reusable
+   volume. The operator runs `scripts/h200_preflight.py --mode direct` before
+   research proofs. A separate ranked judge host also needs Docker/NVIDIA,
+   mount privileges, and the pinned sandbox image; its
+   `--mode judge --image SHA256_ID` preflight fails before proof work if those
+   gates are missing. `./setup.sh` creates the pinned baseline and editable
+   checkout; it does not download private PIEs.
 2. Run `python3 challenge.py paths`, then work in `workspace/stwo-zig` under
-   the [allowed CUDA source paths](spec/CODE_MAP.md). Run relevant small local
-   tests before a GPU trial.
+   the [allowed CUDA source paths](spec/CODE_MAP.md). Explore architecture
+   hypotheses first, test whether independent wins compose, then refine the
+   surviving design. Name the expected stage and minimum gain; run relevant
+   small local tests before a GPU trial.
 3. Capture the source diff with `./scripts/capture-candidate.sh`. Optionally
    attach a prebuilt binary digest for the fast screening tier. The binary is
    never a substitute for source in a ranked submission.
@@ -90,10 +95,13 @@ timer, a source-only static estimate, or an unverified proof.
    builder checks them against source and pinned product policy; only the
    unmodified baseline must match the immutable upstream import hash.
 4. Build both arms, the pinned Rust verifiers, and the canonical preprocessing
-   asset with `./setup.sh --build`. Run a small `smoke` on the H200,
-   then a complete one-pass `qualify`. A `rank` run performs three ABBA rounds
-   and emits scores for every eligible track. Ranked service submissions require
-   the trusted builder to rebuild the pinned source plus submitted patch.
+   asset with `./setup.sh --build`. On an idle H200, run a verified PIE and
+   fold/pipeline A/B smoke with `scripts/h200_experiment.py`; its stage-gain
+   gate prevents weak hypotheses from launching the full basket. The direct
+   driver journals source/binary hashes, cold command, phase times, proof
+   hashes, and whole-device peak for every run. A trusted `rank` run separately
+   performs three ABBA rounds and emits signed scores only on a qualified
+   sandboxed judge; direct results remain research evidence.
 
 On a prepared H200 host, the local loop is:
 
@@ -109,7 +117,7 @@ python3 challenge.py benchmark --tier smoke --track balanced
 ```
 
 Use `python3 challenge.py benchmark --tier qualify` for all cases once and
-`--tier rank` for paired scoring. The original `setup.sh`,
+`--tier rank` only on a qualified judge. The original `setup.sh`,
 `scripts/capture-candidate.sh`, and `benchmark.sh` remain equivalent direct
 entry points; `python3 challenge.py --help` lists the participant commands.
 To package a candidate, update `candidate/NOTES.md`, then commit and push
@@ -117,11 +125,10 @@ To package a candidate, update `candidate/NOTES.md`, then commit and push
 Open a PR against this challenge repository for review and link any relevant
 [research Discussions](spec/DISCUSSIONS.md). Opening a PR does not start a
 GPU run or constitute a ranked submission.
-Once the intake service is live, submit that fork's HTTPS URL and **full**
-commit SHA to its `POST /submissions` endpoint. The endpoint is not published
-yet. Intake accepts a commit rather than a PR number and does not currently
-enforce PR association. The checked-in [activation record](spec/ACTIVATION.md)
-tracks that gate.
+For this internal challenge, the PR enters a manual daily review queue.
+The operator freezes its number and exact head SHA with `service/pr_batch.py`;
+the optional HTTP intake is not required. The checked-in
+[activation record](spec/ACTIVATION.md) tracks the later ranked-judge gate.
 The benchmark defaults to the checked-in public inputs and setup assets under
 `.cache/`; operator paths and the private manifest can be supplied with CLI
 flags or the `STWO_*` variables shown in `.github/workflows/h200-rank.yml`.

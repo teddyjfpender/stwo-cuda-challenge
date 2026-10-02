@@ -15,8 +15,20 @@ The Ideas, Show and tell, and Q&A forms are described in `spec/DISCUSSIONS.md`.
 Link relevant threads in the eventual submission PR. Discussion participation
 does not replace focused tests, independent proof checks, or the H200 judge.
 
+Search in this order: **explore architecture**, **compose independent wins**,
+then **exploit the best design with smaller refinements**. For each large
+hypothesis, name the affected PIE/fold/pipeline cases, expected phase and
+minimum full-path gain, memory cost, and a cheap falsifying check. Compare
+multiple designs before polishing one kernel. Test whether retained wins
+interfere when combined. Stop tuning a primitive that does not move the full
+command or unlock capacity. Keep failed hypotheses and their measurements in
+the PR notes or a public Discussion.
+
 Keep short iteration loops: compile and test the touched CUDA layer first,
-then one public H200 smoke case, then the complete qualification basket.
+then one public H200 PIE and a fold/pipeline smoke case, then the complete
+qualification basket only for a credible gain. Check the H200 host with
+`scripts/h200_preflight.py` before spending proof time; use
+`scripts/h200_experiment.py` for direct, unranked paired research evidence.
 Measure external process time and whole-device memory; use backend phase
 telemetry to explain changes, not as the ranked result. Check all published
 proofs against the pinned verifier and canonical digests. Do not change the

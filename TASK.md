@@ -27,8 +27,18 @@ to debate architectures, compare evidence, and share unsuccessful ideas. Link
 useful threads from the PR. Discussions are a research channel, not an
 alternative to proof checks or a ranked receipt.
 
-Keep the development loop small: focused compile/test, one public H200 smoke
-case, then complete qualification when promising. Standalone Cairo proofs
+Explore several architectural changes before settling on local tweaks. For
+each, predict which measured ingress, proof, recursion, or publication phase
+should improve, by how much, and at what memory cost. Combine independent
+strong changes and measure whether they compose; then refine the surviving
+design greedily. A fast PoW or hash primitive that leaves the ten-case command
+and memory results unchanged is research evidence, not a winning submission.
+
+Keep the development loop small: focused compile/test, a verified public PIE
+and fold/pipeline smoke, repeated idle-host A/B, then complete qualification
+when promising. The operator's direct
+[`h200_experiment.py`](scripts/h200_experiment.py) records exact identities,
+phase times, proof hashes, and peaks; its results are unranked. Standalone Cairo proofs
 need the pinned official Rust verifier; pipeline leaves need the pinned
 production-registry Rust verifier; every recursive root must bind the correct
 contiguous leaves and outputs. Record all regressions and the exact timing
