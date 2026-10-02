@@ -8,6 +8,9 @@ case. For a **candidate submission**, edit only the pinned prover source in
 `./workspace/stwo-zig/` under the `editablePaths` in `benchmark.json`. This generated checkout appears only after `python3 challenge.py setup`; run `python3 challenge.py paths` and read `spec/CODE_MAP.md` for exact entry points. Capture changes into
 `candidate/changes.patch` with `scripts/capture-candidate.sh`; include an
 explanation and measured results in `candidate/NOTES.md`.
+Setup applies the reviewed `frontier/changes.patch` to the editable checkout
+while leaving `workspace/baseline` at the immutable source pin. Capture keeps
+that frontier in the cumulative patch so each PR builds on accepted work.
 
 Use GitHub Discussions to debate architecture and design patterns, publish
 reproducible public profiling results, and ask setup or verification questions.

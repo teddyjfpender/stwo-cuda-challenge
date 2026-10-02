@@ -16,6 +16,11 @@ Use `python3 challenge.py --help` for the participant CLI. Run `python3 challeng
 `candidate/NOTES.md` current with the hypothesis, focused checks, and measured
 results. The judge rebuilds from that patch, so a local binary is never the
 ranked submission.
+The editable checkout begins with the reviewed
+[accepted frontier](../../frontier/manifest.json); the baseline stays at the
+original pin. Capture produces a cumulative patch containing the frontier and
+your changes. Use `setup --base` only in a fresh checkout when inspecting the
+original source.
 
 Use [GitHub Discussions](https://github.com/teddyjfpender/stwo-cuda-challenge/discussions)
 to compare design alternatives and profiler evidence. An Ideas thread should
