@@ -58,6 +58,9 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
     measure_dir = out / "_measurements" / case_dir.name
     circuit = source / "zig-out/bin/stwo-circuit-recursion-cuda"
     registry = source / "vectors/circuit/official/registries/production.json"
+    phase_seconds = {}
+    ingress_stage_seconds = {}
+    proof_hashes = {}
     if case["family"] == "pie":
         input_path = checked_file(fixtures, case["input"])
         proof, report = case_dir / "proof.json", case_dir / "backend.json"
@@ -69,6 +72,13 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
         if sha(proof) != case["expected_proof_sha256"]:
             raise RuntimeError(f"canonical Cairo proof differs: {case['id']}")
         plan = check_report(report, case["input"]["sha256"])
+        trial = json.loads(report.read_text())["completed_trials"][0]
+        phase_seconds = {key: trial[key] / 1e9 for key in
+                         ("ingress_ns", "proof_execute_and_decode_ns",
+                          "adapted_input_until_publication_ns") if key in trial}
+        ingress_stage_seconds = {key: value / 1e9 for key, value in
+                                 trial.get("ingress_timings", {}).items()}
+        proof_hashes = {"proof.json": sha(proof)}
     elif case["family"] == "recursion":
         leaves = [str(checked_file(fixtures, item)) for item in case["inputs"]]
         manifest = case_dir / "leaves.json"
@@ -79,6 +89,8 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
                    "--packed", str(case_dir / "root_packed.json")]
         measured = run(command, measure_dir, nvml, env, cwd=source)
         check_root(case, case_dir)
+        proof_hashes = {name: sha(case_dir / name) for name in
+                        ("root.proof", "root_outputs.json", "root_packed.json")}
         arenas = [int(value) for value in re.findall(
             r"circuit-proof .*arena_bytes=(\d+)",
             (measure_dir / "process.log").read_text(errors="replace"))]
@@ -107,11 +119,14 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
         check_root(case, result)
         if receipt["root"] != case["expected_root"]:
             raise RuntimeError(f"pipeline receipt root differs: {case['id']}")
+        proof_hashes = {name: sha(result / name) for name in
+                        ("root.proof", "root_outputs.json", "root_packed.json")}
         arenas = []
         for index, item in enumerate(case["inputs"]):
             proof = result / f"leaf-{index}.cairo_proof.json"
             registry_proof_verifier(registry_verifier, proof,
                                     case_dir / f"cairo-verification-{index}")
+            proof_hashes[f"leaf-{index}.cairo_proof.json"] = sha(proof)
             arenas.append(check_report(result / f"leaf-{index}.cairo_report.json",
                                        item["sha256"]))
         profiles = []
@@ -129,6 +144,11 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
         raise ValueError(f"unknown case family: {case['family']}")
     return {"case_id": case["id"], "family": case["family"],
             "time_s": measured["time_s"],
+            "timing_boundary": "adapted-input-to-published-proof-and-process-exit",
+            "timing_condition": "cold-process",
+            "phase_seconds": phase_seconds,
+            "ingress_stage_seconds": ingress_stage_seconds,
+            "proof_sha256": proof_hashes,
             "peak_device_bytes": measured["peak_device_bytes"],
             "idle_device_bytes": measured["idle_device_bytes"],
             "nvml_samples": measured["nvml_samples"],

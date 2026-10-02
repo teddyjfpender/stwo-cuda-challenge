@@ -7,13 +7,24 @@ heads, patch and evidence digests, local validation, and disposition of PRs
 [#3](https://github.com/teddyjfpender/stwo-cuda-challenge/pull/3),
 [#4](https://github.com/teddyjfpender/stwo-cuda-challenge/pull/4), and
 [#6](https://github.com/teddyjfpender/stwo-cuda-challenge/pull/6). The
-[per-case research TSV](submission-research-2026-10-02.tsv) contains the ten
-public cases measured for each of #4 and #6. No after-measurement exists for
-#3. Its first reviewed head failed the pinned Zig 0.15.2 compile because it
-passed a `usize` index to a `u32` parameter. The author pushed a corrected
-`dbbf838` head; its exact recaptured patch now applies and passes the focused
-Rust-checkpoint Cairo CUDA package tests (15/15). It is queued for H200 smoke
-as submission `24e342a5d78c14b8973e`, with no speedup claimed yet.
+[per-case research TSV](submission-research-2026-10-02.tsv) retains #4's
+author-reported ten-case research and summarizes new independent H200 evidence
+for #3 and #6. The [per-run H200 TSV](submission-h200-runs-2026-10-02.tsv)
+contains all 148 independently collected observations: #3 has two samples
+per arm on each of six PIEs and one per arm on two pipelines; #6 has three
+ABBA rounds and six samples per arm on all ten public cases. Each row records
+the measured command, available phases, 10 ms sampled whole-device peak, and
+actual proof hash. The reviewed heads and patch hashes in the review TSV bind
+these observations to the exact submitted sources. All these H200 proofs and
+roots matched the pinned canonical outputs, the Cairo proofs passed the
+independent Rust verifiers, and no CUDA trial fell back to CPU.
+
+PR #3's first head failed the pinned Zig 0.15.2 compile because it passed a
+`usize` index to a `u32` parameter. The author corrected it at `dbbf838`;
+that head passes the focused Rust-checkpoint Cairo CUDA tests (15/15).
+Independent H200 PIE ratios are mixed, from 0.930 to 1.051, and both pipeline
+commands are slightly slower. Its predicted large gain is not supported, so
+the PR remains research-only.
 
 PR #4's source is its immutable `36e8949` commit's
 `candidate/MEASUREMENTS.json` (SHA-256 recorded on every row). Its 120 submitted
@@ -30,30 +41,28 @@ observations per arm. Its 26-bit ratios are 0.9304 (plain) and 0.9321 (M31)
 for the synchronous circuit grind call, including allocation and transfer;
 they are not full proofs and do not override the command regressions.
 
-PR #6's source is its immutable `d2c8688` commit's `candidate/NOTES.md`
-(digest recorded in the TSV). The table transcribes the author's one baseline
-and one candidate direct H200 observation per case. Its command and ingress
-times improved on all six PIEs; proof-execute/finish time was nearly unchanged.
-The commands were not interleaved or isolated from builds, and the raw run
-receipts were not attached. Its `median_paired_command_ratio` cells are blank;
-the single-sample times are not paired evidence. PR #6 passed local pinned
-source policy, apply, Cairo CUDA package tests (15/15), and the Cairo CUDA
-product check. It was labeled `ready-to-judge`, frozen by manual intake as
-submission `3f5cbe25c0c83453f5a8`, and prepared for a trusted build. This is
-**queue admission**, not a ranked promotion or a claim that proof-stage time
-improved.
+PR #6's immutable `d2c8688` patch was independently built and measured in
+three idle-host ABBA rounds. The six PIEs each improve by roughly 16–23% in
+whole-command time, with proof-execute/finish nearly unchanged. The gain is in
+ingress, especially fixed-asset loading overlapped with source work. Device
+peaks are essentially unchanged. The two fold cases are near baseline; the
+serial pipeline is near baseline and the integrated pipeline is slower.
+The three-family geometric time ratio is 0.930 (7.5% inverse-latency gain).
+The same runs' baseline A/A median absolute log dispersion implies an 11.3%
+noise threshold, above that aggregate gain. The operator promoted it as
+**independently validated direct H200 research**, separate from ranked scores.
 
-All rows preserve the distinction between external whole-command time and the
-Cairo backend's execute/finish diagnostic, which ends at `proof.finish` before
-canonical verification and publication. Fold and pipeline proof-only times are
-blank because a comparable trusted interval was not measured. Peak GiB values
-are rounded; #4 uses the maximum of six independently sampled run peaks per arm,
-and #6 uses the rounded values in its author's table. Neither direct run used the
-qualified Docker judge, private holdout, three paired rank rounds, or a signed
-receipt. They must not be combined with the older direct baseline as a score or
-shown in the site's ranked leaderboard. PR #3 needs its first GPU measurement;
-PR #4 needs a full-path winner; PR #6 awaits the trusted judge and proof-stage
-epoch.
+All rows distinguish external whole-command time from the Cairo backend's
+execute/finish diagnostic, which ends at `proof.finish` before independent
+verification and publication. Fold and pipeline proof-only cells are blank
+because no comparable trusted interval was measured. Peak GiB is the maximum
+sampled whole-device usage per arm, rounded for display. #4's observations
+remain author-reported; #3 and #6 are independent direct diagnostics. The
+restricted Runpod H200 does not have the Docker judge or output-image mount
+capability, so none of these observations has private holdout isolation or a
+signed rank receipt. They are not leaderboard scores, and command-time gains
+must not be presented as proof-stage gains. #4 still needs a full-path winner;
+#6 needs a qualified judge and enough aggregate gain to clear variance.
 
 Two complete public-basket passes on one healthy NVIDIA H200 reproduced all
 canonical proof and root hashes. Every Cairo proof passed its pinned Rust

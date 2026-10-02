@@ -16,6 +16,80 @@ trusted judge's output quota, network isolation, Docker image, signed receipt,
 or paired A/B scoring. Keep generated proofs and logs outside Git and do not
 use these numbers as ranked scores. Use `--case-id ID` to narrow a smoke run.
 
+## Keep the research loop short
+
+Use an H200 network volume or other persistent filesystem for the verified
+fixture store, source checkouts, `.cache` (including the 2.17 GB canonical
+preprocessing asset and compiled Rust verifiers), Zig/CUDA toolchains, build
+cache, and external run journals. A pod's ephemeral root filesystem is not the
+cache: stopping or replacing a pod can lose twenty minutes or more of rebuild
+and transfer work. Mount the volume at the **same path** on replacement pods,
+then recheck pinned hashes; persistence does not make a file trustworthy. Keep
+credentials and private fixtures outside public worktrees. Prepare and build
+before reserving expensive proof time where the provider permits CPU setup.
+Do not rely on a particular stopped pod restarting: H200 capacity can be
+unavailable. Keep the same persistent volume mountable by a fresh compatible
+pod. Preserve one active experiment journal outside Git and never run a second
+build or proof on the measurement GPU during an A/B comparison.
+
+Before the first proof, run one of these checks. Both verify Zig 0.15.2,
+nvcc/Cargo availability, the pinned source and runtime files, staged AIR
+bundles, canonical preprocessing hash, executable/verifier hashes, selected
+fixture hashes, H200 capacity, and idle whole-device usage. The judge check
+also fails early if Docker, its exact pinned image, output-image mount
+capability, or the filesystem/network/quota isolation probe is missing.
+
+```sh
+python3 scripts/h200_preflight.py --mode direct --source workspace/baseline \
+  --out /external/runs/baseline-preflight.json
+python3 scripts/h200_preflight.py --mode judge --source workspace/baseline \
+  --image "$STWO_SANDBOX_IMAGE" --out /external/runs/judge-preflight.json
+```
+
+The first command is for a restricted Runpod research pod; its success does
+not qualify the sandbox or permit ranked results. If the second command fails,
+fix that host/image before invoking `harness/run_arm.py` or dispatching smoke.
+The preflight receipt labels itself `prerequisites-only`. It is deliberately
+separate from both exact proof qualification and a signed judge receipt.
+
+For each hypothesis, name the expected stage and fractional gain. Compile the
+touched Zig/CUDA target and run the relevant local test first. Then use the
+direct A/B driver on an otherwise idle H200; it interleaves baseline and
+candidate twice for one representative PIE and one fold or pipeline case.
+Each run checks canonical proof hashes and the pinned verifiers and appends a
+durable JSONL row with exact source commit, tracked diff/untracked source and
+executable hashes, cold full-command time, available ingress/proof phases,
+whole-device peak, proof hashes, and verification flags. A stage-gain gate
+keeps a weak idea from triggering the full ten-case basket. For example:
+
+```sh
+python3 scripts/h200_experiment.py --baseline workspace/baseline \
+  --candidate workspace/stwo-zig --out /external/runs/source-cache-01 \
+  --hypothesis 'overlap fixed-asset loading with source preparation' \
+  --stage ingress_ns --min-stage-gain 0.05 \
+  --max-companion-regression 0.05 --full-if-promising
+```
+
+For a recursion or pipeline hypothesis, select that case with
+`--smoke-companion` and also set `--target-case` to the same ID. The PIE then
+acts as the full-command regression guard. The gate always tests the declared
+stage on the chosen target and full-command time on the other case.
+
+`experiment.json` records preflight/build identities and the stated timing
+boundary; `runs.jsonl` survives a later failure; `gate.json` says whether the
+full basket was admitted. Use a fresh output directory for every experiment.
+The full basket is one paired diagnostic pass by default; choose more rounds
+explicitly when variance matters. Its output remains unsandboxed and unranked.
+Candidate-reported ingress and proof timers are diagnostic; an editable prover
+can change them. The externally measured cold command and NVML peak remain the
+comparable values. Record **preparation**, **cold adapted-input to published
+proof**, and **warm proof** as different quantities. This driver times only
+the cold command; it labels warm proof `not measured` because a resident
+request protocol and judge-owned timer do not yet exist. Package creation,
+fixture transfer, and compilation cannot silently move before the `h200-v1`
+clock or become a proof-stage rank; changing that boundary requires the
+reviewed next epoch in [`PROOF_STAGE_EPOCH.md`](PROOF_STAGE_EPOCH.md).
+
 ## Prepare the host once
 
 1. Use one exclusive H200 SXM with the device capacity in `benchmark.json`.
