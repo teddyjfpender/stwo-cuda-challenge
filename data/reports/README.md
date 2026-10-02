@@ -1,5 +1,60 @@
 # H200 direct qualification, 2026-10-02
 
+## Reviewed challenge PRs, 2026-10-02
+
+The [review-status TSV](submission-review-2026-10-02.tsv) records the frozen
+heads, patch and evidence digests, local validation, and disposition of PRs
+[#3](https://github.com/teddyjfpender/stwo-cuda-challenge/pull/3),
+[#4](https://github.com/teddyjfpender/stwo-cuda-challenge/pull/4), and
+[#6](https://github.com/teddyjfpender/stwo-cuda-challenge/pull/6). The
+[per-case research TSV](submission-research-2026-10-02.tsv) contains the ten
+public cases measured for each of #4 and #6. No after-measurement exists for
+#3. Its first reviewed head failed the pinned Zig 0.15.2 compile because it
+passed a `usize` index to a `u32` parameter. The author pushed a corrected
+`dbbf838` head; its exact recaptured patch now applies and passes the focused
+Rust-checkpoint Cairo CUDA package tests (15/15). It is queued for H200 smoke
+as submission `24e342a5d78c14b8973e`, with no speedup claimed yet.
+
+PR #4's source is its immutable `36e8949` commit's
+`candidate/MEASUREMENTS.json` (SHA-256 recorded on every row). Its 120 submitted
+observations were checked for canonical-result flags, six samples per arm per
+case, ABBA order, published medians, whole-device peak maxima, and paired
+command ratios. These checks verify the **internal arithmetic and provenance of
+the submitted data**, not the original GPU execution. The six PIE command
+ratios are all slower (1.010–1.031), although the focused PoW primitive and
+reported PoW device intervals are faster. The `median_paired_command_ratio`
+column is the median of three ABBA round ratios and is **not** a ranked score.
+The separate [PoW primitive TSV](submission-pow-primitives-2026-10-02.tsv)
+recomputes all eight focused channel/bit-width ratios from 30 submitted
+observations per arm. Its 26-bit ratios are 0.9304 (plain) and 0.9321 (M31)
+for the synchronous circuit grind call, including allocation and transfer;
+they are not full proofs and do not override the command regressions.
+
+PR #6's source is its immutable `d2c8688` commit's `candidate/NOTES.md`
+(digest recorded in the TSV). The table transcribes the author's one baseline
+and one candidate direct H200 observation per case. Its command and ingress
+times improved on all six PIEs; proof-execute/finish time was nearly unchanged.
+The commands were not interleaved or isolated from builds, and the raw run
+receipts were not attached. Its `median_paired_command_ratio` cells are blank;
+the single-sample times are not paired evidence. PR #6 passed local pinned
+source policy, apply, Cairo CUDA package tests (15/15), and the Cairo CUDA
+product check. It was labeled `ready-to-judge`, frozen by manual intake as
+submission `3f5cbe25c0c83453f5a8`, and prepared for a trusted build. This is
+**queue admission**, not a ranked promotion or a claim that proof-stage time
+improved.
+
+All rows preserve the distinction between external whole-command time and the
+Cairo backend's execute/finish diagnostic, which ends at `proof.finish` before
+canonical verification and publication. Fold and pipeline proof-only times are
+blank because a comparable trusted interval was not measured. Peak GiB values
+are rounded; #4 uses the maximum of six independently sampled run peaks per arm,
+and #6 uses the rounded values in its author's table. Neither direct run used the
+qualified Docker judge, private holdout, three paired rank rounds, or a signed
+receipt. They must not be combined with the older direct baseline as a score or
+shown in the site's ranked leaderboard. PR #3 needs its first GPU measurement;
+PR #4 needs a full-path winner; PR #6 awaits the trusted judge and proof-stage
+epoch.
+
 Two complete public-basket passes on one healthy NVIDIA H200 reproduced all
 canonical proof and root hashes. Every Cairo proof passed its pinned Rust
 verifier; every reported CUDA trial used the canonical 70-query, 26-bit PoW

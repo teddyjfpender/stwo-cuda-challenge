@@ -17,6 +17,12 @@ can open. The direct 6.90–9.78 s Cairo figures are full-command diagnostics.
 The [staging website](https://autoresearch-web-lac.vercel.app/challenges/stwo-cuda)
 accepts no ranked submissions; it links to this repository for research PRs
 and Discussions.
+The reviewed [PR status](data/reports/submission-review-2026-10-02.tsv) and
+[per-case research measurements](data/reports/submission-research-2026-10-02.tsv)
+for PRs #3, #4, and #6 are published separately from signed scores. PRs #3
+and #6 are queued for future trusted judging; direct-run numbers are unranked.
+PR #4's narrower [PoW primitive results](data/reports/submission-pow-primitives-2026-10-02.tsv)
+are retained alongside its full-command regressions.
 
 The prover's CUDA implementation lives in upstream `stwo-zig`. This challenge
 pins one commit from its `main` branch and checks it out under
