@@ -27,24 +27,37 @@ The focused same-host smoke pair on `pie:15581148_15581148` passed the pinned in
 | Whole-device peak | 84,530,954,240 bytes | 84,530,954,240 bytes |
 | Planned arena | 82,697,758,816 bytes | 82,697,758,816 bytes |
 
-One direct full public basket pass per arm on the same H200 produced the following diagnostics. Each cell is full-command seconds / whole-device peak GiB. The candidate arm ran before the baseline arm; this is not an ABBA paired measurement, and concurrent builds add variance. The descriptive equal-family geometric mean command-time reduction is 8.7%, not an official score.
+One direct run per public case and arm on the same H200 produced the following diagnostics. Each cell is full-command seconds / whole-device peak GiB. The baseline arm ran before the final candidate build, and candidate PIEs and folds/pipelines were run in separate qualifications. This is not an ABBA paired measurement, and concurrent builds add variance. The descriptive equal-family geometric mean command-time reduction is 9.5%, not an official score.
 
 | Public case | Baseline | Candidate |
 | --- | ---: | ---: |
-| `pie:15582797_15582797` | 7.885 / 84.27 | 5.925 / 84.27 |
-| `pie:15603744_15603744` | 8.378 / 83.55 | 7.378 / 83.55 |
-| `pie:15581148_15581148` | 7.277 / 78.74 | 6.776 / 79.25 |
-| `pie:15590913_15590913` | 8.728 / 97.99 | 6.526 / 97.99 |
-| `pie:15588777_15588780` | 9.830 / 124.86 | 7.627 / 124.86 |
-| `pie:15591789_15591789` | 8.127 / 108.27 | 7.277 / 108.27 |
-| `recursion:two-leaf-wrap-fold` | 2.524 / 27.40 | 2.430 / 27.40 |
-| `recursion:eight-distinct-pie-fold` | 8.281 / 27.40 | 7.930 / 27.40 |
-| `pipeline:two-leaf-root` | 18.646 / 64.68 | 17.792 / 64.68 |
-| `pipeline:two-leaf-batch-integrated` | 14.287 / 38.46 | 13.739 / 38.46 |
+| `pie:15582797_15582797` | 7.885 / 84.27 | 5.933 / 84.27 |
+| `pie:15603744_15603744` | 8.378 / 83.55 | 6.275 / 83.55 |
+| `pie:15581148_15581148` | 7.277 / 78.74 | 5.223 / 78.74 |
+| `pie:15590913_15590913` | 8.728 / 97.99 | 6.425 / 97.99 |
+| `pie:15588777_15588780` | 9.830 / 124.86 | 7.226 / 124.86 |
+| `pie:15591789_15591789` | 8.127 / 108.27 | 6.074 / 108.27 |
+| `recursion:two-leaf-wrap-fold` | 2.524 / 27.40 | 2.630 / 27.40 |
+| `recursion:eight-distinct-pie-fold` | 8.281 / 27.40 | 7.980 / 27.40 |
+| `pipeline:two-leaf-root` | 18.646 / 64.68 | 18.245 / 64.68 |
+| `pipeline:two-leaf-batch-integrated` | 14.287 / 38.46 | 14.587 / 38.46 |
+
+Cairo backend report times are kept separate from the command timer (seconds):
+
+| Public PIE | Baseline ingress | Candidate ingress | Baseline proof execute + decode | Candidate proof execute + decode |
+| --- | ---: | ---: | ---: | ---: |
+| `15582797_15582797` | 5.925 | 3.920 | 1.292 | 1.268 |
+| `15603744_15603744` | 6.532 | 4.361 | 1.220 | 1.217 |
+| `15581148_15581148` | 5.563 | 3.468 | 1.171 | 1.167 |
+| `15590913_15590913` | 6.533 | 4.203 | 1.548 | 1.542 |
+| `15588777_15588780` | 7.195 | 4.532 | 1.949 | 1.943 |
+| `15591789_15591789` | 5.837 | 3.738 | 1.680 | 1.667 |
 
 All six PIEs passed the pinned independent Rust verifier, matched the reference proof SHA-256, and reported the canonical security profile with no CPU proving fallback. Both recursive folds and both pipelines matched the public root, output, and packed hashes; pipeline Cairo leaves also passed Rust verification. The public fixture hash check passed for all 60 files. Focused local checks passed: `zig build check-cairo-cuda-local -Doptimize=ReleaseFast`, `zig build test-cairo-preprocessed-cache -Doptimize=ReleaseFast`, and `zig build test-cairo-cuda-local -Doptimize=ReleaseFast`. `python3 challenge.py capture` produced a 12,454-byte patch affecting only the three paths above and confirmed CUDA source closure.
 
-On the second pod, the first read of the freshly transferred artifact took 104.5 s in static initialization; warmed runs recovered to normal times. This storage-cold observation is retained as a limitation, not used as an improvement claim. The candidate does not reduce proof-stage time or planned GPU memory. Recursive-only timing changes should be treated as run-to-run variation because this patch does not change their proof path.
+On the prepared second H200, `python3 challenge.py setup --build` completed successfully for both baseline and candidate, including the pinned Rust verifiers and attestations. The required `python3 challenge.py benchmark --tier smoke --track balanced` command was then attempted verbatim. It exited 2 before running a case: `rank.py: error: --sandbox-image must be a pinned SHA-256 image ID or repository digest`. This Runpod pod has no configured pinned sandbox image, so the official sandboxed smoke and qualification basket were unavailable. The direct full-basket checks above are the unranked fallback, not an official judge pass.
+
+On the second pod, the first read of the freshly transferred artifact took 104.5 s in static initialization; warmed runs recovered to normal times. This storage-cold observation is retained as a limitation, not used as an improvement claim. The candidate does not materially reduce Cairo proof-stage time or planned GPU memory. The current challenge contract does not retain comparable wrap/fold/pipeline proof-only timers, so their table entries are full commands. The two-leaf fold (2.524 to 2.630 s) and integrated pipeline (14.287 to 14.587 s) regressed in these single samples; this patch does not change recursive proof execution, so their small timing differences need paired reruns before interpretation.
 
 ## Tradeoffs and discussion
 
