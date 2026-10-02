@@ -1,0 +1,279 @@
+diff --git a/src/backends/cuda/native/pow/candidate.cuh b/src/backends/cuda/native/pow/candidate.cuh
+index d1b0c910..98a9c96f 100644
+--- a/src/backends/cuda/native/pow/candidate.cuh
++++ b/src/backends/cuda/native/pow/candidate.cuh
+@@ -130,9 +130,16 @@ __device__ __forceinline__ uint32_t candidate_hash_word(
+ 
+ #undef STWO_POW_DYNAMIC_G
+ #else
+-__device__ __forceinline__ uint32_t candidate_hash_word(
+-    const Prefix &prefix,
+-    unsigned long long nonce) {
++// Seven of the eight G operations in round zero are independent of the
++// nonce. Compute them once per block; only G(8, 9) remains per candidate.
++// Its four state words are disjoint from the other three diagonal Gs.
++struct PreparedPrefix {
++    Prefix prefix;
++    uint32_t state[16];
++};
++
++__device__ __forceinline__ PreparedPrefix prepare_prefix(const Prefix &prefix) {
++    constexpr unsigned long long nonce = 0;
+     uint32_t v0 = 0x6a09e667u ^ 0x01010020u;
+     uint32_t v1 = 0xbb67ae85u;
+     uint32_t v2 = 0x3c6ef372u;
+@@ -150,9 +157,39 @@ __device__ __forceinline__ uint32_t candidate_hash_word(
+     uint32_t v14 = 0x1f83d9abu ^ 0xffffffffu;
+     uint32_t v15 = 0x5be0cd19u;
+ 
+-    STWO_POW_ROUND(
+-        0, 1, 2, 3, 4, 5, 6, 7,
+-        8, 9, 10, 11, 12, 13, 14, 15);
++    STWO_POW_G(0, 1, v0, v4, v8, v12);
++    STWO_POW_G(2, 3, v1, v5, v9, v13);
++    STWO_POW_G(4, 5, v2, v6, v10, v14);
++    STWO_POW_G(6, 7, v3, v7, v11, v15);
++    STWO_POW_G(10, 11, v1, v6, v11, v12);
++    STWO_POW_G(12, 13, v2, v7, v8, v13);
++    STWO_POW_G(14, 15, v3, v4, v9, v14);
++    return {prefix, {v0, v1, v2, v3, v4, v5, v6, v7,
++                     v8, v9, v10, v11, v12, v13, v14, v15}};
++}
++
++__device__ __forceinline__ uint32_t candidate_hash_word(
++    const PreparedPrefix &prepared,
++    unsigned long long nonce) {
++    const Prefix &prefix = prepared.prefix;
++    uint32_t v0 = prepared.state[0];
++    uint32_t v1 = prepared.state[1];
++    uint32_t v2 = prepared.state[2];
++    uint32_t v3 = prepared.state[3];
++    uint32_t v4 = prepared.state[4];
++    uint32_t v5 = prepared.state[5];
++    uint32_t v6 = prepared.state[6];
++    uint32_t v7 = prepared.state[7];
++    uint32_t v8 = prepared.state[8];
++    uint32_t v9 = prepared.state[9];
++    uint32_t v10 = prepared.state[10];
++    uint32_t v11 = prepared.state[11];
++    uint32_t v12 = prepared.state[12];
++    uint32_t v13 = prepared.state[13];
++    uint32_t v14 = prepared.state[14];
++    uint32_t v15 = prepared.state[15];
++
++    STWO_POW_G(8, 9, v0, v5, v10, v15);
+     STWO_POW_ROUND(
+         14, 10, 4, 8, 9, 15, 13, 6,
+         1, 12, 0, 2, 11, 7, 5, 3);
+diff --git a/src/backends/cuda/native/pow/search.cu b/src/backends/cuda/native/pow/search.cu
+index 474ea6cc..5d0d263d 100644
+--- a/src/backends/cuda/native/pow/search.cu
++++ b/src/backends/cuda/native/pow/search.cu
+@@ -125,9 +125,13 @@ void search_kernel(
+     unsigned long long *best_nonce,
+     uint32_t *completed_blocks,
+     uint32_t *transcript_nonce) {
+-    __shared__ Prefix prefix;
+-    if (threadIdx.x < 8) {
+-        prefix.words[threadIdx.x] = prefix_digest[threadIdx.x];
++    __shared__ PreparedPrefix prefix;
++    if (threadIdx.x == 0) {
++        Prefix raw;
++#pragma unroll
++        for (uint32_t word = 0; word < 8; ++word)
++            raw.words[word] = prefix_digest[word];
++        prefix = prepare_prefix(raw);
+     }
+     __syncthreads();
+ 
+diff --git a/src/integrations/circuit_cuda/native/circuit_grind.cu b/src/integrations/circuit_cuda/native/circuit_grind.cu
+index febe3f2b..ed939ece 100644
+--- a/src/integrations/circuit_cuda/native/circuit_grind.cu
++++ b/src/integrations/circuit_cuda/native/circuit_grind.cu
+@@ -36,6 +36,8 @@
+ namespace stwo::circuit_cuda::grind {
+ 
+ using stwo::cuda::pow::Prefix;
++using stwo::cuda::pow::PreparedPrefix;
++using stwo::cuda::pow::prepare_prefix;
+ using stwo::cuda::pow::candidate_hash_word;
+ using stwo::cuda::pow::trailing_zeros;
+ 
+@@ -65,7 +67,7 @@ __device__ __forceinline__ uint32_t reduce_m31(uint32_t word) {
+ 
+ template <bool kM31Output>
+ __device__ __forceinline__ bool candidate_valid(
+-    const Prefix &prefix,
++    const PreparedPrefix &prefix,
+     unsigned long long nonce,
+     uint32_t pow_bits) {
+     uint32_t word = candidate_hash_word(prefix, nonce);
+@@ -81,7 +83,7 @@ __device__ __forceinline__ bool candidate_valid(
+ // function sequentially over the classes against the CPU grind.
+ template <bool kM31Output>
+ __device__ __forceinline__ void scan_residue_class(
+-    const Prefix &prefix,
++    const PreparedPrefix &prefix,
+     uint32_t pow_bits,
+     unsigned long long worker,
+     unsigned long long stride,
+@@ -112,8 +114,14 @@ void search_kernel(
+     uint32_t pow_bits,
+     unsigned long long search_end,
+     unsigned long long *best_nonce) {
+-    __shared__ Prefix prefix;
+-    if (threadIdx.x < 8) prefix.words[threadIdx.x] = prefix_words[threadIdx.x];
++    __shared__ PreparedPrefix prefix;
++    if (threadIdx.x == 0) {
++        Prefix raw;
++#pragma unroll
++        for (uint32_t word = 0; word < 8; ++word)
++            raw.words[word] = prefix_words[word];
++        prefix = prepare_prefix(raw);
++    }
+     __syncthreads();
+     scan_residue_class<kM31Output>(
+         prefix,
+@@ -233,8 +241,9 @@ extern "C" int stwo_circuit_cuda_grind_emulate(
+         search_end > kIndexLimit || workers == 0) {
+         return 1;
+     }
+-    Prefix words;
+-    for (uint32_t word = 0; word < 8; ++word) words.words[word] = prefix[word];
++    Prefix raw;
++    for (uint32_t word = 0; word < 8; ++word) raw.words[word] = prefix[word];
++    const PreparedPrefix words = prepare_prefix(raw);
+     unsigned long long best = kNoNonce;
+     for (unsigned long long worker = 0; worker < workers; ++worker) {
+         if (m31_output != 0) {
+diff --git a/src/integrations/circuit_cuda/tests/grind_regression.py b/src/integrations/circuit_cuda/tests/grind_regression.py
+new file mode 100644
+index 00000000..f73de1c1
+--- /dev/null
++++ b/src/integrations/circuit_cuda/tests/grind_regression.py
+@@ -0,0 +1,125 @@
++#!/usr/bin/env python3
++"""Focused NVIDIA PoW checks; no prover fixtures or security settings changed.
++
++Run from the prover root with CUDA/nvcc on PATH:
++  python3 src/integrations/circuit_cuda/tests/grind_regression.py
++Add --baseline /path/to/pinned/source --repetitions 9 for paired call timings.
++The timer includes allocation, transfers, search, synchronization and teardown
++of one circuit grind call, not a proof stage or complete prover command.
++"""
++
++import argparse
++import ctypes
++import hashlib
++import json
++from pathlib import Path
++import statistics
++import struct
++import subprocess
++import tempfile
++import time
++
++P = (1 << 31) - 1
++LIMIT = P << 20
++NONE = (1 << 64) - 1
++U32 = ctypes.c_uint32
++U64 = ctypes.c_ulonglong
++
++
++def build(source, directory, name):
++    library = directory / (name + '.so')
++    subprocess.run(['nvcc', '-std=c++17', '-O3', '-arch=sm_90',
++                    '-shared', '-Xcompiler=-fPIC',
++                    str(source / 'src/integrations/circuit_cuda/native/circuit_grind.cu'),
++                    '-o', str(library)], check=True)
++    dll = ctypes.CDLL(str(library))
++    fn = dll.stwo_circuit_cuda_blake2s_grind
++    fn.argtypes = [ctypes.POINTER(U32), U32, U32, U64, ctypes.POINTER(U64)]
++    fn.restype = ctypes.c_int
++    return fn
++
++
++def grind(fn, prefix, bits, m31, end=LIMIT):
++    result = U64(NONE)
++    words = (U32 * 8)(*struct.unpack('<8I', prefix))
++    code = fn(words, bits, m31, end, ctypes.byref(result))
++    if code:
++        raise RuntimeError(f'CUDA grind failed with status {code}')
++    return result.value
++
++
++def oracle(prefix, bits, m31, end):
++    for index in range(end):
++        nonce = ((index >> 20) << 32) | (index & ((1 << 20) - 1))
++        word = struct.unpack('<I', hashlib.blake2s(
++            prefix + struct.pack('<Q', nonce)).digest()[:4])[0]
++        if m31:
++            word %= P
++        if word & ((1 << bits) - 1) == 0:
++            return nonce
++    return NONE
++
++
++def prefix_for(seed, m31):
++    raw = hashlib.sha256(f'stwo-cuda-pow-regression-{seed}'.encode()).digest()
++    if m31:
++        raw = struct.pack('<8I', *(word % P for word in struct.unpack('<8I', raw)))
++    return raw
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--source', type=Path, default=Path(__file__).resolve().parents[4])
++    parser.add_argument('--baseline', type=Path)
++    parser.add_argument('--repetitions', type=int, default=9)
++    args = parser.parse_args()
++    if args.repetitions < 1:
++        parser.error('repetitions must be positive')
++    with tempfile.TemporaryDirectory(prefix='stwo-pow-check-') as tmp:
++        directory = Path(tmp)
++        candidate = build(args.source.resolve(), directory, 'candidate')
++        checks = 0
++        for m31 in (0, 1):
++            for seed in range(6):
++                prefix = prefix_for(seed, m31)
++                for bits, end in ((1, 37), (8, 33), (12, 4097), (32, 262145)):
++                    expected = oracle(prefix, bits, m31, end)
++                    assert grind(candidate, prefix, bits, m31, end) == expected
++                    checks += 1
++            # Cross the low-word lattice boundary without replacing it by a
++            # contiguous u64 search. A 32-bit predicate normally has no hit.
++            prefix = prefix_for(99, m31)
++            end = (1 << 20) + 37
++            assert grind(candidate, prefix, 32, m31, end) == oracle(prefix, 32, m31, end)
++            checks += 1
++        print(json.dumps({'oracle_checks': checks}), flush=True)
++        if args.baseline is None:
++            return
++        baseline = build(args.baseline.resolve(), directory, 'baseline')
++        for fn in (baseline, candidate):
++            grind(fn, prefix_for(0, 0), 8, 0)
++        for m31 in (0, 1):
++            for bits in (8, 20, 24, 26):
++                samples = {'baseline': [], 'candidate': []}
++                for rep in range(args.repetitions):
++                    prefix = prefix_for(1000 + rep, m31)
++                    nonces = []
++                    # ABBA, with a fresh prefix per repetition and identical
++                    # input in the four calls; retain all raw observations.
++                    for label, fn in (('baseline', baseline), ('candidate', candidate),
++                                      ('candidate', candidate), ('baseline', baseline)):
++                        start = time.perf_counter_ns()
++                        nonces.append(grind(fn, prefix, bits, m31))
++                        samples[label].append((time.perf_counter_ns() - start) / 1e6)
++                    assert len(set(nonces)) == 1 and nonces[0] != NONE
++                print(json.dumps({'m31': m31, 'bits': bits,
++                                  'scope': 'synchronous circuit grind call, milliseconds',
++                                  'median_ms': {k: statistics.median(v) for k, v in samples.items()},
++                                  'median_paired_ratio': statistics.median(
++                                      sum(samples['candidate'][i:i+2]) / sum(samples['baseline'][i:i+2])
++                                      for i in range(0, 2*args.repetitions, 2)),
++                                  'samples_ms': samples}), flush=True)
++
++
++if __name__ == '__main__':
++    main()
