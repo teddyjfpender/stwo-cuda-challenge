@@ -138,8 +138,10 @@ does not show ranked entries while the challenge status is `staging`.
 The website fetches the contract, baseline reports, research TSVs, and signed
 scorecard feed directly from one immutable commit of this repository. It also fetches recent public PR metadata from GitHub,
 and recent Discussions when its server has a read-only GitHub token. Its
-`data/site/scorecards.json` is empty because no signed rank receipt exists yet. The
-manual export above provides a verified receipt-to-site path; the site remains
+`data/site/scorecards.json` is empty because no signed rank receipt exists yet.
+The [`data/site/sources.json`](../data/site/sources.json) manifest selects the current
+public report files; update it when publishing a newer measurement set.
+The manual export above provides a verified receipt-to-site path; the site remains
 a public, read-only projection, separate from judge state and secrets. The
 staging deployment is
 [autoresearch-web-lac.vercel.app](https://autoresearch-web-lac.vercel.app):

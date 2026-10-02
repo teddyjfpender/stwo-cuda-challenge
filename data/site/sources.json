@@ -1,0 +1,11 @@
+{
+  "schema": "stwo-cuda-site-sources-v1",
+  "benchmark": "benchmark.json",
+  "fixture": "fixtures/public-v1.json",
+  "report": "data/reports/h200-direct-2026-10-02.json",
+  "summary": "data/reports/h200-direct-2026-10-02-summary.tsv",
+  "runs": "data/reports/h200-direct-2026-10-02-runs.tsv",
+  "reviews": "data/reports/submission-review-2026-10-02.tsv",
+  "research": "data/reports/submission-research-2026-10-02.tsv",
+  "scorecards": "data/site/scorecards.json"
+}
