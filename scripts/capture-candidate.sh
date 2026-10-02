@@ -2,8 +2,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 source_dir=workspace/stwo-zig
-if [[ ! -d "$source_dir/.git" ]]; then
-  printf 'Run ./setup.sh first.\n' >&2
+if ! git -C "$source_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  printf 'Run python3 challenge.py setup first.\n' >&2
   exit 1
 fi
 python3 scripts/refresh_cuda_manifests.py

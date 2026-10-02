@@ -100,6 +100,39 @@ and verifies each receipt signature and displayed score at render time. It
 does not show ranked entries while the challenge status is `staging`.
 `--website-root` remains available for an older static snapshot.
 
+## Accept a participant code frontier
+
+The challenge repository stores the accepted **cumulative source patch** at
+[`frontier/changes.patch`](../frontier/changes.patch), with PR number, immutable
+head SHA, patch digest, source pin, and qualification in
+[`frontier/manifest.json`](../frontier/manifest.json). The initial frontier is
+reviewed PR #6. It was promoted as direct H200 research, **not** as a signed
+ranked result. Acceptance makes its code available to new participants; it
+does not alter `benchmark.json`, the original baseline, or the scoring epoch.
+
+After approving a new PR, freeze its exact head and run:
+
+```sh
+python3 service/accept_frontier.py --pr NUMBER --head-sha FULL_HEAD_SHA \
+  --source workspace/baseline --replace --dry-run
+python3 service/accept_frontier.py --pr NUMBER --head-sha FULL_HEAD_SHA \
+  --source workspace/baseline --replace
+python3 challenge.py setup
+python3 challenge.py capture
+git add frontier/ TASK.md spec/SUBMISSIONS.md
+git commit -m 'Accept PR NUMBER as participant frontier'
+git push origin main
+```
+
+The command checks the GitHub PR head and approval label, reviewed patch
+digest when present, source policy, and clean applicability to the immutable
+pin. `--replace` requires the operator to review composition with the existing
+frontier. The participant checkout gets the patch automatically on setup;
+capture emits the full cumulative diff against the original pin. Judge intake
+still applies that full diff to the same pin. After the frontier commit reaches
+main, mark the PR accepted and close it; do not merge its `candidate/` files
+into main, where they would overwrite the reusable submission template.
+
 ## Bring up the judge
 
 1. Implement the intended proving-time launch epoch. The repository's current

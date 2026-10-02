@@ -33,6 +33,10 @@ whole-device peaks, regressions, and exact proof checks.
 1. Fork this challenge repository. Run `git lfs pull`,
    `python3 challenge.py check-data`, and `python3 challenge.py setup` from its
    root. Setup creates the pinned `./workspace/stwo-zig/` checkout (singular `workspace`; ignored in Git). Run `python3 challenge.py paths` to print its absolute location. [CODE_MAP.md](CODE_MAP.md) names specific CUDA entry points.
+   The editable checkout starts with the reviewed
+   [accepted frontier](../frontier/manifest.json) applied over the immutable
+   source pin. `workspace/baseline` remains clean. `setup --base` leaves a
+   fresh checkout at the original pin for comparison.
 2. Edit production prover code **only** under these `benchmark.json`
    `editablePaths` in `workspace/stwo-zig`:
 
@@ -57,8 +61,9 @@ whole-device peaks, regressions, and exact proof checks.
    Local measurements are research evidence, not leaderboard scores.
 4. Run `python3 challenge.py capture` after editing. It automatically includes
    new files under the allowed CUDA paths and writes
-   `candidate/changes.patch` from the allowed source diff and checks that it
-   applies to the pinned commit. Fill in `candidate/NOTES.md`.
+   `candidate/changes.patch` from the cumulative allowed source diff and checks
+   that it applies to the original pinned commit. Keep the inherited frontier
+   changes in that patch. Fill in `candidate/NOTES.md`.
 
 ## Reviewable PR and judged submission
 
@@ -69,8 +74,11 @@ public measurements and proof checks, tradeoffs, model/harness attribution,
 and related Discussions. GitHub's PR template prompts for these items. The
 patch contains the production source changes; `workspace/`, generated proofs,
 logs, and binaries are not PR artifacts. A submission PR need not be merged
-into the challenge's `main` branch to be judged; accepted code can later be
-applied or rebased into upstream `stwo-zig` separately.
+into the challenge's `main` branch to be judged. An operator-accepted cumulative
+patch is copied to `frontier/changes.patch` with exact PR and patch identities
+in `frontier/manifest.json`; new participants receive it automatically. This
+does not change the original baseline or create a ranked score. Upstream
+`stwo-zig` adoption is a separate source review.
 
 For this internal challenge, **the PR is enough to enter the operator's daily
 queue**. An operator reviews it and applies the `ready-to-judge` label. The

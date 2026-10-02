@@ -9,8 +9,18 @@ track guards matter; read [`WORKLOADS.md`](spec/WORKLOADS.md),
 [`SCORING.md`](spec/SCORING.md), and
 [`SUBMISSIONS.md`](spec/SUBMISSIONS.md) before editing.
 
-Run `python3 challenge.py setup` from the challenge root to create the ignored, editable prover checkout at **`./workspace/stwo-zig/`** (singular `workspace`). It is absent from GitHub and fresh clones. Run `python3 challenge.py paths` to print the absolute local paths. [CODE_MAP.md](spec/CODE_MAP.md) names the exact files to inspect and edit. The five allowed CUDA
-directories and their purposes are listed in `spec/SUBMISSIONS.md` and
+Run `python3 challenge.py setup` from the challenge root to create the ignored,
+editable prover checkout at **`./workspace/stwo-zig/`** (singular `workspace`).
+It is absent from GitHub and fresh clones. Run `python3 challenge.py paths` to
+print the absolute local paths. [CODE_MAP.md](spec/CODE_MAP.md) names the exact
+files to inspect and edit. The checkout begins with the reviewed
+[accepted frontier](frontier/manifest.json)
+over the immutable pinned prover source. `challenge.py capture` emits a
+**cumulative** patch against the original pin, including the frontier and your
+new work; do not strip the inherited changes. To inspect the original baseline
+in a fresh checkout, use `challenge.py setup --base`.
+The five allowed CUDA directories and their purposes are listed in
+`spec/SUBMISSIONS.md` and
 `benchmark.json`. Use CPU, Metal, and Rust implementations for understanding,
 but change production code only in those CUDA directories. The challenge
 contract, judge, verifier, fixture manifest, security profile, and reference

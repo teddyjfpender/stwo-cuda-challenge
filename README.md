@@ -19,21 +19,25 @@ accepts no ranked submissions; it links to this repository for research PRs
 and Discussions.
 The reviewed [PR status](data/reports/submission-review-2026-10-02.tsv) and
 [per-case research measurements](data/reports/submission-research-2026-10-02.tsv)
-for PRs #3, #4, and #6 are published separately from signed scores. PRs #3
-and #6 are queued for future trusted judging; direct-run numbers are unranked.
+for PRs #3, #4, and #6 are published separately from signed scores. PR #6 is
+the current [accepted starting frontier](frontier/manifest.json); this is an
+unranked source promotion, not a signed leaderboard result.
 PR #4's narrower [PoW primitive results](data/reports/submission-pow-primitives-2026-10-02.tsv)
 are retained alongside its full-command regressions.
 
 The prover's CUDA implementation lives in upstream `stwo-zig`. This challenge
 pins one commit from its `main` branch and checks it out under
-`workspace/stwo-zig` after `python3 challenge.py setup`. Participants submit changes to the allowed CUDA paths as
+`workspace/stwo-zig` after `python3 challenge.py setup`. Setup overlays the
+reviewed CUDA [frontier patch](frontier/changes.patch) by default; `--base`
+leaves a fresh checkout at the original pin. Participants submit cumulative
+changes to the allowed CUDA paths as
 `candidate/changes.patch` in their challenge-repository PRs. The judge applies
-that patch to a clean pinned checkout before building and measuring it. This
+that full patch to a clean pinned checkout before building and measuring it. This
 keeps one production source tree and gives maintainers a source diff to apply
 or rebase upstream. A PR should explain its CUDA changes in
 `candidate/NOTES.md`; the patch is the reviewable source diff, not a binary
 artifact. The challenge's `harness/` contains only measurement and validation
-code. `./setup.sh` obtains the exact source commit. Public inputs and retained
+code. `./setup.sh` obtains the exact source commit and accepted frontier. Public inputs and retained
 reference proofs are under
 [`data/`](data/README.md), with the scored fixture contract in
 [`fixtures/public-v1.json`](fixtures/public-v1.json).
@@ -88,7 +92,9 @@ timer, a source-only static estimate, or an unverified proof.
    gates are missing. `./setup.sh` creates the pinned baseline and editable
    checkout; it does not download private PIEs.
 2. Run `python3 challenge.py paths`, then work in `workspace/stwo-zig` under
-   the [allowed CUDA source paths](spec/CODE_MAP.md). Explore architecture
+   the [allowed CUDA source paths](spec/CODE_MAP.md). The checkout already
+   contains the accepted frontier; the baseline remains the original pin.
+   Explore architecture
    hypotheses first, test whether independent wins compose, then refine the
    surviving design. Name the expected stage and minimum gain; run relevant
    small local tests before a GPU trial.

@@ -98,7 +98,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--build", action="store_true", help="compile H200 CUDA products after checkout")
     parser.add_argument("--apply-candidate", action="store_true", help="apply candidate/changes.patch after checkout")
+    parser.add_argument("--base", action="store_true", help="leave the editable checkout at the original pinned source")
     args = parser.parse_args()
+    if args.base and args.apply_candidate:
+        parser.error("--base and --apply-candidate are mutually exclusive")
     config = json.loads((ROOT / "benchmark.json").read_text())
     workspace = ROOT / "workspace/stwo-zig"
     baseline = ROOT / "workspace/baseline"
@@ -116,6 +119,9 @@ def main() -> None:
                                             cwd=baseline, text=True).strip()
     if baseline_head != config["sourceCommit"]:
         raise SystemExit("baseline checkout is not pinned")
+    if not args.base and not args.apply_candidate:
+        from harness.accepted_frontier import apply_frontier
+        apply_frontier(ROOT, workspace, baseline, config)
     if args.apply_candidate:
         patch = ROOT / "candidate/changes.patch"
         if not patch.is_file():
