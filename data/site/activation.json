@@ -4,43 +4,43 @@
   "gates": [
     {
       "name": "Proof-only scoring contract",
-      "status": "pending",
-      "evidence": "Six Cairo PIE proof-stage timers are retained, but wrap, fold, and pipeline proof-only timers are not. The implemented h200-v1 judge scores adapted-input-to-publication time. A reviewed new epoch, complete timers, and fresh baselines are required before a proof-only leaderboard can launch."
+      "status": "partial",
+      "evidence": "The proof-v2 contract pins the same nine hash-checked Cairo, fold, and integrated pipeline jobs for CUDA, Metal, and CPU. Protected exact Cairo, wrap, and fold timers are merged in stwo-zig PR #213. Direct M5 receipts exercise those intervals, but a trusted proof-v2 judge and fresh paired baselines are still required for ranking."
     },
     {
       "name": "Contract and data",
       "status": "done",
-      "evidence": "All 60 public files hash-verified on a healthy H200; contract CI passes."
+      "evidence": "The nine proof-v2 jobs use one hash-pinned public manifest across three backends; contract and file-integrity checks pass. The former ten-case H200 command-time epoch remains archived."
     },
     {
       "name": "Independent verifiers",
-      "status": "done",
-      "evidence": "Both pinned Rust verifiers accepted every Cairo proof in two direct H200 rounds."
+      "status": "partial",
+      "evidence": "Direct proof-v2 M5 runs check exact Cairo proof and circuit root bytes against pinned references; Cairo product verification is enabled. The proof-v2 judge must independently verify every public and private proof, including circuit roots."
     },
     {
       "name": "Public proofs and folds",
-      "status": "done",
-      "evidence": "Six PIEs, both folds and both pipeline modes reproduced exact reference hashes on H200."
+      "status": "partial",
+      "evidence": "CPU and Metal M5 Max each reproduce all nine current-reference Cairo, fold, and integrated pipeline outputs with exact proof-stage timers. The current-pin H200 basket remains unmeasured."
     },
     {
       "name": "Private holdout",
       "status": "partial",
-      "evidence": "An 18-case holdout passes hash preflight locally; not yet mounted on a judge."
+      "evidence": "Existing holdout assets pass local hash preflight, but the proof-v2 judge has not mounted or qualified private cases."
     },
     {
       "name": "Paired scoring",
       "status": "partial",
-      "evidence": "Tracks, guards, ABBA, A/A and bootstrap pass scorer tests; no paired H200 rounds yet."
+      "evidence": "The proof-v2 scorer checks exact stage counts and equally weights Cairo, recursion, and pipeline families. Direct one-pass M5 observations are unranked; no paired baseline/candidate rounds or A/A dispersion study exists for this epoch."
     },
     {
       "name": "Intake and dispatch",
       "status": "partial",
-      "evidence": "Intake, trusted builder, tiered receipts and signing pass locally; no self-hosted runner is configured."
+      "evidence": "Trial submissions and direct comparisons work locally; a self-hosted proof-v2 runner, trusted receipt signing, and backend-specific promotion remain to be wired."
     },
     {
       "name": "Candidate isolation",
       "status": "pending",
-      "evidence": "CPU sandbox probe passed; GPU isolation on the actual H200 runner is still to qualify."
+      "evidence": "The earlier CPU sandbox probe does not qualify proof-v2. Candidate isolation, immutable inputs, and GPU access must be checked on each actual ranking worker."
     }
   ]
 }

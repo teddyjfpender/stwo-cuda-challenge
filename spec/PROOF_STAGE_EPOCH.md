@@ -1,6 +1,6 @@
-# Next epoch: proof execution on CUDA, Metal, and CPU
+# Staged proof-only epoch: CUDA, Metal, and CPU
 
-The next challenge scores **proof execution time only**. CUDA runs on one
+This challenge targets **proof execution time only**. CUDA runs on one
 exclusive H200; Metal and CPU run independently on this 64 GB M5 Max. Each
 backend receives the **same nine unique proof jobs, hash-pinned CPI/leaf
 inputs, ordered tree, registry, and canonical security profile** in
@@ -39,7 +39,7 @@ measurement boundary. A deliberately dishonest candidate that reports a tiny
 internal timer must not improve the score. CUDA's product-level timer and
 circuit `resident_ns` were emitted from editable source under v1, so the
 implemented `h200-v1` judge cannot be relabeled or ranked as proof-only. The
-staged edit surfaces protect those files. The proposed source commit adds
+staged edit surfaces protect those files. The pinned source commit adds
 nanosecond timers at the shared Cairo, wrap, and fold prover call boundaries;
 the judge must still authenticate the stage receipts end to end.
 
@@ -89,17 +89,18 @@ footprints respectively. The other public cases and private holdouts remain
 unqualified on the proposed pin.
 
 The staged [`benchmark-proof-v2.json`](../benchmark-proof-v2.json) pins the
-proposed stage-timer commit `1433d61b`, based on upstream `97510e52` after
+stage-timer commit `1433d61b`, based on upstream `97510e52` after
 the accepted PR #17 improvements were upstreamed. Its
 candidate edit surfaces exclude the timer-owning product files; timer-file
 digests are fixed separately per backend. The staged proof scorer validates
 one Cairo proof per standalone PIE, one proof per fold reduction, and two
 Cairo plus two wrap plus one fold proof for the remaining pipeline job. It
 scores only those stage intervals, with memory as an admission gate. This is
-staging code: the current `benchmark.json` remains the h200-v1 command-time
-contract until new timer receipts, judge runners, and complete backend
-baselines qualify. The M5 capacity records above predate this timing-only
-commit and are not score denominators.
+staging code: the former `benchmark.json` command-time contract is archived
+and cannot issue a proof-only score. The new direct runners work on all three
+backends, while paired judging and complete backend baselines remain gates.
+The M5 capacity records above predate this timing-only commit and are not
+score denominators.
 
 Maintainers and early participants can inspect one backend's new source
 surface without disturbing the current v1 checkout or submission patch:
@@ -118,10 +119,10 @@ the source pin and protected timer hashes, and capture validates the selected
 backend's edit surface. Re-running setup advances clean checkouts to a newer
 pin; it refuses to overwrite participant edits, which must be captured first.
 The accepted v1 CUDA frontier is already upstream on this new source line and
-is not overlaid again. This is **staging**, not a proof-only score or a new
-public submission route. Until the source timer receipts and judge are
-qualified, the current v1 setup/capture/benchmark commands remain the only
-implemented challenge workflow.
+is not overlaid again. This is a **public, reviewable trial route**, not a
+ranked proof-only score. Run `challenge.py benchmark-proof --backend BACKEND`
+for exact public jobs, and submit the captured patch in a challenge PR. Direct
+receipts stay unranked until paired judging and backend baselines qualify.
 
 For M5 capacity and exact-output research, the direct diagnostic runner can
 exercise one case or the full nine-case basket after building both Cairo and

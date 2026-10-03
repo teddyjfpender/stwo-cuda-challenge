@@ -97,6 +97,17 @@ class ProofEpochTest(unittest.TestCase):
         self.assertTrue(result["promotable"])
         self.assertAlmostEqual(result["score"], 1.25)
 
+    def test_unified_memory_peak_is_optional_but_cuda_peak_is_required(self):
+        m5 = self.evidence("metal")
+        for row in m5["baseline"] + m5["candidate"]:
+            row.pop("peak_bytes")
+        self.assertAlmostEqual(aggregate(self.config, self.manifest,
+                                         self.manifest_hash, m5)["score"], 1.25)
+        cuda = self.evidence("cuda")
+        cuda["candidate"][0].pop("peak_bytes")
+        with self.assertRaisesRegex(InvalidProofEvidence, "memory peak"):
+            aggregate(self.config, self.manifest, self.manifest_hash, cuda)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -18,8 +18,8 @@ class ProofEpochSetupTests(unittest.TestCase):
                             "-c", "user.email=test@example.com", "commit", "-qm", "first"], check=True)
             first = head(repo)
             file.write_text("second\n")
-            subprocess.run(["git", "-C", str(repo), "commit", "-qam", "second",
-                            "--author=Test <test@example.com>"], check=True)
+            subprocess.run(["git", "-C", str(repo), "-c", "user.name=Test",
+                            "-c", "user.email=test@example.com", "commit", "-qam", "second"], check=True)
             second = head(repo)
             repin_clean(repo, first)
             self.assertEqual(head(repo), first)

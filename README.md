@@ -1,253 +1,34 @@
-# Stwo CUDA Challenge
+# Stwo proving challenge
 
-The [proof-only multi-backend trial](spec/PROOF_STAGE_EPOCH.md) is now available
-for local testing. It uses the same nine unique canonical jobs on CUDA H200,
-Metal M5 Max, and CPU M5 Max; only Cairo, wrap, and fold prover intervals
-enter its staged score. Start at the [agent task](TASK.md#proof-only-cuda-metal-and-cpu-trial)
-and use `challenge.py setup-proof`, `benchmark-proof`, and `capture-proof`.
-Exact output checks and protected timer hashes are implemented, but the
-paired sandboxed judge and fresh backend baselines are still qualification
-gates. Trial results are unranked until those gates pass.
+Optimize **proof execution** for the same nine hash-pinned Starknet jobs on CUDA H200, Metal M5 Max, or CPU M5 Max. Six jobs prove Cairo PIEs, two fold already wrapped leaves, and one proves two PIEs through Cairo, wrap, and fold to a single root. Choose one backend per submission. Each backend has its own source edit surface and baseline; only its Cairo, wrap, and fold prover-call intervals enter the proposed latency score. Input loading, setup, publication, verification, and full-command time are separate diagnostics. Memory must fit the selected host and does not multiply the score.
 
-Optimize the production Cairo and circuit-recursion CUDA paths in
-[`stwo-zig`](https://github.com/teddyjfpender/stwo-zig) on one H200. The ranked
-workload starts with **already adapted** Starknet PIE inputs, proves each PIE,
-wraps Cairo proofs in circuit verifier proofs, and folds consecutive leaves to
-one recursive root. The judge owns the inputs, clock, memory measurement,
-security settings, independent Cairo verification, and canonical root checks.
+The proof-only epoch is **staging**. Participants can build, run exact public jobs, capture a reviewable patch, and open a PR now. Direct measurements are unranked until the paired, isolated judge, independent verification, and full backend baselines qualify. The prior H200 command-time contract is [archived](spec/LEGACY_H200_V1.md); its old numbers are not proof-only ranks.
 
-**Launch scope:** the intended research target is GPU proving time. The
-implemented `h200-v1` judge currently scores the full adapted-input-to-proof
-command, including ingress and publication, and is **not live**. Six Cairo PIE
-proof-stage timings are retained (1.17–1.95 s); wrap/fold proof-only timers are
-still missing. The [activation decision](spec/ACTIVATION.md) requires a new
-proof-stage scoring epoch and fresh baselines before a proving-time leaderboard
-can open. The direct 6.90–9.78 s Cairo figures are full-command diagnostics.
-The [staging website](https://autoresearch-web-lac.vercel.app/challenges/stwo-cuda)
-accepts no ranked submissions; it links to this repository for research PRs
-and Discussions.
-The reviewed [PR status](data/site/sources.json) and per-case research
-measurements selected by that manifest are published separately from signed
-scores. The [accepted starting frontier](frontier/manifest.json) is a cumulative
-patch: challenge PR #17 builds on challenge PR #6 and the ingress changes
-merged upstream in `stwo-zig` PR #205. PR #17 has direct H200 research
-measurements, but no judged ranking. Pull challenge `main` and rerun setup to
-pick up that reviewed source.
-PR #4's narrower [PoW primitive results](data/reports/submission-pow-primitives-2026-10-02.tsv)
-are retained alongside its full-command regressions.
-The [upstream PR #212 H200 ingress study](data/reports/README.md#upstream-cuda-ingress-pr-212-2026-10-03)
-records two- and four-distinct-PIE ABBA timings and exact proof hashes as
-unranked research; it does not change this challenge's fixed source pin or
-accepted participant frontier.
+## Start a trial
 
-The prover's CUDA implementation lives in upstream `stwo-zig`. This challenge
-pins one commit from its `main` branch and checks it out under
-`workspace/stwo-zig` after `python3 challenge.py setup`. Setup overlays the
-reviewed cumulative CUDA [frontier patch](frontier/changes.patch) by default; `--base`
-leaves a fresh checkout at the original pin. Participants submit cumulative
-changes to the allowed CUDA paths as
-`candidate/changes.patch` in their challenge-repository PRs. The judge applies
-that full patch to a clean pinned checkout before building and measuring it. This
-keeps one production source tree and gives maintainers a source diff to apply
-or rebase upstream. A PR should explain its CUDA changes in
-`candidate/NOTES.md`; the patch is the reviewable source diff, not a binary
-artifact. The challenge's `harness/` contains only measurement and validation
-code. `./setup.sh` obtains the exact source commit and accepted frontier. Public inputs and retained
-reference proofs are under
-[`data/`](data/README.md), with the scored fixture contract in
-[`fixtures/public-v1.json`](fixtures/public-v1.json).
-
-Start with [TASK.md](TASK.md) and the [exact CUDA source map](spec/CODE_MAP.md).
-Run `python3 challenge.py paths` to see the local checkout path; there is no
-`/workspaces/stwo-zig` directory, and `workspace/` is ignored in Git. A fresh
-clone therefore has no prover source until setup runs. The fixed contract is [benchmark.json](benchmark.json),
-the workload and proof obligations are in [spec/WORKLOADS.md](spec/WORKLOADS.md),
-and the scoring and tradeoffs are in [spec/SCORING.md](spec/SCORING.md).
-The [submission guide](spec/SUBMISSIONS.md) lists editable CUDA files,
-validation, Discussion use, PR contents, and the separate judge intake step.
-Coding agents can load the repository's
-[participant skill](skills/stwo-cuda-challenge/SKILL.md); its commands are
-available through [`challenge.py`](challenge.py). Both use paths relative to
-this checkout.
-The specific upstream design choices are recorded in
-[spec/REFERENCES.md](spec/REFERENCES.md). The exact boundary before enabling
-the live H200 leaderboard is in [spec/ACTIVATION.md](spec/ACTIVATION.md).
-
-Three rankings use the **same validated proofs and measurements**. The public
-basket currently has six component-diverse PIEs, two fixed-leaf root folds
-(two leaves and eight distinct contiguous leaves), and two full PIE-to-root
-modes (serial and integrated batch):
-
-| Track | Objective | Why it exists |
-| --- | --- | --- |
-| `latency` | Minimize the weighted geometric mean of adapted-input-to-publication time | Fastest usable H200 pipeline. |
-| `memory` | Minimize the weighted geometric mean of whole-device peak bytes, with a latency guard | Make dense PIEs fit and enable later GPU choices. |
-| `balanced` | Minimize normalized time × peak memory, with per-case guardrails | Explore the Pareto tradeoff; a capacity proxy, not a dollar-cost claim. |
-
-Every score card publishes the uncompressed per-case `(time, memory)` ratios;
-`harness/frontier.py` derives Pareto status across judged submissions.
-Correctness is a hard gate for **all** tracks. The
-ranked suite is fixed by a versioned, hash-pinned manifest; holdout inputs use
-the same public shape classes. There is no score from a self-reported kernel
-timer, a source-only static estimate, or an unverified proof.
-
-## Development loop
-
-1. Prepare Zig 0.15.2, CUDA/nvcc, ccache 4.0+, Cargo,
-   `nightly-2026-01-15`, and
-   `git lfs pull` on a Linux H200 workspace. Keep the toolchain, fixtures,
-   checked preprocessing asset, verifiers, and baseline build on a reusable
-   volume. Set `STWO_CUDA_BUILD_CACHE_ROOT` to a persistent directory;
-   setup shares its archive/cubin and ccache entries between baseline and
-   candidate builds while targeting only SM 90. The reviewed
-   [fixed-artifact release](spec/RELEASE_ARTIFACTS.md) lets setup
-   download hash-verified Rust verifiers and canonical preprocessing data
-   instead of rebuilding those unchanged inputs. The operator runs
-   `scripts/h200_preflight.py --mode direct` before
-   research proofs. A separate ranked judge host also needs Docker/NVIDIA,
-   mount privileges, and the pinned sandbox image; its
-   `--mode judge --image SHA256_ID` preflight fails before proof work if those
-   gates are missing. `./setup.sh` creates the pinned baseline and editable
-   checkout; it does not download private PIEs.
-2. Run `python3 challenge.py paths`, then work in `workspace/stwo-zig` under
-   the [allowed CUDA source paths](spec/CODE_MAP.md). The checkout already
-   contains the accepted frontier; the baseline remains the original pin.
-   After pulling challenge `main`, rerun `python3 challenge.py setup` to pick
-   up a newer frontier. An unchanged previous frontier advances automatically;
-   if you have source edits, capture them first and move them onto a fresh
-   checkout. Setup will not overwrite participant changes.
-   Explore architecture
-   hypotheses first, test whether independent wins compose, then refine the
-   surviving design. Name the expected stage and minimum gain; run relevant
-   small local tests before a GPU trial.
-3. Capture the source diff with `./scripts/capture-candidate.sh`. Optionally
-   attach a prebuilt binary digest for the fast screening tier. The binary is
-   never a substitute for source in a ranked submission.
-   Capture refreshes the derived CUDA manifests after kernel edits. The trusted
-   builder checks them against source and pinned product policy; only the
-   unmodified baseline must match the immutable upstream import hash.
-4. Build both arms, the pinned Rust verifiers, and the canonical preprocessing
-   asset with `./setup.sh --build`. On an idle H200, run a verified PIE and
-   fold/pipeline A/B smoke with `scripts/h200_experiment.py`; its stage-gain
-   gate prevents weak hypotheses from launching the full basket. The direct
-   driver journals source/binary hashes, cold command, phase times, proof
-   hashes, and whole-device peak for every run. A trusted `rank` run separately
-   performs three ABBA rounds and emits signed scores only on a qualified
-   sandboxed judge; direct results remain research evidence.
-   For a verified one-case GPU timeline and 10 ms whole-device memory trace,
-   use the [profiling runbook](spec/H200_PROFILING.md) before choosing a kernel
-   or buffer-lifetime experiment. Profiled wall time is diagnostic.
-
-On a prepared H200 host, the local loop is:
+Read [TASK.md](TASK.md), the [proof contract](benchmark-proof-v2.json), [fixed jobs](fixtures/public-proof-v2.json), and [submission guide](spec/SUBMISSIONS.md). Clone this repository, then run:
 
 ```sh
 git lfs pull
 python3 challenge.py check-data
-python3 challenge.py setup
-python3 challenge.py paths
-# Edit allowed CUDA source paths in workspace/stwo-zig.
-python3 challenge.py capture
-python3 challenge.py setup --build
-python3 challenge.py benchmark --tier smoke --track balanced
+python3 challenge.py setup-proof --backend metal --build
+python3 challenge.py benchmark-proof --backend metal \
+  --case-id recursion:two-leaf-wrap-fold --out ./proof-trial
 ```
 
-Use `python3 challenge.py benchmark --tier qualify` for all cases once and
-`--tier rank` only on a qualified judge. The original `setup.sh`,
-`scripts/capture-candidate.sh`, and `benchmark.sh` remain equivalent direct
-entry points; `python3 challenge.py --help` lists the participant commands.
-To package a candidate, update `candidate/NOTES.md`, then commit and push
-`candidate/changes.patch` and `candidate/NOTES.md` in your challenge fork.
-Open a PR against this challenge repository for review and link any relevant
-[research Discussions](spec/DISCUSSIONS.md). Opening a PR does not start a
-GPU run or constitute a ranked submission.
-For this internal challenge, the PR enters a manual daily review queue.
-The operator freezes its number and exact head SHA with `service/pr_batch.py`;
-the optional HTTP intake is not required. The checked-in
-[activation record](spec/ACTIVATION.md) tracks the later ranked-judge gate.
-The benchmark defaults to the checked-in public inputs and setup assets under
-`.cache/`; operator paths and the private manifest can be supplied with CLI
-flags or the `STWO_*` variables shown in `.github/workflows/h200-rank.yml`.
-The checked-in public files use Git LFS: run `git lfs pull` and
-`python3 scripts/check_data.py` after cloning. In deployment the judge may
-mount its own read-only content-addressed store with the same manifest-relative
-paths. Run `python3 scripts/materialize_public.py --source workspace/stwo-zig
---out data/inputs --verify-only` to check the original public fixture contract
-before spending GPU time. The canonical preprocessing
-asset is generated from the pinned prover with `zig build
-cairo-preprocessed-export -Doptimize=ReleaseFast` followed by
-`zig-out/bin/cairo-preprocessed-export /absolute/path/preprocessed-canonical.bin
-canonical`. Keep the 2 GiB asset outside Git.
+Replace `metal` with `cpu` on the M5 Max, or `cuda` on a prepared H200. The editable pinned prover checkout appears at `workspace/proof-v2-source`; the clean reference checkout is `workspace/proof-v2-baseline`. Both are ignored by Git. For CUDA, prepare fixed assets and independent Rust verifiers using the [H200 runbook](spec/H200_RUNBOOK.md). Run a representative PIE and fold before omitting `--case-id` for the full nine-job basket. Each direct receipt records source and binary identities, exact reference output checks, proof time, and command time separately. The [epoch design](spec/PROOF_STAGE_EPOCH.md) specifies stage boundaries and remaining activation gates.
 
-Standalone PIE proofs use the pinned `stwo-cairo-official-verifier`. Registry
-leaf proofs use the pinned Rust `verify_cairo_cuda_json` helper because their
-Blake2s-M31/lifted proof shape is different. `./setup.sh --build` creates both
-verifiers from the pinned baseline source; `--registry-cairo-verifier` can
-override the latter path when using operator-managed assets.
+For CPU/Metal, `scripts/export_proof_v2.py` rechecks every on-disk proof or root
+and exports the complete direct basket to TSV. After running the baseline and
+candidate separately, `challenge.py compare-proof --backend metal --baseline
+BASELINE.tsv --candidate CANDIDATE.tsv --out COMPARISON.json` gives an
+**unranked** family-weighted proof-time comparison. This is a quick research
+loop, not the paired, isolated rank judge.
 
-Participants do not need the PIE API key. The operator creates a static
-content-addressed bundle once, then hosts that directory over HTTPS:
+Explore architectural improvements first, measure whether strong changes compose, then refine the best design. Use [GitHub Discussions](https://github.com/teddyjfpender/stwo-cuda-challenge/discussions) to compare designs and report useful failed experiments. After editing only the selected backend's `editablePaths` in the contract, run `python3 challenge.py capture-proof --backend metal`. Commit `candidate/proof-v2-changes.patch` and your notes in a challenge-repository PR. Include the changed source paths, mechanism, before/after proof-stage times, exact proof checks, memory and command diagnostics, regressions, attribution, and relevant Discussions. The [participant skill](skills/stwo-cuda-challenge/SKILL.md) gives the same workflow to coding agents.
 
-```sh
-python3 scripts/publish_public.py \
-  --source data/inputs \
-  --out ../stwo-cuda-challenge-public-bundle
-python3 scripts/fetch_public.py \
-  --base https://your-fixture-host.example/challenge/h200-v1 \
-  --out data/inputs
-```
+## Data and website
 
-The downloader checks the committed manifest digest and every blob SHA-256.
-`--case-id` fetches only one case for a cheap smoke loop. The public bundle is
-prepared locally; its HTTPS hosting remains part of deployment.
+The [main research TSV](data/reports/submission-research-2026-10-03.tsv) places historical modeled PIE improvements and measured direct observations against the same six current public inputs. `record_kind`, provenance, method, and uncertainty fields distinguish modeled history from measurements; neither is a signed proof-v2 rank. The [site source manifest](data/site/sources.json) points the website to this TSV, the proof contract, fixed jobs, and backend observation tables. [CUDA](https://autoresearch-web-lac.vercel.app/challenges/stwo-cuda), [Metal](https://autoresearch-web-lac.vercel.app/challenges/stwo-metal), and [CPU](https://autoresearch-web-lac.vercel.app/challenges/stwo-cpu) share the job definitions and show backend-specific observations.
 
-The service/runner design, artifact policy, isolation requirements, and H200
-budget controls are in [spec/JUDGE.md](spec/JUDGE.md). The
-[H200 operator runbook](spec/H200_RUNBOOK.md) gives the activation sequence.
-The [operations map](spec/OPERATIONS.md) explains how PRs, intake, GitHub
-Actions, signed receipts, and `autoresearch-web` fit together and which live
-connections still need deployment.
-For the internal daily batch, an operator reviews PRs, adds the
-`ready-to-judge` label, and freezes their exact heads into local intake state:
-
-```sh
-python3 service/pr_batch.py --dry-run
-python3 service/pr_batch.py --source workspace/baseline \
-  --state /operator/state
-```
-
-The standalone HTTP intake prototype and trusted dispatcher also remain
-runnable locally:
-
-```sh
-python3 service/intake.py --source workspace/baseline \
-  --state ../stwo-cuda-challenge-state --token-file /secure/path/intake-token \
-  --max-intake-requests-24h 100
-python3 service/build_worker.py --source workspace/baseline \
-  --state ../stwo-cuda-challenge-state --submission-id ID
-python3 service/dispatch.py --source workspace/baseline \
-  --state ../stwo-cuda-challenge-state --submission-id ID \
-  --repository teddyjfpender/stwo-cuda-challenge --tier smoke --dry-run
-```
-
-`POST /submissions` takes `{"repository":"https://github.com/OWNER/FORK",
-"commit":"FULL_SHA"}` and an optional `artifact_sha256`. It returns a job ID
-after patch validation, without building or reserving the H200. The worker
-rebuilds ranked binaries from source; uploaded artifacts are stored for future
-untrusted fast screening only. A real H200 deployment requires a fixture
-object store, verifier binaries, self-hosted runner, isolation, an externally
-provisioned receipt signing key, chosen GPU dispatch budgets, and operator
-secrets outside Git. Intake's request limit is persistent across restarts.
-This repo does not claim to operate a live public ranking service yet.
-
-The [public staging repository](https://github.com/teddyjfpender/stwo-cuda-challenge)
-has Discussions enabled. Once an operator configures the dedicated H200
-runner and judge variables, removing `--dry-run` dispatches a built submission
-to the serialized workflow. Smoke, qualify, and rank receipts remain available
-by tier as a submission progresses.
-The manual `CPU sandbox probe` workflow exercises the image and filesystem
-boundary on a hosted Linux runner; H200 GPU proof parity remains a separate
-activation gate.
-
-The current GitHub Discussions categories and research forms are in
-[spec/DISCUSSIONS.md](spec/DISCUSSIONS.md). No benchmark source, proof blob,
-API token, or private fixture belongs in a Discussion or submission PR.
+The [activation record](spec/ACTIVATION.md) lists what remains before promotion can issue ranked receipts. Source changes belong in the upstream [`stwo-zig`](https://github.com/teddyjfpender/stwo-zig) prover; this repository pins that source and stores participant patches, harnesses, manifests, and research data.
