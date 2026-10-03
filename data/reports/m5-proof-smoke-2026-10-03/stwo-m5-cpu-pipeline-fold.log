@@ -1,0 +1,50 @@
+info(circuit_recursion): reducing layer 0 with 2 entries
+info(circuit_recursion): reduce layer 1 pair 0 (root): build 429 ms, prove 6104 ms
+info: recursive tree: 2 leaves, 1 layers, 1 reductions
+fold_canonical_build 1.545 s
+fold_reduce_root 6.534 s
+  fold_build 0.429 s
+  circuit_commit_preprocessed 0.000 s
+  circuit_base_witness 0.360 s
+  circuit_commit_base 0.979 s
+    merkle_commit 0.363 s
+  circuit_interaction_pow 0.001 s
+  circuit_interaction_witness 1.231 s
+  circuit_commit_interaction 1.102 s
+    merkle_commit 0.320 s
+  circuit_bind_components 0.000 s
+  draw_random_coeff 0.000 s
+  composition_trace_extract 0.000 s
+  composition_evaluation 0.549 s
+    cpu_composition_component 0.257 s
+      cpu_native_air_part 0.000 s
+    cpu_composition_component 0.004 s
+      cpu_native_air_part 0.000 s
+    cpu_composition_component 0.058 s
+      cpu_native_air_part 0.000 s
+    cpu_composition_component 0.014 s
+      cpu_native_air_part 0.000 s
+    cpu_composition_component 0.012 s
+      cpu_native_air_part 0.000 s
+    cpu_composition_component 0.000 s
+      cpu_native_air_part 0.000 s
+    cpu_composition_component 0.016 s
+      cpu_native_air_part 0.000 s
+    cpu_composition_component 0.000 s
+      cpu_native_air_part 0.000 s
+    cpu_composition_component 0.000 s
+      cpu_native_air_part 0.000 s
+    cpu_composition_component 0.001 s
+      cpu_native_air_part 0.000 s
+    cpu_composition_component 0.000 s
+      cpu_native_air_part 0.000 s
+  composition_interpolate_and_split 0.048 s
+  composition_commit 0.179 s
+  oods_point_and_mask_points 0.000 s
+  sampled_value_evaluation 0.576 s
+  sampled_value_channel_mix 0.000 s
+  fri_quotient_build_and_commit 0.673 s
+  proof_of_work 0.135 s
+  fri_decommit 0.210 s
+  trace_decommit 0.004 s
+  constraint_check_and_assembly 0.000 s

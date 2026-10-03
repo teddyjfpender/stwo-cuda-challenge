@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 3,
+  "status": "staging",
+  "name": "stwo-multibackend-proof-execution",
+  "contractEpoch": "proof-v2",
+  "sourceRepository": "https://github.com/teddyjfpender/stwo-zig.git",
+  "sourceCommit": "97510e52e2fd1d2703385a912177107ed72d8f88",
+  "fixtureManifest": "fixtures/public-proof-v2.json",
+  "security": {
+    "friQueries": 70,
+    "queryPowBits": 26,
+    "interactionPowBits": 24,
+    "preprocessedVariant": "canonical"
+  },
+  "metric": {
+    "name": "proof_stage_seconds",
+    "direction": "minimize",
+    "familyWeights": {
+      "pie": 0.3333333333333333,
+      "recursion": 0.3333333333333333,
+      "pipeline": 0.3333333333333333
+    },
+    "memory": "capacity_gate_only",
+    "coldCommandTime": "diagnostic_only"
+  },
+  "backends": {
+    "cuda": {
+      "host": "NVIDIA H200 SXM",
+      "deviceBytes": 150754820096,
+      "reserveBytes": 6000000000,
+      "editablePaths": [
+        "src/backends/cuda",
+        "src/integrations/cairo_cuda",
+        "src/integrations/circuit_cuda"
+      ],
+      "protectedPaths": [
+        "src/integrations/circuit_cuda/recursion_source.zig",
+        "src/integrations/cairo_cuda/executor/proof_session.zig"
+      ],
+      "timerFiles": [
+        "src/products/cairo_cuda/app.zig",
+        "src/integrations/circuit_cuda/recursion_source.zig",
+        "src/integrations/circuit_cpu/recursion/fold.zig",
+        "src/integrations/circuit_cpu/recursion/leaf_wrap.zig"
+      ],
+      "timerDigest": "b2a590f397f8a67ec487aeb76133aaa4838212229a9d140a6a82f4a672be90a7"
+    },
+    "metal": {
+      "host": "Apple M5 Max 64 GB",
+      "unifiedMemoryBytes": 68719476736,
+      "editablePaths": [
+        "src/backends/metal",
+        "src/integrations/cairo_metal",
+        "src/integrations/circuit_metal"
+      ],
+      "protectedPaths": [],
+      "timerFiles": [
+        "src/products/cairo/shared/application.zig",
+        "src/products/circuit_recursion_cpu/app.zig",
+        "src/integrations/circuit_cpu/recursion/fold.zig",
+        "src/integrations/circuit_cpu/recursion/leaf_wrap.zig"
+      ],
+      "timerDigest": "027aa903356cc07a9feacf32a5f2705b26529433a39de2caaf8ea025d2c89348"
+    },
+    "cpu": {
+      "host": "Apple M5 Max 64 GB",
+      "systemMemoryBytes": 68719476736,
+      "editablePaths": [
+        "src/backends/cpu_scalar",
+        "src/integrations/cairo_cpu",
+        "src/integrations/circuit_cpu"
+      ],
+      "protectedPaths": [
+        "src/integrations/circuit_cpu/recursion/fold.zig",
+        "src/integrations/circuit_cpu/recursion/leaf_wrap.zig"
+      ],
+      "timerFiles": [
+        "src/products/cairo/shared/application.zig",
+        "src/products/circuit_recursion_cpu/app.zig",
+        "src/integrations/circuit_cpu/recursion/fold.zig",
+        "src/integrations/circuit_cpu/recursion/leaf_wrap.zig"
+      ],
+      "timerDigest": "027aa903356cc07a9feacf32a5f2705b26529433a39de2caaf8ea025d2c89348"
+    }
+  },
+  "tracks": [
+    {
+      "name": "proof-cuda",
+      "backend": "cuda",
+      "scorePath": "score-proof-cuda.json"
+    },
+    {
+      "name": "proof-metal",
+      "backend": "metal",
+      "scorePath": "score-proof-metal.json"
+    },
+    {
+      "name": "proof-cpu",
+      "backend": "cpu",
+      "scorePath": "score-proof-cpu.json"
+    }
+  ]
+}

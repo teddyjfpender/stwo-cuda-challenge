@@ -1,0 +1,59 @@
+info: device composition metallib admitted: air_template_composition_bounded_v4 (a11c91fc929fc1cf978e7b3ce5db03cdb5ce11cc88fa1fcf1d46df4f87cab9d1, 10121115 bytes)
+info: composition tiled admission: add_opcode: 524288 rows per tile, 262 MiB arena
+info: composition tiled admission: add_opcode_small: 1048576 rows per tile, 268 MiB arena
+info: composition tiled admission: add_ap_opcode: 1048576 rows per tile, 164 MiB arena
+info: composition tiled admission: assert_eq_opcode: 1048576 rows per tile, 128 MiB arena
+info: composition tiled admission: assert_eq_opcode_double_deref: 1048576 rows per tile, 172 MiB arena
+info: composition tiled admission: call_opcode_rel_imm: 1048576 rows per tile, 208 MiB arena
+info: composition tiled admission: jnz_opcode_taken: 1048576 rows per tile, 284 MiB arena
+info: composition tiled admission: mul_opcode: 524288 rows per tile, 428 MiB arena
+info: composition tiled admission: mul_opcode_small: 1048576 rows per tile, 276 MiB arena
+info: composition tiled admission: ret_opcode: 1048576 rows per tile, 160 MiB arena
+info: composition tiled admission: blake_round: 262144 rows per tile, 340 MiB arena
+info: composition tiled admission: blake_g: 1048576 rows per tile, 388 MiB arena
+info: composition tiled admission: partial_ec_mul_generic: 65536 rows per tile, 315 MiB arena
+info: composition tiled admission: partial_ec_mul_window_bits_18: 131072 rows per tile, 282 MiB arena
+info: composition tiled admission: pedersen_points_table_window_bits_18: 1048576 rows per tile, 280 MiB arena
+info: composition tiled admission: cube_252: 262144 rows per tile, 349 MiB arena
+info: composition tiled admission: memory_address_to_id: 1048576 rows per tile, 292 MiB arena
+info: composition tiled admission: memory_id_to_big[0]: 1048576 rows per tile, 280 MiB arena
+info: composition tiled admission: memory_id_to_small: 1048576 rows per tile, 120 MiB arena
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_sd_3e2619c965690820
+info: composition host admission: add_mod_builtin: kernel stwo_zig_eval_sd_3e2619c965690820: PolynomialEvaluationFailed
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_sd_f5c210ee11c12b32
+info: composition host admission: bitwise_builtin: kernel stwo_zig_eval_sd_f5c210ee11c12b32: PolynomialEvaluationFailed
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_sd_880388445dd1edaa
+info: composition host admission: mul_mod_builtin: kernel stwo_zig_eval_sd_880388445dd1edaa: PolynomialEvaluationFailed
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_sd_33e16d6937b57728
+info: composition host admission: pedersen_builtin: kernel stwo_zig_eval_sd_33e16d6937b57728: PolynomialEvaluationFailed
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_sd_02ad4e89a5eb6381
+info: composition host admission: poseidon_builtin: kernel stwo_zig_eval_sd_02ad4e89a5eb6381: PolynomialEvaluationFailed
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_sd_979dcb81915d15f2
+info: composition host admission: range_check96_builtin: kernel stwo_zig_eval_sd_979dcb81915d15f2: PolynomialEvaluationFailed
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_sd_f2fe1dbed4f1ca8e
+info: composition host admission: range_check_builtin: kernel stwo_zig_eval_sd_f2fe1dbed4f1ca8e: PolynomialEvaluationFailed
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_sd_0e02e004893e391b
+info: composition host admission: ec_op_builtin: kernel stwo_zig_eval_sd_0e02e004893e391b: PolynomialEvaluationFailed
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_td3_22caeab4f5b69210
+info: composition host admission: memory_address_to_id: kernel stwo_zig_eval_td3_22caeab4f5b69210: PolynomialEvaluationFailed
+info: device composition stage open: 55/64 components accepted, arena 470 MiB
+info: composition tile staging: add_opcode: 2032 MiB across 127 read sites
+info: composition tile staging: add_opcode_small: 4032 MiB across 63 read sites
+info: composition tile staging: add_ap_opcode: 592 MiB across 37 read sites
+info: composition tile staging: assert_eq_opcode: 3584 MiB across 28 read sites
+info: composition tile staging: assert_eq_opcode_double_deref: 2496 MiB across 39 read sites
+info: composition tile staging: call_opcode_rel_imm: 1536 MiB across 48 read sites
+info: composition tile staging: jnz_opcode_taken: 2144 MiB across 67 read sites
+info: composition tile staging: mul_opcode: 1680 MiB across 210 read sites
+info: composition tile staging: mul_opcode_small: 520 MiB across 65 read sites
+info: composition tile staging: ret_opcode: 1152 MiB across 36 read sites
+info: composition tile staging: blake_round: 1344 MiB across 336 read sites
+info: composition tile staging: blake_g: 2976 MiB across 93 read sites
+info: composition tile staging: partial_ec_mul_generic: 1256 MiB across 1256 read sites
+info: composition tile staging: partial_ec_mul_window_bits_18: 35904 MiB across 561 read sites
+info: composition tile staging: pedersen_points_table_window_bits_18: 4224 MiB across 66 read sites
+info: composition tile staging: cube_252: 1380 MiB across 345 read sites
+info: composition tile staging: memory_id_to_big[0]: 528 MiB across 66 read sites
+info: composition tile staging: memory_id_to_small: 1664 MiB across 26 read sites
+info: device composition: trace staging 38576.907 ms over 71635 MiB (native 2591 MiB, tiled 69044 MiB; 1.95 GB/s), 325 dispatches in 325 submissions, device 1747.047 ms
+info: sampled coefficient evaluation: 9553857136 source words in 7585 columns; bounded source streaming true
