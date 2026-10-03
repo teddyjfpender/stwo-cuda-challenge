@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Participant entry point for the checked-in CUDA challenge commands."""
+"""Participant entry point for the proof-only CUDA, Metal, and CPU challenge."""
 
 import json
 from pathlib import Path
@@ -9,14 +9,16 @@ import sys
 
 ROOT = Path(__file__).resolve().parent
 COMMANDS = {
-    "paths": ([], "Show the exact editable checkout and CUDA source paths."),
-    "setup": ([sys.executable, "scripts/setup.py"], "Check out pinned source; add --build for CUDA products."),
-    "capture": (["bash", "scripts/capture-candidate.sh"], "Capture the allowed source diff into candidate/changes.patch."),
     "check-data": ([sys.executable, "scripts/check_data.py"], "Check public input and reference-output hashes."),
-    "benchmark": ([sys.executable, "harness/rank.py"], "Run smoke, qualify, or rank on a prepared H200 host."),
-    "setup-proof": ([sys.executable, "scripts/setup_proof_v2.py"], "Stage one proof-v2 backend checkout; pass --backend cuda|metal|cpu."),
-    "capture-proof": ([sys.executable, "scripts/capture_proof_v2.py"], "Capture a staged proof-v2 patch; pass --backend cuda|metal|cpu."),
+    "setup-proof": ([sys.executable, "scripts/setup_proof_v2.py"], "Create one proof-v2 backend checkout; pass --backend cuda|metal|cpu."),
+    "paths": ([], "Show the selected backend's checkout and editable paths; pass --backend cuda|metal|cpu."),
     "benchmark-proof": ([sys.executable, "scripts/benchmark_proof_v2.py"], "Run exact proof-stage diagnostics for cuda, metal, or cpu."),
+    "capture-proof": ([sys.executable, "scripts/capture_proof_v2.py"], "Capture a proof-v2 backend patch for a review PR."),
+}
+LEGACY = {
+    "legacy-setup": [sys.executable, "scripts/setup.py"],
+    "legacy-capture": ["bash", "scripts/capture-candidate.sh"],
+    "legacy-benchmark": [sys.executable, "harness/rank.py"],
 }
 
 
@@ -26,29 +28,30 @@ def main(argv: list[str]) -> int:
         for name, (_, description) in COMMANDS.items():
             print(f"  {name:<12} {description}")
         print("\nRead TASK.md and spec/SUBMISSIONS.md before editing or benchmarking.")
-        print("Open a review PR with the committed patch; ranked judging needs live intake.")
+        print("Direct trials are unranked; see spec/PROOF_STAGE_EPOCH.md for activation gates.")
         return 0 if argv else 2
     command, *options = argv
+    if command in LEGACY:
+        print("Archived h200-v1 command-time workflow; see spec/LEGACY_H200_V1.md.", file=sys.stderr)
+        return subprocess.run([*LEGACY[command], *options], cwd=ROOT, check=False).returncode
     if command not in COMMANDS:
         print(f"Unknown command: {command}. Run python3 challenge.py --help.", file=sys.stderr)
         return 2
-    if command == "capture" and options:
-        print("capture takes no options", file=sys.stderr)
-        return 2
     if command == "paths":
-        if options:
-            print("paths takes no options", file=sys.stderr)
+        if len(options) != 2 or options[0] != "--backend" or options[1] not in ("cuda", "metal", "cpu"):
+            print("paths requires --backend cuda|metal|cpu", file=sys.stderr)
             return 2
-        config = json.loads((ROOT / "benchmark.json").read_text())
-        source = ROOT / "workspace/stwo-zig"
+        backend = options[1]
+        config = json.loads((ROOT / "benchmark-proof-v2.json").read_text())
+        source = ROOT / "workspace/proof-v2-source"
         print(f"Challenge root: {ROOT}")
         print(f"Editable prover checkout: {source}")
         print(f"Pinned source commit: {config['sourceCommit']}")
-        print(f"Checkout exists: {'yes' if source.is_dir() else 'no; run python3 challenge.py setup'}")
-        for relative in config["editablePaths"]:
+        print(f"Checkout exists: {'yes' if source.is_dir() else 'no; run python3 challenge.py setup-proof'}")
+        for relative in config["backends"][backend]["editablePaths"]:
             print(f"  {source / relative}")
-        print("Source map: spec/CODE_MAP.md")
-        print("Submit: python3 challenge.py capture -> candidate/changes.patch")
+        print("Submit: python3 challenge.py capture-proof --backend", backend)
+        print("Captured patch: candidate/proof-v2-changes.patch")
         return 0
     return subprocess.run([*COMMANDS[command][0], *options], cwd=ROOT, check=False).returncode
 

@@ -116,6 +116,7 @@ def qualify_case(source: Path, fixtures: Path, case: dict, backend: str, out: Pa
         if data["input"]["sha256"] != case["input"]["sha256"] or data["backend"] != backend:
             raise ValueError("backend report input or backend differs")
         receipt.update(proof_sha256=actual, proof_stage_s=data["timing"]["prove_ns"] / 1e9,
+                       stages=[{"kind": "cairo", "seconds": data["timing"]["prove_ns"] / 1e9}],
                        command_wall_s=wall, report_sha256=sha(report),
                        physical_footprint_peak_bytes=data["prover_process_usage"].get(
                            "lifetime_peak_physical_footprint_bytes"),
@@ -162,11 +163,20 @@ def qualify_case(source: Path, fixtures: Path, case: dict, backend: str, out: Pa
         receipt.update(fold_result)
         if case["family"] == "recursion" and fold_result["fold_proof_s"] is not None:
             receipt["proof_stage_s"] = fold_result["fold_proof_s"]
+            receipt["stages"] = [{"kind": "fold", "seconds": ns / 1e9}
+                                  for ns in fold_result["fold_prove_ns"]]
             receipt["stage_scope"] = "exact-fold-call-boundaries"
         elif case["family"] == "pipeline" and fold_result["fold_proof_s"] is not None and all(
                 "cairo_proof_s" in item and "wrap_proof_s" in item for item in leaf_timings):
+            receipt["fold_command_wall_s"] = fold_result["command_wall_s"]
+            receipt["command_wall_s"] += sum(item["command_wall_s"] for item in leaf_timings)
             receipt["proof_stage_s"] = fold_result["fold_proof_s"] + sum(
                 item["cairo_proof_s"] + item["wrap_proof_s"] for item in leaf_timings)
+            receipt["stages"] = [stage for item in leaf_timings for stage in (
+                {"kind": "cairo", "seconds": item["cairo_proof_s"]},
+                {"kind": "wrap", "seconds": item["wrap_proof_s"]})] + [
+                    {"kind": "fold", "seconds": ns / 1e9}
+                    for ns in fold_result["fold_prove_ns"]]
             receipt["stage_scope"] = "exact-cairo-wrap-fold-call-boundaries"
         else:
             receipt["stage_scope"] = "incomplete-stage-diagnostics"
