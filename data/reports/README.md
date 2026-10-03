@@ -180,13 +180,27 @@ and the source receipt's relative path and SHA-256. All imported proofs passed
 the official Rust verifier at the canonical 70/26/24 profile with zero CPU
 fallback. Failed proofs and rejected variants are excluded.
 
-| Historical cold proof stage | SN PIE 1 | SN PIE 2 | SN PIE 3 | SN PIE 4 |
-| --- | ---: | ---: | ---: | ---: |
-| v39, one accepted run each | 3.784 s | 2.955 s | 3.772 s | 3.170 s |
-| v45, three-run medians | 2.218 s | 1.504 s | 2.206 s | 1.595 s |
-| Hopper v5, two paired-run medians | 1.889 s | 1.323 s | 1.878 s | 1.492 s |
-| Hopper v8, two paired-run medians | 1.193 s | 0.811 s | 1.190 s | 0.944 s |
-| Hopper v18, one accepted run each | 1.034 s | 0.657 s | 1.030 s | 0.798 s |
+The [main research TSV](submission-research-2026-10-03.tsv) also carries the
+historical trajectory **under the same six current public PIE case IDs** as
+the challenge baseline and PR measurements. `record_kind` distinguishes
+`historical_model`, `challenge_baseline`, and `submission` rows. The older
+four-PIE measurements remain in the provenance TSV above; they do not appear
+as separate challenge cases. For each historical milestone, the generator
+takes the geometric mean of its four source-PIE proof-time ratios against
+Hopper v18 and applies that factor to each current public PIE's measured
+baseline proof stage. Every historical row is therefore an **estimate for a
+different input**, not a measured proof or ranked result. `estimate_low_s` and
+`estimate_high_s` express uncertainty from the four source ratios.
+
+The v37 receipt has three verified source proofs; its first PIE failed. The
+v33/v35 source values and missing v37 value are separately backcast with a
+log-linear fit to the earliest verified receipts and a Student-t prediction
+interval. Those intervals are propagated to the six current cases. Early
+revision labels describe a statistical reconstruction, not a claim that a
+passing proof existed then. Each model row retains the source receipt paths,
+SHA-256 digests, method, and zero measured samples. Regenerate the blended TSV
+from the pinned receipts with
+`python3 scripts/blend_proof_history.py --source /path/to/stwo-zig`.
 
 This is a trajectory across versions and H200 sessions, **not** one paired
 v39-versus-v18 trial or a score against the challenge basket. The source
