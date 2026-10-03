@@ -16,13 +16,6 @@ COMMANDS = {
     "compare-proof": ([sys.executable, "scripts/compare_proof_v2.py"], "Compare two exact public baskets; research only, never ranked."),
     "capture-proof": ([sys.executable, "scripts/capture_proof_v2.py"], "Capture a proof-v2 backend patch for a review PR."),
 }
-LEGACY = {
-    "legacy-setup": [sys.executable, "scripts/setup.py"],
-    "legacy-capture": ["bash", "scripts/capture-candidate.sh"],
-    "legacy-benchmark": [sys.executable, "harness/rank.py"],
-}
-
-
 def main(argv: list[str]) -> int:
     if not argv or argv[0] in ("-h", "--help", "help"):
         print("Usage: python3 challenge.py COMMAND [COMMAND OPTIONS]\n")
@@ -32,9 +25,6 @@ def main(argv: list[str]) -> int:
         print("Direct trials are unranked; see spec/PROOF_STAGE_EPOCH.md for activation gates.")
         return 0 if argv else 2
     command, *options = argv
-    if command in LEGACY:
-        print("Archived h200-v1 command-time workflow; see spec/LEGACY_H200_V1.md.", file=sys.stderr)
-        return subprocess.run([*LEGACY[command], *options], cwd=ROOT, check=False).returncode
     if command not in COMMANDS:
         print(f"Unknown command: {command}. Run python3 challenge.py --help.", file=sys.stderr)
         return 2

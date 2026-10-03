@@ -100,6 +100,14 @@ def verify(deep: bool = True, pointers: bool = False) -> tuple[int, int]:
         if row["leaf_proof.json"]["sha256"] != provenance["wrapped_proof_sha256"]:
             raise ValueError(f"wrap proof differs: {row['pie']}")
         check(row["leaf_proof.json"])
+    proof_manifest = json.loads((ROOT / "fixtures/public-proof-v2.json").read_text())
+    legacy = {case["id"]: case for case in manifest["cases"]}
+    for case in proof_manifest["cases"]:
+        original = legacy.get(case["id"])
+        if original is None or {key: value for key, value in case.items()
+                                if key != "metric"} != {key: value for key, value in
+                                                     original.items() if key != "metric"}:
+            raise ValueError(f"proof-v2 fixture differs from hash-verified source: {case['id']}")
     return len(catalog["tasks"]), len(files)
 
 

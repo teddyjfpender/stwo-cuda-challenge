@@ -33,6 +33,7 @@ def check_v2(config: dict, manifest: dict) -> None:
         assert HEX.fullmatch(backend["timerDigest"])
         assert len(backend["editablePaths"]) == len(set(backend["editablePaths"]))
     for case in manifest["cases"]:
+        assert case["metric"] == "proof_stage_seconds"
         inputs = [case["input"]] if case["family"] == "pie" else case["inputs"]
         for item in inputs:
             assert HEX.fullmatch(item["sha256"])
@@ -46,7 +47,7 @@ def check_v2(config: dict, manifest: dict) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--config", type=Path, default=ROOT / "benchmark.json")
+    parser.add_argument("--config", type=Path, default=ROOT / "benchmark-proof-v2.json")
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
     manifest = json.loads((ROOT / config["fixtureManifest"]).read_text())

@@ -6,6 +6,7 @@ ranked receipt because it does not enforce the Docker/network/output quota gates
 """
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -49,18 +50,31 @@ def circuit_phase_seconds(logs: list[Path]) -> dict[str, float]:
     return {key: value / 1e9 for key, value in totals.items()} if count else {}
 
 
-def proof_v2_seconds(case: dict, phases: dict[str, float]) -> float:
-    if case["family"] == "pie":
-        result = phases.get("proof_execute_and_decode_ns")
-    elif case["family"] == "recursion":
-        result = phases.get("circuit_resident_ns")
-    else:
-        cairo = phases.get("cairo_leaf_proof_execute_and_decode_ns_sum")
-        circuit = phases.get("circuit_resident_ns")
-        result = cairo + circuit if cairo is not None and circuit is not None else None
-    if result is None or not math.isfinite(result) or result <= 0:
+def circuit_proof_stages(logs: list[Path], profiles: list[str], kinds: list[str]) -> list[dict]:
+    entries = []
+    for log in logs:
+        entries.extend((profile, int(ns) / 1e9) for profile, ns in re.findall(
+            r"circuit-cuda circuit-proof profile=(internal|root) resident_ns=(\d+)",
+            log.read_text(errors="replace")))
+    if [profile for profile, _ in entries] != profiles or len(kinds) != len(entries):
+        raise ValueError("incomplete circuit proof-stage telemetry")
+    return [{"kind": kind, "seconds": seconds} for kind, (_, seconds) in zip(kinds, entries)]
+
+
+def proof_v2_seconds(case: dict, stages: list[dict]) -> float:
+    leaves = len(case.get("inputs", []))
+    expected = ({"cairo": 1, "wrap": 0, "fold": 0} if case["family"] == "pie" else
+                {"cairo": 0, "wrap": 0, "fold": leaves - 1} if case["family"] == "recursion" else
+                {"cairo": leaves, "wrap": leaves, "fold": leaves - 1})
+    if ({kind: sum(stage.get("kind") == kind for stage in stages)
+         for kind in expected} != expected or
+            any(stage.get("kind") not in expected or
+                isinstance(stage.get("seconds"), bool) or
+                not isinstance(stage.get("seconds"), (int, float)) or
+                not math.isfinite(stage["seconds"]) or stage["seconds"] <= 0
+                for stage in stages)):
         raise ValueError(f"{case['id']} lacks complete proof-stage telemetry")
-    return result
+    return sum(stage["seconds"] for stage in stages)
 
 
 def check_report(path: Path, input_digest: str) -> int:
@@ -102,6 +116,7 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
     ingress_stage_seconds = {}
     proof_hashes = {}
     verifier_results = {}
+    proof_stages = []
 
     def execute(command: list[str]) -> dict:
         wrapped = [*(command_prefix or ()), *command]
@@ -122,6 +137,8 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
         plan = check_report(report, case["input"]["sha256"])
         trial = json.loads(report.read_text())["completed_trials"][0]
         phase_seconds = cairo_phase_seconds(trial)
+        if "proof_execute_and_decode_ns" in phase_seconds:
+            proof_stages = [{"kind": "cairo", "seconds": phase_seconds["proof_execute_and_decode_ns"]}]
         ingress_stage_seconds = {key: value / 1e9 for key, value in
                                  trial.get("ingress_timings", {}).items()}
         proof_hashes = {"proof.json": sha(proof)}
@@ -140,6 +157,10 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
         proof_hashes = {name: sha(case_dir / name) for name in
                         ("root.proof", "root_outputs.json", "root_packed.json")}
         phase_seconds = circuit_phase_seconds([measure_dir / "process.log"])
+        proof_stages = circuit_proof_stages(
+            [measure_dir / "process.log"],
+            ["internal"] * (len(leaves) - 2) + ["root"],
+            ["fold"] * (len(leaves) - 1))
         verifier_results = {"canonical_root_digests": "matched",
                             "independent_circuit_verifier": "not_run_by_direct_qualifier"}
         arenas = [int(value) for value in re.findall(
@@ -197,6 +218,10 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
         if profiles != ["internal"] * len(case["inputs"]) + ["root"] * (len(case["inputs"]) - 1):
             raise RuntimeError(f"pipeline circuit telemetry differs: {case['id']}")
         phase_seconds = circuit_phase_seconds([Path(log) for log in receipt["logs"]])
+        proof_stages = ([{"kind": "cairo", "seconds": leaf["proof_execute_and_decode_ns"]}
+                         for leaf in leaf_phases] + circuit_proof_stages(
+            [Path(log) for log in receipt["logs"]], profiles,
+            ["wrap"] * len(case["inputs"]) + ["fold"] * (len(case["inputs"]) - 1)))
         phase_seconds.update({f"cairo_leaf_{key}_sum": sum(leaf.get(key, 0) for leaf in leaf_phases)
                               for key in ("ingress_ns", "proof_execute_and_decode_ns",
                                           "adapted_input_until_publication_ns",
@@ -210,6 +235,7 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
             "timing_boundary": "adapted-input-to-published-proof-and-process-exit",
             "timing_condition": "cold-process",
             "phase_seconds": phase_seconds,
+            "proof_stages": proof_stages,
             "ingress_stage_seconds": ingress_stage_seconds,
             "proof_sha256": proof_hashes,
             "verifier_results": verifier_results,
@@ -261,6 +287,10 @@ def main() -> None:
     env = candidate_env(os.environ, preprocessed, artifacts)
     proof_v2 = config["contractEpoch"] == "proof-v2"
     timer_digest = attest(source, config, "cuda") if proof_v2 else None
+    source_diff_sha256 = hashlib.sha256(subprocess.check_output(
+        ["git", "-C", str(source), "diff", "--binary", "HEAD"])).hexdigest() if proof_v2 else None
+    binary_sha256 = {name: sha(source / "zig-out/bin" / name) for name in
+                     ("stwo-cairo-cuda", "stwo-circuit-recursion-cuda")} if proof_v2 else None
     hardware = config["backends"]["cuda"] if proof_v2 else config["hardware"]
     nvml = Nvml(hardware["deviceBytes"])
     rows = []
@@ -269,10 +299,12 @@ def main() -> None:
             row = qualify_case(case, source, fixtures, out, verifier,
                                registry_verifier, nvml, env)
             if proof_v2:
-                row.update(proof_stage_s=proof_v2_seconds(case, row["phase_seconds"]),
+                row.update(proof_stage_s=proof_v2_seconds(case, row["proof_stages"]),
                            timing_boundary="proof-execution-v2",
                            timer_digest=timer_digest,
-                           source_commit=config["sourceCommit"])
+                           source_commit=config["sourceCommit"],
+                           source_diff_sha256=source_diff_sha256,
+                           binary_sha256=binary_sha256)
             rows.append(row)
             (out / "direct-results.json").write_text(json.dumps(rows, indent=2) + "\n")
             print(f"{row['case_id']}: {row.get('proof_stage_s', row['time_s']):.3f}s, "

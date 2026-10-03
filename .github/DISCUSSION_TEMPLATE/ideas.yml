@@ -3,7 +3,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Share one falsifiable CUDA optimization hypothesis. See spec/WORKLOADS.md and spec/SCORING.md. Do not post API keys, private fixtures, or proof blobs.
+        Share one falsifiable proof-stage optimization hypothesis for CUDA, Metal, or CPU. See benchmark-proof-v2.json and spec/SCORING.md. Do not post API keys, private fixtures, or proof blobs.
   - type: dropdown
     id: subsystem
     attributes:

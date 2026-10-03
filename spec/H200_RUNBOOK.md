@@ -1,301 +1,85 @@
-# H200 operator runbook
+# CUDA proof-v2 trial on an H200
 
-This runbook is for the public staging challenge. The local contract checks
-pass, but no H200 judge runner is registered yet. Do not dispatch a judged
-submission until the live activation gates in [`ACTIVATION.md`](ACTIVATION.md)
-are satisfied. A single H200 is reserved for one run at a time; all CPU builds,
-fixture transfers, and hash checks happen before its timed proof work.
+The current challenge measures only Cairo, wrap, and fold prover-call
+intervals for the nine jobs in [`benchmark-proof-v2.json`](../benchmark-proof-v2.json).
+The same inputs and expected proof/root hashes are used for CPU and Metal.
+The H200 direct runner is an **unranked research tool**; no proof-v2 judge or
+signed ranking receipt is active yet. The former command-time operator
+procedure is [archived](LEGACY_H200_RUNBOOK.md).
 
-On a restricted GPU pod without Docker and mount privileges, run
-`python3 scripts/qualify_direct_h200.py --out /external/direct-runs` after
-`./setup.sh --build` to check every public CUDA proof and recursive root against
-its pinned digest and independent Cairo verifiers. Each case writes elapsed
-time, 10 ms sampled peak device memory, and its backend report. This is
-**direct, unsandboxed diagnostic evidence only**: it does not exercise the
-trusted judge's output quota, network isolation, Docker image, signed receipt,
-or paired A/B scoring. Keep generated proofs and logs outside Git and do not
-use these numbers as ranked scores. Use `--case-id ID` to narrow a smoke run.
-
-## Keep the research loop short
-
-Use an H200 network volume or other persistent filesystem for the verified
-fixture store, source checkouts, `.cache` (including the 2.17 GB canonical
-preprocessing asset and compiled Rust verifiers), Zig/CUDA toolchains, build
-cache, and external run journals. The
-[fixed-artifact release](RELEASE_ARTIFACTS.md) lets setup fetch the pinned
-Rust verifiers and preprocessing data directly; keep the verified copies on
-the volume for later runs. A pod's ephemeral root filesystem is not the
-cache: stopping or replacing a pod can lose twenty minutes or more of rebuild
-and transfer work. Mount the volume at the **same path** on replacement pods,
-then recheck pinned hashes; persistence does not make a file trustworthy. Keep
-credentials and private fixtures outside public worktrees. Prepare and build
-before reserving expensive proof time where the provider permits CPU setup.
-Set `STWO_CUDA_BUILD_CACHE_ROOT` to a directory on that volume before
-`setup --build` or a trusted build. The toolchain helper creates a shared
-archive/cubin cache and a separate ccache directory there, so baseline and
-candidate builds can reuse unchanged work. Do not put this directory in Git.
-Do not rely on a particular stopped pod restarting: H200 capacity can be
-unavailable. Keep the same persistent volume mountable by a fresh compatible
-pod. Preserve one active experiment journal outside Git and never run a second
-build or proof on the measurement GPU during an A/B comparison.
-
-After the one-time build and fixture transfer, run `prepare` against the
-persistent volume. It checks Zig 0.15.2, the CUDA build options (SM 90,
-ccache and nvcc threads), writable build caches, the pinned source and
-runtime files, staged AIR bundles, canonical preprocessing hash,
-executable/verifier hashes, and selected fixture hashes. It needs no GPU, so
-these multi-gigabyte checks can finish before renting the H200. Repeat this
-check after replacing a volume or changing any pinned asset.
-
-Immediately before the first proof, run `direct` or `judge` on the H200.
-Both repeat the asset checks and additionally require the contracted H200
-capacity, low idle whole-device usage, no live GPU compute context, and no
-other build process on the host. The judge check **first** fails if Docker or
-its exact pinned image is missing, then checks output-image mount capability
-and exercises the filesystem/network/quota isolation probe. A direct pass
-never implies judge readiness.
+Use an idle H200 with enough persistent storage for the Git LFS inputs,
+fixed preprocessing data, source, build cache, and proof outputs. Keep
+results and cache outside the Git worktree. The CUDA build helper targets
+SM 90 and uses nvcc threads and ccache when available; set
+`STWO_CUDA_BUILD_CACHE_ROOT` to persistent storage before building.
 
 ```sh
-python3 scripts/h200_preflight.py --mode prepare --source workspace/baseline \
-  --out /external/runs/prepared-volume.json
-python3 scripts/h200_preflight.py --mode direct --source workspace/baseline \
-  --out /external/runs/baseline-preflight.json
-python3 scripts/h200_preflight.py --mode judge --source workspace/baseline \
-  --image "$STWO_SANDBOX_IMAGE" --out /external/runs/judge-preflight.json
+git lfs pull
+python3 challenge.py check-data
+python3 harness/check_contract.py
+python3 challenge.py setup-proof --backend cuda --build --build-baseline
+python3 challenge.py paths --backend cuda
 ```
 
-`prepare` can run on a CPU setup host with the mounted volume. `direct` is for
-a restricted Runpod research pod; its success does not qualify the sandbox or
-permit ranked results. If `judge` fails, fix that host/image before invoking
-`harness/run_arm.py` or dispatching smoke. Keep all H200 A/B work under the
-same `STWO_H200_HOST_LOCK` (default `/tmp/stwo-h200-host.lock`) and keep other
-builds off the host until the experiment exits; a preflight alone cannot
-reserve an otherwise idle GPU for the whole comparison.
-The preflight receipt labels itself `prerequisites-only`. It is deliberately
-separate from both exact proof qualification and a signed judge receipt.
+`setup-proof --build --build-baseline` pins `stwo-zig@1433d61b`, builds the CUDA Cairo and
+resident circuit products, and prepares the canonical fixed asset, staged
+AIR bundles, and two independently built Rust Cairo verifiers. The current
+fixed-asset release is pinned to the older epoch, so this source pin falls
+back to building those tools; keep the resulting `.cache` and Zig/Cargo
+caches on persistent storage. A future release for the proof-v2 source pin
+can eliminate that repeated preparation. No candidate binary is accepted
+as a verifier.
 
-For each hypothesis, name the expected stage and fractional gain. Compile the
-touched Zig/CUDA target and run the relevant local test first. Then use the
-direct A/B driver on an otherwise idle H200; it interleaves baseline and
-candidate twice for one representative PIE and one fold or pipeline case.
-Each run checks canonical proof hashes and the pinned verifiers and appends a
-durable JSONL row with exact source commit, tracked diff/untracked source and
-executable hashes, cold full-command time, available ingress/proof phases,
-whole-device peak, proof hashes, and verification flags. A stage-gain gate
-keeps a weak idea from triggering the full ten-case basket. For example:
+Before measuring, run the machine-checked proof-v2 preflight. `prepare`
+rehashes fixed assets and selected fixtures; `direct` additionally requires
+an idle H200 and no concurrent build process. Both are prerequisite checks,
+not score receipts. There is deliberately no proof-v2 `judge` mode yet.
 
 ```sh
-python3 scripts/h200_experiment.py --baseline workspace/baseline \
-  --candidate workspace/stwo-zig --out /external/runs/source-cache-01 \
-  --hypothesis 'overlap fixed-asset loading with source preparation' \
-  --stage ingress_ns --min-stage-gain 0.05 \
-  --max-companion-regression 0.05 --full-if-promising
+python3 scripts/h200_preflight.py --mode prepare \
+  --config benchmark-proof-v2.json --manifest fixtures/public-proof-v2.json \
+  --source workspace/proof-v2-baseline --out /external/trials/prepare.json
+python3 scripts/h200_preflight.py --mode direct \
+  --config benchmark-proof-v2.json --manifest fixtures/public-proof-v2.json \
+  --source workspace/proof-v2-baseline --out /external/trials/direct.json
 ```
 
-For a recursion or pipeline hypothesis, select that case with
-`--smoke-companion` and also set `--target-case` to the same ID. The PIE then
-acts as the full-command regression guard. The gate tests the declared stage
-**and** externally timed full-command time on the chosen target. It also
-guards full-command time on the other case. `--min-target-command-gain`
-defaults to zero, so a faster internal stage with a slower target command
-cannot trigger the full basket. Set a positive threshold when the hypothesis
-predicts a minimum cold-command gain.
-The experimental source-lookahead option can be measured with
-`--candidate-lookahead` on the integrated pipeline case. It is injected only
-into the candidate process and recorded in `experiment.json`; the pinned
-baseline uses its ordinary path. A standalone PIE cannot exercise this batch
-option. It does not alter the judge's environment or score. Cross-root fixed
-host retention is a separate draft experiment; the current public basket has
-no multi-root campaign case, so this driver does not claim to measure it.
-For the draft lookahead candidate, use the two-leaf integrated pipeline as the
-target and reject it if its cold command does not improve:
+Run one PIE and one recursive case first. `--out` directories must be fresh;
+the full basket checks all nine exact output hashes and reports both proof
+time and whole-command time. Use `--fixtures` if the hash-pinned input store
+is mounted elsewhere.
 
 ```sh
-python3 scripts/h200_experiment.py --baseline workspace/baseline \
-  --candidate workspace/stwo-zig --out /external/runs/lookahead-01 \
-  --hypothesis 'prepare the next compact CPI while the current leaf proves' \
-  --smoke-companion pipeline:two-leaf-batch-integrated \
-  --target-case pipeline:two-leaf-batch-integrated \
-  --stage cairo_leaf_ingress_ns_sum --min-stage-gain 0.05 \
-  --min-target-command-gain 0.02 --candidate-lookahead
+python3 challenge.py benchmark-proof --backend cuda \
+  --case-id pie:15582797_15582797 --out /external/trials/pie
+python3 challenge.py benchmark-proof --backend cuda \
+  --case-id recursion:two-leaf-wrap-fold --out /external/trials/fold
+python3 challenge.py benchmark-proof --backend cuda \
+  --out /external/trials/baseline --source workspace/proof-v2-baseline
+python3 scripts/export_proof_v2.py --backend cuda \
+  --root /external/trials/baseline --out /external/trials/baseline.tsv
 ```
 
-The `--candidate-lookahead` switch is research-only. To qualify a future
-ranked candidate, the reviewed source would need to make the winning path its
-default inside the existing scoring clock and pass the complete judge basket.
+After an allowed CUDA source edit, rebuild the editable checkout, run the same
+basket into a separate directory, export it, then compare proof times:
 
-`experiment.json` records smoke preflight/build identities and the stated
-timing boundary; `runs.jsonl` survives a later failure; `gate.json` says
-whether the full basket was admitted. Use a fresh output directory for every
-experiment. The direct A/B driver hashes smoke fixtures and the canonical
-preprocessing asset once, then checks path, inode, size, and timestamps before
-reusing that attestation for the other arm. Only after the gate passes does it
-hash the additional full-basket fixtures and save `full-preflight.json`.
-It still checks each arm's source and binaries.
-Judge preflight and ranked execution always rehash their inputs independently;
-this direct-only shortcut is not a ranked acceptance gate.
-The full basket is one paired diagnostic pass by default; choose more rounds
-explicitly when variance matters. Its output remains unsandboxed and unranked.
-For a concrete rejection budget, PR #3's retained small-PIE samples took
-about 31.5 seconds for one ABBA cycle and showed a 1.023 candidate/baseline
-command ratio on that case. Adding a two-leaf fold smoke at roughly 3 seconds
-per call would put an exploratory gate near 44 seconds; the measured direct
-ten-case baseline/candidate passes were about 94 and 81 seconds. This is an
-illustration from existing case timings, **not** a replayed #3 gate or a
-substitute for its final checks. A hypothesis targeting that PIE would have
-been rejected after the focused cycle rather than spending a full basket on
-an apparent regression.
-Candidate-reported ingress and proof timers are diagnostic; an editable prover
-can change them. The externally measured cold command and NVML peak remain the
-comparable values. Record **preparation**, **cold adapted-input to published
-proof**, and **warm proof** as different quantities. This driver times only
-the cold command; it labels warm proof `not measured` because a resident
-request protocol and judge-owned timer do not yet exist. Package creation,
-fixture transfer, and compilation cannot silently move before the `h200-v1`
-clock or become a proof-stage rank; changing that boundary requires the
-reviewed next epoch in [`PROOF_STAGE_EPOCH.md`](PROOF_STAGE_EPOCH.md).
-For a one-case CPU/GPU timeline and whole-device memory trajectory, use
-[`H200_PROFILING.md`](H200_PROFILING.md). Nsight-instrumented wall time is
-diagnostic and must not be mixed into the unprofiled A/B gate or ranked score.
+```sh
+python3 challenge.py setup-proof --backend cuda --build --skip-assets
+python3 challenge.py benchmark-proof --backend cuda \
+  --out /external/trials/candidate --source workspace/proof-v2-source
+python3 scripts/export_proof_v2.py --backend cuda \
+  --root /external/trials/candidate --out /external/trials/candidate.tsv
+python3 challenge.py compare-proof --backend cuda \
+  --baseline /external/trials/baseline.tsv \
+  --candidate /external/trials/candidate.tsv \
+  --out /external/trials/comparison.json
+python3 challenge.py capture-proof --backend cuda
+```
 
-## Prepare the host once
-
-1. Use one exclusive H200 SXM with the device capacity in `benchmark.json`.
-   Install Zig 0.15.2, CUDA/nvcc, ccache 4.0 or newer, Cargo,
-   `nightly-2026-01-15`, Git LFS,
-   OpenSSL with Ed25519 support, Docker Engine, the
-   [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html),
-   GitHub CLI, `e2fsprogs`, and `util-linux`. The judge process must run as
-   root or have passwordless `sudo` for mounting, unmounting, and chmod on its
-   own 2 GiB per-case ext4 output images. Keep service state,
-   private fixtures, credentials, and the
-   2 GiB canonical preprocessing asset outside this repository.
-   `./setup.sh --build` resolves the explicit pinned CUDA build options from
-   `nvcc`, `g++`, `ar`, and the toolkit's `lib64`, targeting **only SM 90**
-   through `-Dcuda-arch=90` (the pinned builder emits one
-   `-gencode arch=compute_90,code=sm_90` target). Set
-   `STWO_CUDA_NVCC`, `STWO_CUDA_HOST_CXX`, `STWO_CUDA_AR`, `STWO_CUDA_HOME`,
-   `STWO_CUDA_LIBRARY_DIR`, or the host runtime path overrides if auto-detection
-   differs; `STWO_CUDA_BUILD_JOBS` defaults to four concurrent nvcc processes.
-   The generated nvcc wrapper adds `--threads=N` to each compile and invokes
-   `ccache nvcc`; `STWO_CUDA_NVCC_THREADS` defaults to one or two according to
-   CPU count and build jobs. It rejects ccache older than 4.0. The
-   `STWO_CUDA_CCACHE=0` escape hatch retains the SM 90 and thread settings
-   when diagnosing cache behavior. `CCACHE_DIR` and
-   `STWO_CUDA_ARCHIVE_CACHE` can be set explicitly; otherwise both live under
-   `STWO_CUDA_BUILD_CACHE_ROOT`. Compare `ccache -s` before and after a
-   repeated build. The pinned builder also has its own content-addressed
-   archive/cubin cache; ccache helps when a source change invalidates that
-   archive but leaves individual compilations reusable.
-
-   NVIDIA documents [`--threads`](https://docs.nvidia.com/cuda/archive/12.8.0/cuda-compiler-driver-nvcc/index.html#threads-number-t)
-   as parallelizing nvcc compilation steps, particularly across multiple GPU
-   targets. With this single-SM build, the existing four independent nvcc
-   jobs and cache hits may matter more than nvcc's internal threads. Ccache's
-   [manual](https://ccache.dev/manual/4.10.html) documents nvcc support and
-   `CCACHE_BASEDIR` for sharing hits across absolute-path worktrees. Measure
-   build wall time and cache statistics before claiming a speedup.
-   Setup stages the pinned Cairo AIR library, every digest-declared AIR bundle,
-   witness programs, topology, and fixed/relation tables under
-   `.cache/cuda-artifacts`. The sandbox separately stages their read-only source
-   copies because the pinned AOT binder also opens one library relative to its
-   working directory; the candidate runs from `/candidate` with explicit
-   writable output paths under `/work`.
-2. Clone the challenge, then run `git lfs pull`, `./setup.sh --build`, and
-   `python3 scripts/check_data.py`. This fetches the pinned prover, builds the
-   baseline and local-workspace CUDA products and both pinned Rust verifiers,
-   generates the canonical preprocessing asset, and checks every public file.
-   The baseline and
-   candidate source roots and binary hashes must match their build
-   attestations before ranking.
-   Build `harness/sandbox.Dockerfile` from an NVIDIA CUDA runtime base pinned
-   by repository digest:
-
-   ```sh
-   docker build -f harness/sandbox.Dockerfile \
-     --build-arg CUDA_RUNTIME_IMAGE='nvidia/cuda:VERSION-runtime-ubuntu24.04@sha256:BASE_DIGEST' \
-     -t stwo-judge:h200-v1 .
-   ```
-
-   Replace the placeholders with the qualified CUDA runtime version and full
-   base digest. Record the local image ID returned by
-   `docker image inspect --format '{{.Id}}' IMAGE_TAG`. Set
-   `STWO_SANDBOX_IMAGE` to that `sha256:` ID. The judge refuses a mutable tag
-   or an image absent from the local daemon. First run
-   `python3 scripts/probe_sandbox.py --image "$STWO_SANDBOX_IMAGE"` on the host.
-   Verify the exact image and driver
-   combination with one sandboxed PIE, fold, and full-pipeline proof before
-   ranking; local plan tests alone do not qualify it.
-3. Copy the separately held ranked fixture store and manifest to read-only
-   judge-owned paths. Check every digest before the H200 proof loop:
-
-   ```sh
-   python3 harness/run_arm.py --source workspace/baseline \
-     --fixtures "$STWO_FIXTURE_ROOT" --manifest "$STWO_RANKED_MANIFEST" \
-     --preprocessed .cache/preprocessed-canonical.bin \
-     --artifact-dir .cache/cuda-artifacts \
-     --cairo-verifier .cache/rust-official/release/stwo-cairo-official-verifier \
-     --out .runs/preflight --round 0 --preflight
-   ```
-
-   Never put private case names, expected digests, or fixture paths in GitHub
-   Discussions or a submission repository.
-4. Generate an Ed25519 operator key outside this repository and service state,
-   readable only by the judge identity. Publish its public half through an
-   authenticated channel and retain the public-key digest for this epoch.
-   `openssl genpkey -algorithm ED25519 -out /secure/path/operator-key.pem` and
-   `openssl pkey -in /secure/path/operator-key.pem -pubout -out operator-public.pem`
-   generate the key pair; restrict the private file to mode `0600`.
-   Configure `STWO_RECEIPT_SIGNING_KEY` with the private-key **path**, not key
-   bytes. The publisher signs the exact receipt JSON and serves a detached
-   signature; verify it with `python3 service/receipt_signature.py --receipt
-   RECEIPT.json --signature RECEIPT.signature.json --public-key operator-public.pem`.
-   Candidate sandbox qualification must precede use of the key on an H200 job.
-5. Register one online self-hosted runner with the default `self-hosted` label
-   and `h200-stwo-challenge`. Configure all ten repository variable names
-   used in `.github/workflows/h200-rank.yml` with nonempty paths. Run
-   `python3 service/activation.py --repository OWNER/REPO`; it prints no
-   variable values and must pass before dispatch. Qualify process isolation,
-   outbound-network blocking, read-only fixture mounts, and receipt signing
-   separately before opening the public leaderboard. The required access
-   matrix and denied-access probes are in [`ISOLATION.md`](ISOLATION.md).
-
-## Qualify the exact workflow
-
-1. For the internal daily batch, review challenge PRs and label accepted heads
-   `ready-to-judge`. Run `python3 service/pr_batch.py --dry-run`, then
-   `python3 service/pr_batch.py --source workspace/baseline --state /operator/state`
-   to record each PR number, exact SHA, and submission ID. Build those IDs with
-   `service/build_worker.py`. No HTTP service or participant key is required.
-   The optional `service/intake.py` endpoint can instead accept a source commit
-   on loopback with an explicit `--max-intake-requests-24h` limit. Uploaded
-   binaries are not run by the ranked judge; the worker rebuilds the pinned
-   source plus allowed patch outside the H200 timing interval.
-2. Dispatch `smoke`, then `qualify`, then `rank` through
-   `service/dispatch.py`, passing `--max-gpu-minutes-24h` and
-   `--max-repository-attempts-24h` on each live call. For example, `540` and
-   `3` allow at most six 90-minute reservations globally and three attempts
-   from one repository in any rolling day. Failed and cancelled attempts count
-   conservatively. Each tier requires the prior receipt. The workflow checks
-   out the event's exact commit and atomically claims its dispatch against the
-   first GitHub run ID before measuring one exclusive H200,
-   verifies every proof and root, and publishes a redacted receipt. The rank
-   tier performs three paired ABBA rounds and writes all eligible score files
-   from the same measurements.
-3. Inspect the complete judge-owned evidence, the public redacted receipt,
-   per-case time and memory ratios, A/A dispersion, bootstrap intervals, and
-   peak device-memory samples. Run the public and private baskets against the
-   pinned baseline first; no historical H100/H200 time is a score denominator.
-   If a claimed workflow was cancelled before receipt publication, run
-   `service/reconcile.py` so the exact completed GitHub run releases its
-   dispatch slot. An unclaimed attempt or a run not yet visible in GitHub
-   stays reserved for operator review.
-4. Verify and export reviewed rank receipts with `service/site_export.py` as
-   documented in [`OPERATIONS.md`](OPERATIONS.md). Commit the generated
-   scorecards, redacted receipts, signatures, and public key to the website
-   repository; its build rechecks every signature. Keep the website in staging
-   until the proof-stage epoch and H200 activation gates are qualified.
-5. Shut down the paid H200 host when proof qualification is complete. Retain
-   immutable evidence and signed receipts in the external service store. Keep
-   generated proofs and logs outside Git. Public reference outputs are already
-   under `data/outputs` and are checked by `scripts/check_data.py`.
+The exporter checks the source pin and protected timer digest, requires the
+right number of Cairo, wrap, and fold intervals, and rehashes the emitted
+proof or root. The direct JSON also retains whole-device peak, arena plan,
+Rust Cairo verifier results, proof hashes, command time, and binary identity.
+An idle host, multiple paired repetitions, and a trusted measurement boundary
+are required before promoting an improvement. Do not run the retired
+`h200-rank.yml` workflow; it is disabled and scores the wrong epoch.

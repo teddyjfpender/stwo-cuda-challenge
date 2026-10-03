@@ -67,11 +67,12 @@ def prepare_cuda_artifacts(baseline: Path) -> None:
             raise SystemExit(f"staged CUDA artifact differs: {target}")
 
 
-def prepare_judge_assets(baseline: Path) -> None:
+def prepare_judge_assets(baseline: Path, source_commit: str | None = None) -> None:
     """Build pinned independent verifiers and the shared canonical coefficient asset."""
     official_target = ROOT / ".cache/rust-official"
     registry_target = ROOT / ".cache/rust-registry"
-    source_commit = json.loads((ROOT / "benchmark.json").read_text())["sourceCommit"]
+    if source_commit is None:
+        source_commit = json.loads((ROOT / "benchmark.json").read_text())["sourceCommit"]
     if not install_rust_release(source_commit, ROOT, ROOT / "release-artifacts.lock.json"):
         if not shutil.which("cargo"):
             raise SystemExit("Cargo is required when pinned Rust release artifacts are unavailable")

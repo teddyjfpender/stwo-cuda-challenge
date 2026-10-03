@@ -74,12 +74,24 @@ class DirectH200Tests(unittest.TestCase):
                 "circuit_convert_ns": 0.1})
 
     def test_proof_epoch_excludes_ingress_and_requires_all_pipeline_stages(self):
-        case = {"id": "pipeline:test", "family": "pipeline"}
-        phases = {"cairo_leaf_proof_execute_and_decode_ns_sum": 2.0,
-                  "circuit_resident_ns": 3.0, "ingress_ns": 100.0}
-        self.assertEqual(direct.proof_v2_seconds(case, phases), 5.0)
+        case = {"id": "pipeline:test", "family": "pipeline", "inputs": [{}, {}]}
+        stages = [{"kind": "cairo", "seconds": 1.0},
+                  {"kind": "cairo", "seconds": 1.0},
+                  {"kind": "wrap", "seconds": 1.0},
+                  {"kind": "wrap", "seconds": 1.0},
+                  {"kind": "fold", "seconds": 1.0}]
+        self.assertEqual(direct.proof_v2_seconds(case, stages), 5.0)
         with self.assertRaisesRegex(ValueError, "complete proof-stage"):
-            direct.proof_v2_seconds(case, {"ingress_ns": 100.0, "circuit_resident_ns": 3.0})
+            direct.proof_v2_seconds(case, stages[:-1])
+
+    def test_cuda_circuit_stage_parser_rejects_missing_root(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            log = Path(temporary) / "circuit.log"
+            log.write_text("circuit-cuda circuit-proof profile=internal "
+                           "resident_ns=2000000000 verify_ns=1 convert_ns=1 arena_bytes=123\n")
+            with self.assertRaisesRegex(ValueError, "incomplete circuit"):
+                direct.circuit_proof_stages([log], ["internal", "root"],
+                                            ["fold", "fold"])
 
 
 if __name__ == "__main__":
