@@ -1,0 +1,46 @@
+{
+  "schema": "stwo-proof-v2-h200-artifact-receipt-v1",
+  "local_bundle": ".cache/proof-v2-h200-sm90",
+  "source_commit": "1433d61b590058980d02b3f5bc912fe073c1a646",
+  "architecture": "sm90",
+  "manifest_sha256": "9055bdf33f4dbb4b52c20fb2a19fcd8ad6b78daa9538896790fcc4366a85ab23",
+  "file_count": 72,
+  "total_bytes": 2455022820,
+  "key_files": {
+    "bin/stwo-cairo-cuda": {
+      "path": "bin/stwo-cairo-cuda",
+      "bytes": 72784552,
+      "sha256": "67da3557565e08e454e1062d2ea0a8404bc09362daba94f4cbabfbafc87f1758"
+    },
+    "bin/stwo-circuit-recursion-cuda": {
+      "path": "bin/stwo-circuit-recursion-cuda",
+      "bytes": 91487808,
+      "sha256": "54370a0e99c993a0b2ef3681048cf313650f38a45dd269f649e5d3d105201a2b"
+    },
+    "lib/libstwo_cuda_kernels.a": {
+      "path": "lib/libstwo_cuda_kernels.a",
+      "bytes": 58226078,
+      "sha256": "cf579b4783f5322e88b93ab0a3d05a86daea6ba3765e3c28733d1f82fe9bffca"
+    },
+    "lib/libcudart.so.12": {
+      "path": "lib/libcudart.so.12",
+      "bytes": 728800,
+      "sha256": "c3a75b33af334a3486d197dbd1584a2985183ba4688d237a2be5f2f679329920"
+    },
+    "assets/preprocessed-canonical.bin": {
+      "path": "assets/preprocessed-canonical.bin",
+      "bytes": 2172407516,
+      "sha256": "4d4fda06dfa3bca19554510a158f6c50abad06a74d29c17885ed4cbb88ada34d"
+    },
+    "verifiers/stwo-cairo-official-verifier": {
+      "path": "verifiers/stwo-cairo-official-verifier",
+      "bytes": 6939376,
+      "sha256": "2a8b805031d48d9b94a78a1491e3b6dd0c5a4d8075760a9d0cb6e3d83837ba88"
+    },
+    "verifiers/verify_cairo_cuda_json": {
+      "path": "verifiers/verify_cairo_cuda_json",
+      "bytes": 7495760,
+      "sha256": "779e0a9b3ba46069f8fe3d94469ba2eb5e1855ab9438912ef119d7a0f728af67"
+    }
+  }
+}

@@ -1,5 +1,41 @@
 # Direct qualification reports
 
+## Proof-v2 H200 public basket, 2026-10-03
+
+The [nine-row observation TSV](h200-proof-v2-2026-10-03-full.tsv) and
+[raw direct receipts](h200-proof-v2-2026-10-03-direct.json) record one complete
+CUDA pass over the **same nine public jobs** used by CPU and Metal below. The
+H200 used clean `stwo-zig@1433d61b`, ReleaseFast SM90 binaries, canonical
+security, and the protected proof-call timers from upstream PR #213. The
+[prepare](h200-proof-v2-2026-10-03-preflight.json) and
+[direct](h200-proof-v2-2026-10-03-direct-preflight.json) preflights checked the
+source pin, fixture hashes, CUDA artifacts, and idle device. The TSV records
+measured peak **device** bytes in its footprint column; the raw receipts retain
+the stage breakdown, command time, binary/timer hashes, and verifier results.
+
+| Job | Proof s | Whole command s | Peak device GB |
+| --- | ---: | ---: | ---: |
+| PIE 15582797 | 1.246 | 5.681 | 90.47 |
+| PIE 15603744 | 1.192 | 5.387 | 89.70 |
+| PIE 15581148 | 1.139 | 5.326 | 84.53 |
+| PIE 15590913 | 1.503 | 5.782 | 105.20 |
+| PIE 15588777–15588780 | 1.879 | 6.780 | 134.06 |
+| PIE 15591789 | 1.630 | 5.824 | 116.24 |
+| Two-leaf fold | 0.555 | 2.579 | 29.41 |
+| Eight-distinct-leaf fold | 2.794 | 7.280 | 29.41 |
+| Two-leaf PIE → wrap → fold root | 2.669 | 15.252 | 69.43 |
+
+The integrated pipeline proof interval is two Cairo proves (0.441 and
+0.434 s), two wraps (0.639 and 0.591 s), and one fold (0.565 s). All nine
+published proof/root hashes matched the pinned references. The six standalone
+PIE proofs passed the official Rust Cairo verifier. The pipeline verified its
+Cairo leaves in process and kept them resident; it did not serialize leaf
+proofs for the Rust verifier. The direct qualifier did not run an independent
+circuit-root verifier. These measurements are **unranked, unsandboxed, and
+single-pass**; they do not establish paired speedups or variance. A local
+runtime-artifact bundle and its digest manifest were retained before stopping
+the paid H200 pod; see [the artifact receipt](h200-proof-v2-2026-10-03-artifacts.json).
+
 ## Proof-v2 M5 Max public basket, 2026-10-03
 
 The [full observation TSV](m5-proof-v2-2026-10-03-full.tsv) contains one exact,
@@ -30,7 +66,7 @@ peak measurement. The pipeline proof interval sums two Cairo proves, two
 wraps, and one fold. The command column includes all leaf commands and the
 fold command. These backends shared one host and were run sequentially, but
 one pass does not establish comparative throughput or variance. The H200
-proof-v2 basket still needs a new run at this source pin.
+result above uses the same public proof-v2 jobs and source pin.
 
 ## H200 direct qualification
 

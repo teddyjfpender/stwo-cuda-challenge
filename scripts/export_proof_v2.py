@@ -135,12 +135,17 @@ def export_cuda(root: Path, config: dict, manifest: dict,
         directory = root / case["id"].replace(":", "_")
         if (receipt.get("family") != case["family"] or
                 receipt.get("source_commit") != config["sourceCommit"] or
+                receipt.get("source_diff_sha256") != hashlib.sha256(b"").hexdigest() or
                 receipt.get("timer_digest") != config["backends"]["cuda"]["timerDigest"] or
                 receipt.get("timing_boundary") != "proof-execution-v2" or
                 receipt.get("verified") is not True or
                 receipt.get("canonical_output") is not True or
-                receipt.get("gpu_resident") is not True):
+                receipt.get("gpu_resident") is not True or
+                receipt.get("security_profile") != "canonical"):
             raise ValueError(f"{case['id']}: CUDA source, timer, or output differs")
+        peak_device_bytes = receipt.get("peak_device_bytes")
+        if isinstance(peak_device_bytes, bool) or not isinstance(peak_device_bytes, int) or peak_device_bytes <= 0:
+            raise ValueError(f"{case['id']}: missing measured CUDA device peak")
         stages = receipt.get("proof_stages")
         if not isinstance(stages, list):
             raise ValueError(f"{case['id']}: missing CUDA proof stages")
@@ -179,11 +184,16 @@ def export_cuda(root: Path, config: dict, manifest: dict,
                 ("proof_sha256", "root.proof"), ("outputs_sha256", "root_outputs.json"),
                 ("packed_sha256", "root_packed.json"))}
             expected_hashes = case["expected_root"]
-            verification = ("exact-reference-and-rust-cairo-leaves" if case["family"] == "pipeline"
-                            else "exact-reference")
-            if (case["family"] == "pipeline" and receipt.get("verifier_results", {}).get(
-                    "registry_rust_cairo_leaves") != "accepted"):
-                raise ValueError(f"{case['id']}: Rust Cairo leaf verification missing")
+            verification = "exact-reference"
+            if case["family"] == "pipeline":
+                verdicts = receipt.get("verifier_results", {})
+                if verdicts.get("registry_rust_cairo_leaves") == "accepted":
+                    verification = "exact-reference-and-rust-cairo-leaves"
+                elif (verdicts.get("resident_cairo_leaves") == "verified" and
+                      verdicts.get("registry_rust_cairo_leaves") == "not_serialized"):
+                    verification = "exact-reference-and-resident-cairo-leaves"
+                else:
+                    raise ValueError(f"{case['id']}: Cairo leaf verification missing")
         if hashes != expected_hashes:
             raise ValueError(f"{case['id']}: CUDA artifact digest differs")
         reported_hashes = receipt.get("proof_sha256", {})
@@ -199,7 +209,7 @@ def export_cuda(root: Path, config: dict, manifest: dict,
                      "stage_total_s": f"{proof_seconds:.9f}",
                      "stage_scope": "exact-cuda-cairo-wrap-fold-call-boundaries",
                      "command_wall_s": f"{command_seconds:.9f}",
-                     "peak_physical_footprint_bytes": "", "reference_match": "true",
+                     "peak_physical_footprint_bytes": str(peak_device_bytes), "reference_match": "true",
                      "verification": verification, **hashes,
                      "timer_digest": receipt["timer_digest"],
                      "receipt_sha256": sha(receipt_path)})

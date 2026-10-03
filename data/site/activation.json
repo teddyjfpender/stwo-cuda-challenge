@@ -5,7 +5,7 @@
     {
       "name": "Proof-only scoring contract",
       "status": "partial",
-      "evidence": "The proof-v2 contract pins the same nine hash-checked Cairo, fold, and integrated pipeline jobs for CUDA, Metal, and CPU. Protected exact Cairo, wrap, and fold timers are merged in stwo-zig PR #213. Direct M5 receipts exercise those intervals, but a trusted proof-v2 judge and fresh paired baselines are still required for ranking."
+      "evidence": "The proof-v2 contract pins the same nine hash-checked Cairo, fold, and integrated pipeline jobs for CUDA, Metal, and CPU. Protected exact Cairo, wrap, and fold timers are merged in stwo-zig PR #213. Direct M5 and H200 receipts exercise those intervals; a trusted proof-v2 judge and fresh paired baselines are still required for ranking."
     },
     {
       "name": "Contract and data",
@@ -15,12 +15,12 @@
     {
       "name": "Independent verifiers",
       "status": "partial",
-      "evidence": "Direct proof-v2 M5 runs check exact Cairo proof and circuit root bytes against pinned references; Cairo product verification is enabled. The proof-v2 judge must independently verify every public and private proof, including circuit roots."
+      "evidence": "Direct M5 and H200 runs check exact Cairo proof and circuit root hashes against pinned references. H200 standalone PIE proofs pass the official Rust Cairo verifier; resident pipeline Cairo leaves pass in-process verification without serialized leaf proofs. The proof-v2 judge must independently verify every public and private proof, including circuit roots."
     },
     {
       "name": "Public proofs and folds",
-      "status": "partial",
-      "evidence": "CPU and Metal M5 Max each reproduce all nine current-reference Cairo, fold, and integrated pipeline outputs with exact proof-stage timers. The current-pin H200 basket remains unmeasured."
+      "status": "done",
+      "evidence": "CPU and Metal M5 Max and CUDA H200 each reproduce all nine current-reference Cairo, fold, and integrated pipeline outputs at stwo-zig@1433d61b with exact proof-stage timers. These are direct, single-pass, unranked observations."
     },
     {
       "name": "Private holdout",

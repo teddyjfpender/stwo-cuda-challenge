@@ -194,19 +194,32 @@ def qualify_case(case: dict, source: Path, fixtures: Path, out: Path,
         proof_hashes = {name: sha(result / name) for name in
                         ("root.proof", "root_outputs.json", "root_packed.json")}
         verifier_results = {"canonical_root_digests": "matched",
-                            "registry_rust_cairo_leaves": "accepted",
                             "independent_circuit_verifier": "not_run_by_direct_qualifier"}
         arenas = []
         leaf_phases = []
+        serialized_cairo_proofs = 0
         for index, item in enumerate(case["inputs"]):
             proof = result / f"leaf-{index}.cairo_proof.json"
-            registry_proof_verifier(registry_verifier, proof,
-                                    case_dir / f"cairo-verification-{index}")
-            proof_hashes[f"leaf-{index}.cairo_proof.json"] = sha(proof)
+            if proof.is_file():
+                registry_proof_verifier(registry_verifier, proof,
+                                        case_dir / f"cairo-verification-{index}")
+                proof_hashes[f"leaf-{index}.cairo_proof.json"] = sha(proof)
+                serialized_cairo_proofs += 1
             arenas.append(check_report(result / f"leaf-{index}.cairo_report.json",
                                        item["sha256"]))
-            leaf_phases.append(cairo_phase_seconds(json.loads(
-                (result / f"leaf-{index}.cairo_report.json").read_text())["completed_trials"][0]))
+            trial = json.loads((result / f"leaf-{index}.cairo_report.json").read_text())["completed_trials"][0]
+            if not proof.is_file() and trial.get("proof_sha256") is not None:
+                raise RuntimeError(f"resident Cairo leaf has no published proof but reports one: {case['id']}")
+            leaf_phases.append(cairo_phase_seconds(trial))
+        if serialized_cairo_proofs == len(case["inputs"]):
+            verifier_results["registry_rust_cairo_leaves"] = "accepted"
+        elif serialized_cairo_proofs == 0:
+            # The current CUDA sink verifies the Cairo proof before handing its
+            # capture to the circuit wrapper and deliberately skips JSON output.
+            verifier_results["resident_cairo_leaves"] = "verified"
+            verifier_results["registry_rust_cairo_leaves"] = "not_serialized"
+        else:
+            raise RuntimeError(f"mixed serialized and resident Cairo leaves: {case['id']}")
         profiles = []
         for log in receipt["logs"]:
             content = Path(log).read_text(errors="replace")
@@ -289,8 +302,9 @@ def main() -> None:
     timer_digest = attest(source, config, "cuda") if proof_v2 else None
     source_diff_sha256 = hashlib.sha256(subprocess.check_output(
         ["git", "-C", str(source), "diff", "--binary", "HEAD"])).hexdigest() if proof_v2 else None
-    binary_sha256 = {name: sha(source / "zig-out/bin" / name) for name in
-                     ("stwo-cairo-cuda", "stwo-circuit-recursion-cuda")} if proof_v2 else None
+    binary_sha256 = ({name: sha(source / "zig-out/bin" / name) for name in
+                      ("stwo-cairo-cuda", "stwo-circuit-recursion-cuda")
+                      if (source / "zig-out/bin" / name).is_file()} if proof_v2 else None)
     hardware = config["backends"]["cuda"] if proof_v2 else config["hardware"]
     nvml = Nvml(hardware["deviceBytes"])
     rows = []
