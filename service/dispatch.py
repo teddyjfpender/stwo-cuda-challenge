@@ -108,6 +108,8 @@ def main() -> None:
                         help="rolling 24-hour attempts for this submitter repository; required for live dispatch")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
+    if not args.dry_run:
+        parser.error("h200-v1 ranking is retired; proof-v2 has no live dispatch yet")
     if not args.dry_run and (args.max_gpu_minutes_24h is None or
                              args.max_repository_attempts_24h is None):
         parser.error("live dispatch requires --max-gpu-minutes-24h and --max-repository-attempts-24h")

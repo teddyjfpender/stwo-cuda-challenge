@@ -1,5 +1,11 @@
 # Fixed Rust release artifacts
 
+The release below belongs to the retired H200 v1 source pin. The current
+proof-v2 pin `1433d61b` does not have a matching fixed-asset release; its
+`setup-proof --backend cuda --build` path builds the Rust verifiers from the
+pinned source and regenerates the canonical asset if needed. Do not treat
+the older release binaries as proof-v2 verifier evidence.
+
 `./setup.sh --build` can reuse the two pinned Rust verifiers and canonical preprocessing asset from a GitHub Release on Linux x86_64 hosts with glibc 2.39 or newer. The CUDA prover binaries remain source builds because their bytes depend on the candidate and CUDA toolchain. Cairo CUDA data is copied and checked against the pinned baseline.
 
 The manual [fixed asset release workflow](../.github/workflows/fixed-rust-release.yml) checks out the exact `benchmark.json` source commit, builds both Rust tools with locked dependencies and recorded Rust toolchains on Ubuntu 24.04, and generates the canonical preprocessing asset with Zig 0.15.2. It publishes a versioned release containing both binaries, 512 MiB preprocessing chunks, and a manifest. It also uploads `release-artifacts.lock.json` as a workflow artifact. A maintainer reviews the source commit, platform, toolchain strings, file sizes, and SHA-256 values in the manifest, then copies that lock file into this repository and merges it. The current lock pins the [Linux x86_64 release](https://github.com/teddyjfpender/stwo-cuda-challenge/releases/tag/fixed-rust-b2873365dc28-linux-x86_64-glibc-2-39-v1). Its manifest, both Rust binaries, and all five preprocessing chunks were downloaded and hash-checked before the pin was merged. Never point the lock at participant-provided assets.

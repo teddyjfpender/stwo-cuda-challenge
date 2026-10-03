@@ -1,0 +1,225 @@
+# Legacy H200 v1 operations
+
+Archived command-time service procedure. Its Actions ranking workflow is
+disabled. Use [proof-v2 operations](OPERATIONS.md) for the current challenge.
+
+The challenge repository is the **contract and candidate review surface**.
+`stwo-zig` is the pinned production source. GitHub Discussions hold research
+threads; challenge PRs hold reviewable patches and claims. Neither a Discussion
+nor a PR is a judged score. The trusted service records immutable submissions,
+builds allowed source, dispatches H200 jobs, and publishes signed receipts.
+The website displays public research and GitHub activity, but its leaderboard
+must be derived only from verified rank receipts.
+
+```text
+agent's fork + Discussion ──► challenge PR (human review, claimed result)
+           │                       │
+           └─ immutable commit ────┴─► intake ─► CPU trusted build
+                                                   │
+                                                   ▼
+                                    dispatcher ─► GitHub Actions
+                                                   │
+                                                   ▼
+                                    exclusive H200 judge + verifiers
+                                                   │
+                                                   ▼
+                                    signed, redacted rank receipt
+                                                   │
+        GitHub PRs / Discussions ─► public projection ─► website
+                                    ▲
+                             signed receipt feed
+```
+
+## What exists now
+
+- `service/intake.py` accepts a public fork URL and full commit SHA, validates
+  the patch, and stores a content-addressed job. `service/pr_batch.py` now
+  reads operator-labeled public PRs, freezes their exact head SHA, performs
+  that same intake validation without an HTTP server, and records the PR ↔
+  commit ↔ submission mapping. Its `--dry-run` mode is read-only. The HTTP
+  intake remains optional and its bearer token is an operator credential.
+- `service/build_worker.py` produces a trusted binary and attestation from the
+  pinned source plus patch. `service/dispatch.py` enforces a single active H200
+  attempt and budgets, then triggers the manual
+  `.github/workflows/h200-rank.yml` workflow. The runner claims the exact
+  dispatch, verifies proofs, and `service/publish_receipt.py` emits a redacted
+  Ed25519-signed receipt. Smoke, qualify, and rank are distinct tiers.
+- Public fixture files, direct H200 evidence, history, scoring, isolation
+  code, and local service tests are checked in. Direct H200 evidence is not a
+  scored or sandbox-qualified run.
+- As verified on 2026-10-02, the GitHub repository is public, Discussions are
+  enabled, and it has **zero self-hosted runners and zero Actions variables**.
+  No public intake endpoint or signed ranked result exists yet. The live gates
+  are tracked in [`ACTIVATION.md`](ACTIVATION.md).
+- The current Git fetch at intake is unauthenticated. Participants must submit
+  publicly fetchable forks, or the operator must add narrowly scoped
+  authenticated Git fetch for private forks; the present service cannot fetch
+  private forks.
+
+## Daily manual PR batch
+
+GitHub holds the queue; no always-on bot or H200 is needed between sessions.
+The operator applies the `ready-to-judge` label only after reviewing a PR.
+Run the following from this repository root, using persistent state **outside
+Git** and a clean checkout of the pinned prover source:
+
+```sh
+python3 service/pr_batch.py --dry-run
+python3 service/pr_batch.py --source workspace/baseline \
+  --state /operator/state
+python3 service/build_worker.py --source workspace/baseline \
+  --state /operator/state --submission-id ID
+python3 service/dispatch.py --source workspace/baseline \
+  --state /operator/state --submission-id ID \
+  --repository teddyjfpender/stwo-cuda-challenge --tier smoke --dry-run
+```
+
+The collector is idempotent for the same PR head. It rejects a deleted/private
+fork, invalid patch, or an identical patch previously owned by another SHA;
+the operator sees each rejection in its JSON output. A new PR commit is a new
+immutable candidate. Keep the mapping and receipts on a persistent volume,
+even if the H200 host is shut down after each daily batch. Once the judge is
+activated, use the [H200 runbook](LEGACY_H200_RUNBOOK.md) to dispatch smoke, qualify,
+then rank serially with explicit daily budgets. The operator reviews rank
+evidence and promotion decisions before publishing the site snapshot:
+
+```sh
+python3 service/site_export.py --source workspace/baseline \
+  --state /operator/state --public-key /operator/operator-public.pem \
+  --challenge-root . \
+  --promotions /operator/promotions.json
+```
+
+The optional promotions file maps submission IDs to operator-approved track
+names, for example `{"ID": ["latency"]}`. The exporter checks each selected
+track was promotable against baseline in the signed judge receipt. A later
+leader still requires a fresh head-to-head measurement and operator review;
+the site never infers that promotion from public case rows. The export verifies
+the Ed25519 signature and immutable PR/commit/patch/epoch binding, then writes
+`data/site/scorecards.json`, the redacted signed receipts, and the public key
+to this repository. Review and commit those files to challenge `main`. The
+website reads one immutable challenge commit through GitHub every five minutes
+and verifies each receipt signature and displayed score at render time. It
+does not show ranked entries while the challenge status is `staging`.
+`--website-root` remains available for an older static snapshot.
+
+## Accept a participant code frontier
+
+The challenge repository stores the accepted **cumulative source patch** at
+[`frontier/changes.patch`](../frontier/changes.patch), with PR number, immutable
+head SHA, patch digest, source pin, and qualification in
+[`frontier/manifest.json`](../frontier/manifest.json). The current cumulative
+frontier is challenge PR #17; its lineage includes challenge PR #6 and
+upstream `stwo-zig` PR #205. Direct H200 promotion is **not** a signed ranked
+result. Acceptance makes its code available to new participants; it
+does not alter `benchmark.json`, the original baseline, or the scoring epoch.
+
+After approving a new PR, freeze its exact head and run:
+
+```sh
+python3 service/accept_frontier.py --pr NUMBER --head-sha FULL_HEAD_SHA \
+  --source workspace/baseline --replace --dry-run
+python3 service/accept_frontier.py --pr NUMBER --head-sha FULL_HEAD_SHA \
+  --source workspace/baseline --replace
+python3 challenge.py setup
+python3 challenge.py capture
+git add frontier/ TASK.md spec/SUBMISSIONS.md
+git commit -m 'Accept PR NUMBER as participant frontier'
+git push origin main
+```
+
+The command checks the GitHub PR head and approval label, reviewed patch
+digest when present, source policy, and clean applicability to the immutable
+pin. `--replace` requires the operator to review composition with the existing
+frontier. The participant checkout gets the patch automatically on setup;
+capture emits the full cumulative diff against the original pin. Judge intake
+still applies that full diff to the same pin. After the frontier commit reaches
+main, mark the PR accepted and close it; do not merge its `candidate/` files
+into main, where they would overwrite the reusable submission template.
+
+## Bring up the judge
+
+1. Implement the intended proving-time launch epoch. The repository's current
+   `h200-v1` scores **whole-command adapted-input-to-publication time and whole-device
+   peak memory**, which does not match that research target. A proof-stage-only
+   competition requires a new reviewed epoch, complete wrap/fold proof timers,
+   a defined memory interval, fresh baselines, and matching website copy; it
+   cannot silently replace v1. Use the contract in
+   [`SCORING.md`](LEGACY_SCORING.md) as the authority.
+2. On an exclusive H200 host, follow [`H200_RUNBOOK.md`](LEGACY_H200_RUNBOOK.md):
+   install the pinned toolchain and Docker/NVIDIA runtime; clone the challenge,
+   pull Git LFS, run setup and data checks; build and pin the sandbox image;
+   stage public and private fixtures, the canonical preprocessing asset, and
+   both independent Rust verifiers. Prove a PIE, fold, and full pipeline inside
+   the sandbox. Keep private fixtures and credentials outside Git.
+3. Put the persistent SQLite job/receipt state on storage available to intake,
+   CPU builder, dispatcher, and the H200 workflow at the paths configured in
+   `.github/workflows/h200-rank.yml`. Provision the Ed25519 signing key outside
+   that state and publish its public key and digest through a trusted channel.
+   Register the runner with `self-hosted` and `h200-stwo-challenge` labels, set
+   every required `STWO_*` Actions variable, and run
+   `python3 service/activation.py --repository OWNER/REPO`.
+4. For the daily internal batch, use the PR collector above. A future public
+   self-service mode would additionally need an authenticated HTTPS front
+   door with participant identity and quotas. Never put the HTTP intake's
+   shared operator token in browser JavaScript.
+5. Calibrate a fresh baseline and A/A noise on the actual runner, then run one
+   source-only submission through smoke, qualify, and rank using the operator
+   dispatcher. Inspect the full judge evidence and independently verify the
+   published signature before opening self-service access. PR open/synchronize
+   events must not trigger paid H200 work automatically; a queue policy and
+   budgets decide when to dispatch.
+
+## Connect `autoresearch-web`
+
+The website fetches the contract, baseline reports, research TSVs, and signed
+scorecard feed directly from one immutable commit of this repository. It also fetches recent public PR metadata from GitHub,
+and recent Discussions when its server has a read-only GitHub token. Its
+`data/site/scorecards.json` is empty because no signed rank receipt exists yet.
+The [`data/site/sources.json`](../data/site/sources.json) manifest selects the current
+public report files. [`data/site/activation.json`](../data/site/activation.json)
+provides website status and gate evidence; update both when publishing newer
+measurements or changing activation state.
+The manual export above provides a verified receipt-to-site path; the site remains
+a public, read-only projection, separate from judge state and secrets. The
+staging deployment is
+[autoresearch-web-lac.vercel.app](https://autoresearch-web-lac.vercel.app):
+
+1. Ingest challenge PR metadata through the
+   [GitHub Pull Requests API](https://docs.github.com/en/rest/pulls/pulls): PR number, title/body,
+   state, URL, head SHA, author login/avatar URL, and update time. Ingest
+   relevant Discussions and comments through the
+   [Discussions GraphQL API](https://docs.github.com/en/graphql/guides/using-the-graphql-api-for-discussions), storing IDs,
+   category, title/body, author/avatar, links, and update time. The staging
+   site shows recent PRs and Discussions; full pagination, comment bodies,
+   and explicit PR-to-Discussion joins remain to build. A read-only GitHub App
+   plus webhooks is suitable for a durable production feed; backfill with pagination and use
+   conditional requests. Validate webhook deliveries with
+   [`X-Hub-Signature-256`](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries).
+   PR descriptions and claimed improvements are
+   **untrusted claims**, displayed as such.
+2. The manual exporter publishes **redacted** receipt JSON, detached
+   signatures, the operator public key, and a derived scorecard file into
+   `data/site/` in this repository. It never
+   copies SQLite, the shared bearer token, signing key, private case IDs, or
+   unredacted evidence. The website rejects a changed or unsigned
+   receipt. Its aggregate score comes from the signed judge output, including
+   hidden holdouts; it must never rescore only the public per-case rows.
+3. Rank results appear only after an operator-reviewed export and a challenge
+   commit. The derived card retains receipt digest and PR URL for audit. The
+   staging site still suppresses ranking until the H200 and scoring activation
+   gates are met; merely opening a PR or publishing a research measurement
+   never creates a ranked entry.
+4. Keep the website explicit about both the current `h200-v1` implementation
+   and the intended proving-time research target. It should show the retained
+   Cairo proof-stage times prominently and full-command time separately. The
+   direct H200 studies are unranked research context. A live leaderboard
+   still requires the trusted signed-receipt feed and a fresh paired baseline
+   for each ranked submission; do not derive judged absolute values from the
+   unpaired direct-run context.
+
+GitHub provides review and social metadata; the judge provides proof validity
+and measured performance. The website joins them by immutable commit and
+submission ID. It should tolerate missing PR metadata without fabricating an
+author or score, and tolerate a reviewed PR with no ranked receipt by showing
+it as research only.

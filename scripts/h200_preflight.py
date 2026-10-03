@@ -167,8 +167,9 @@ def preflight(*, mode: str, source: Path, fixtures: Path, manifest: Path,
               preprocessed: Path, artifacts: Path, verifier: Path,
               registry_verifier: Path, case_ids: set[str] | None = None,
               image: str | None = None, probe: bool = True,
-              shared_asset_attestation: dict | None = None) -> dict:
-    config = json.loads((ROOT / "benchmark.json").read_text())
+              shared_asset_attestation: dict | None = None,
+              config_path: Path | None = None) -> dict:
+    config = json.loads((config_path or ROOT / "benchmark.json").read_text())
     contract = json.loads(manifest.read_text())
     if (contract["contract_epoch"] != config["contractEpoch"] or
             contract["source_commit"] != config["sourceCommit"]):
@@ -177,6 +178,8 @@ def preflight(*, mode: str, source: Path, fixtures: Path, manifest: Path,
     if not selected or (case_ids and len(selected) != len(case_ids)):
         raise RuntimeError("unknown or empty case selection")
     if mode == "judge":
+        if config["contractEpoch"] == "proof-v2":
+            raise RuntimeError("proof-v2 trusted H200 judge is not activated")
         if image is None:
             raise RuntimeError("judge mode requires --image with a local pinned sandbox image")
         # Check the failure seen by participants before hashing a multi-GB asset.
@@ -193,7 +196,8 @@ def preflight(*, mode: str, source: Path, fixtures: Path, manifest: Path,
         raise RuntimeError("Zig 0.15.2 is required")
     build_options = cuda_build_options()
     caches = check_build_cache()
-    result = {"schema": "stwo-h200-preflight-v1", "mode": mode,
+    result = {"schema": ("stwo-h200-preflight-v2" if config["contractEpoch"] == "proof-v2"
+                         else "stwo-h200-preflight-v1"), "mode": mode,
               "qualification": "prerequisites-only", "contract_epoch": config["contractEpoch"],
               "cases": [case["id"] for case in selected],
               "toolchain": {tool: command_output(tool, "--version").splitlines()[0]
@@ -256,7 +260,9 @@ def preflight(*, mode: str, source: Path, fixtures: Path, manifest: Path,
             result["sandbox_probe"] = "passed"
     if mode != "prepare":
         check_host_idle()
-        nvml = Nvml(config["hardware"]["deviceBytes"])
+        hardware = (config["backends"]["cuda"] if config["contractEpoch"] == "proof-v2"
+                    else config["hardware"])
+        nvml = Nvml(hardware["deviceBytes"])
         try:
             result["idle_device_bytes"] = nvml.read().used
         finally:
@@ -269,6 +275,7 @@ def preflight(*, mode: str, source: Path, fixtures: Path, manifest: Path,
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=("prepare", "direct", "judge"), required=True)
+    parser.add_argument("--config", type=Path, default=ROOT / "benchmark.json")
     parser.add_argument("--source", type=Path, default=ROOT / "workspace/baseline")
     parser.add_argument("--fixtures", type=Path, default=ROOT / "data/inputs")
     parser.add_argument("--manifest", type=Path, default=ROOT / "fixtures/public-v1.json")
@@ -290,7 +297,8 @@ def main() -> None:
                            verifier=args.verifier.resolve(),
                            registry_verifier=args.registry_verifier.resolve(),
                            case_ids=set(args.case_id) if args.case_id else None,
-                           image=args.image or os.environ.get("STWO_SANDBOX_IMAGE"))
+                           image=args.image or os.environ.get("STWO_SANDBOX_IMAGE"),
+                           config_path=args.config.resolve())
     except (RuntimeError, ValueError, OSError, subprocess.SubprocessError) as error:
         parser.exit(2, f"H200 preflight failed: {error}\n")
     data = json.dumps(result, indent=2, sort_keys=True) + "\n"

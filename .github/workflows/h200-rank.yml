@@ -1,4 +1,6 @@
-name: H200 qualification and ranking
+name: Retired H200 v1 ranking (disabled)
+# The public challenge uses proof-v2. Keep this workflow as a historical
+# dispatch record; it must never issue a new command-time score.
 run-name: H200 attempt-${{ inputs.attempt }} submission-${{ inputs.submission_id }} tier-${{ inputs.tier }}
 on:
   workflow_dispatch:
@@ -27,7 +29,7 @@ jobs:
   h200:
     runs-on: [self-hosted, h200-stwo-challenge]
     timeout-minutes: 90
-    if: github.ref == 'refs/heads/main'
+    if: ${{ false }}
     env:
       SUBMISSION_ID: ${{ inputs.submission_id }}
       ATTEMPT: ${{ inputs.attempt }}

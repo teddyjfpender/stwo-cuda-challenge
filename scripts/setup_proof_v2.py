@@ -35,7 +35,8 @@ def repin_clean(source: Path, commit: str) -> None:
 
 
 def prepare(config: dict, backend: str, *, apply_candidate: bool = False,
-            build: bool = False, build_baseline: bool = False) -> tuple[Path, Path]:
+            build: bool = False, build_baseline: bool = False,
+            prepare_assets: bool = True) -> tuple[Path, Path]:
     if config.get("contractEpoch") != "proof-v2":
         raise ValueError("setup requires the proof-v2 contract")
     if backend not in config["backends"]:
@@ -89,6 +90,9 @@ def prepare(config: dict, backend: str, *, apply_candidate: bool = False,
             else:
                 command("zig", "build", "stwo-cairo-cpu", "stwo-circuit-recursion-cpu",
                         "-Doptimize=ReleaseFast", "-j2", cwd=tree)
+        if backend == "cuda" and prepare_assets:
+            from scripts.setup import prepare_judge_assets
+            prepare_judge_assets(baseline, commit)
     return source, baseline
 
 
@@ -100,10 +104,13 @@ def main() -> None:
     parser.add_argument("--build", action="store_true")
     parser.add_argument("--build-baseline", action="store_true",
                         help="also build the pinned baseline; not needed for a first smoke test")
+    parser.add_argument("--skip-assets", action="store_true",
+                        help="reuse previously verified CUDA fixed assets when rebuilding source")
     args = parser.parse_args()
     source, baseline = prepare(json.loads(args.config.read_text()), args.backend,
                                apply_candidate=args.apply_candidate, build=args.build,
-                               build_baseline=args.build_baseline)
+                               build_baseline=args.build_baseline,
+                               prepare_assets=not args.skip_assets)
     print(f"Proof-v2 {args.backend} source: {source}; baseline: {baseline}")
     print("Staging only: no ranked proof-only judge is active yet.")
 

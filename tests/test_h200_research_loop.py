@@ -13,6 +13,18 @@ from scripts import h200_preflight as preflight
 
 
 class H200PreflightTests(unittest.TestCase):
+    def test_proof_v2_judge_is_not_enabled_by_a_direct_preflight(self):
+        root = preflight.ROOT
+        with self.assertRaisesRegex(RuntimeError, "not activated"):
+            preflight.preflight(
+                mode="judge", source=root, fixtures=root / "data/inputs",
+                manifest=root / "fixtures/public-proof-v2.json",
+                preprocessed=root / ".cache/preprocessed-canonical.bin",
+                artifacts=root / ".cache/cuda-artifacts",
+                verifier=root / ".cache/rust-official/release/stwo-cairo-official-verifier",
+                registry_verifier=root / ".cache/rust-registry/release/verify_cairo_cuda_json",
+                config_path=root / "benchmark-proof-v2.json")
+
     def test_prepare_checks_assets_without_needing_a_gpu_or_sandbox(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

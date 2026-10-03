@@ -1,3 +1,9 @@
+# Legacy H200 v1 judge
+
+This document describes the retired command-time judge. Its GitHub Actions
+ranking job is disabled. The current staged proof-only rules are in
+[SCORING.md](SCORING.md) and [ACTIVATION.md](ACTIVATION.md).
+
 # Judge and validation service design
 
 ## Submission and trust boundary

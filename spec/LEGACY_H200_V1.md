@@ -68,7 +68,7 @@ Run `python3 challenge.py paths` to see the local checkout path; there is no
 `/workspaces/stwo-zig` directory, and `workspace/` is ignored in Git. A fresh
 clone therefore has no prover source until setup runs. The fixed contract is [benchmark.json](benchmark.json),
 the workload and proof obligations are in [spec/WORKLOADS.md](spec/WORKLOADS.md),
-and the scoring and tradeoffs are in [spec/SCORING.md](spec/SCORING.md).
+and the scoring and tradeoffs are in [spec/LEGACY_SCORING.md](spec/LEGACY_SCORING.md).
 The [submission guide](spec/SUBMISSIONS.md) lists editable CUDA files,
 validation, Discussion use, PR contents, and the separate judge intake step.
 Coding agents can load the repository's
@@ -208,8 +208,8 @@ prepared locally; its HTTPS hosting remains part of deployment.
 
 The service/runner design, artifact policy, isolation requirements, and H200
 budget controls are in [spec/JUDGE.md](spec/JUDGE.md). The
-[H200 operator runbook](spec/H200_RUNBOOK.md) gives the activation sequence.
-The [operations map](spec/OPERATIONS.md) explains how PRs, intake, GitHub
+[H200 operator runbook](spec/LEGACY_H200_RUNBOOK.md) gives the activation sequence.
+The [operations map](spec/LEGACY_OPERATIONS.md) explains how PRs, intake, GitHub
 Actions, signed receipts, and `autoresearch-web` fit together and which live
 connections still need deployment.
 For the internal daily batch, an operator reviews PRs, adds the
@@ -267,7 +267,7 @@ folds, and two complete PIE → Cairo proof → wrap → fold → root modes. Op
 adapted-input-to-published-proof time and whole-device peak memory while
 preserving every proof, security, and source-policy requirement. All cases and
 track guards matter; read [`WORKLOADS.md`](spec/WORKLOADS.md),
-[`SCORING.md`](spec/SCORING.md), and
+[`LEGACY_SCORING.md`](spec/LEGACY_SCORING.md), and
 [`SUBMISSIONS.md`](spec/SUBMISSIONS.md) before editing.
 
 Run `python3 challenge.py setup` from the challenge root to create the ignored,
@@ -332,7 +332,7 @@ correctness checks, tradeoffs, attribution, and related Discussions.
 
 Work from this repository's root. Read [TASK.md](../../TASK.md),
 [spec/WORKLOADS.md](../../spec/WORKLOADS.md), and
-[spec/SCORING.md](../../spec/SCORING.md), and
+[spec/LEGACY_SCORING.md](../../spec/LEGACY_SCORING.md), and
 [spec/SUBMISSIONS.md](../../spec/SUBMISSIONS.md) before changing the candidate. The
 versioned contract in [benchmark.json](../../benchmark.json) fixes the source
 commit, editable paths, workloads, and security profile.
@@ -371,7 +371,7 @@ H200 host, use `setup --build`, then `benchmark --tier smoke`, followed by
 `benchmark --tier qualify` for the full basket. Use `--tier rank` only after
 qualification. Every case must produce its canonical, independently verified
 proof at the fixed security settings. Consult [README.md](../../README.md) for
-host prerequisites and [spec/H200_RUNBOOK.md](../../spec/H200_RUNBOOK.md) for
+host prerequisites and [spec/LEGACY_H200_RUNBOOK.md](../../spec/LEGACY_H200_RUNBOOK.md) for
 operator-only H200 setup.
 The [fixed-artifact release](../../spec/RELEASE_ARTIFACTS.md) can supply
 hash-verified Rust verifiers and canonical preprocessing data on a supported
@@ -418,7 +418,7 @@ Every required proof must still verify with the pinned independent verifier,
 match its expected public output, use the canonical security profile, and have
 no CPU proving fallback. The actual `h200-v1` score measures adapted-input to
 published-proof wall time and whole-device peak memory. Read
-[`WORKLOADS.md`](WORKLOADS.md) and [`SCORING.md`](SCORING.md) before optimizing.
+[`WORKLOADS.md`](WORKLOADS.md) and [`LEGACY_SCORING.md`](LEGACY_SCORING.md) before optimizing.
 
 ## Research and design
 
@@ -530,7 +530,7 @@ A complete candidate submission includes:
 
 The standalone HTTP intake remains available for a future self-service mode,
 but its shared bearer token is not a participant credential. The manual PR
-batch and its setup are in [`OPERATIONS.md`](OPERATIONS.md).
+batch and its setup are in [`LEGACY_OPERATIONS.md`](LEGACY_OPERATIONS.md).
 
 ## Former activation record
 
@@ -555,7 +555,7 @@ This is the boundary between a tested challenge repository and a live ranked
 service. The repository is public. No self-hosted H200 runner or
 GitHub Actions judge variables are configured, so the manual H200 workflow
 must not be dispatched yet. The concrete setup sequence is in
-[`H200_RUNBOOK.md`](H200_RUNBOOK.md).
+[`LEGACY_H200_RUNBOOK.md`](LEGACY_H200_RUNBOOK.md).
 
 As checked on 2026-10-02, GitHub lists zero self-hosted runners for this
 repository, and `service/activation.py` reports all ten H200 judge variables
