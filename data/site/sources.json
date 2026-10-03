@@ -11,7 +11,8 @@
   "proofBenchmark": "benchmark-proof-v2.json",
   "proofFixture": "fixtures/public-proof-v2.json",
   "proofObservations": [
-    "data/reports/m5-proof-v2-2026-10-03-full.tsv"
+    "data/reports/m5-proof-v2-2026-10-03-full.tsv",
+    "data/reports/h200-proof-v2-2026-10-03-full.tsv"
   ],
   "ingressStudy": "data/reports/h200-pr212-ingress-2026-10-03-summary.tsv",
   "scorecards": "data/site/scorecards.json"

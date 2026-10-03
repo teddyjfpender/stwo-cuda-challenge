@@ -1,0 +1,520 @@
+[
+  {
+    "case_id": "pie:15582797_15582797",
+    "family": "pie",
+    "time_s": 5.681290326,
+    "timing_boundary": "proof-execution-v2",
+    "timing_condition": "cold-process",
+    "phase_seconds": {
+      "ingress_ns": 3.480983988,
+      "proof_execute_and_decode_ns": 1.246162136,
+      "adapted_input_until_publication_ns": 4.806701385,
+      "source_lookahead_prepare_ns": 0.0,
+      "source_lookahead_wait_ns": 0.0
+    },
+    "proof_stages": [
+      {
+        "kind": "cairo",
+        "seconds": 1.246162136
+      }
+    ],
+    "ingress_stage_seconds": {
+      "paths_ns": 5.0847e-05,
+      "runtime_ns": 0.465343937,
+      "source_ns": 1.265481371,
+      "controllers_ns": 0.179313046,
+      "twiddles_ns": 0.103375113,
+      "allocation_ns": 0.177458908,
+      "binding_ns": 0.161132055,
+      "static_ns": 0.671610283,
+      "writers_ns": 0.359166718,
+      "statement_and_session_ns": 0.09805171
+    },
+    "proof_sha256": {
+      "proof.json": "fcc457fee3bcaca85efd97d308daa1a16e849c633b4571144417543158eb1eeb"
+    },
+    "verifier_results": {
+      "official_rust_cairo": "accepted",
+      "canonical_proof_digest": "matched"
+    },
+    "peak_device_bytes": 90470678528,
+    "idle_device_bytes": 634060800,
+    "nvml_samples": 532,
+    "planned_arena_bytes": 88627473376,
+    "verified": true,
+    "canonical_output": true,
+    "gpu_resident": true,
+    "security_profile": "canonical",
+    "qualification": "direct-unranked-unsandboxed",
+    "proof_stage_s": 1.246162136,
+    "timer_digest": "1d525125717c95da0af6ddfe4039547d15b9ba865da2318344b37081d9b72512",
+    "source_commit": "1433d61b590058980d02b3f5bc912fe073c1a646",
+    "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "binary_sha256": {
+      "stwo-cairo-cuda": "67da3557565e08e454e1062d2ea0a8404bc09362daba94f4cbabfbafc87f1758",
+      "stwo-circuit-recursion-cuda": "54370a0e99c993a0b2ef3681048cf313650f38a45dd269f649e5d3d105201a2b"
+    }
+  },
+  {
+    "case_id": "pie:15603744_15603744",
+    "family": "pie",
+    "time_s": 5.386649653,
+    "timing_boundary": "proof-execution-v2",
+    "timing_condition": "cold-process",
+    "phase_seconds": {
+      "ingress_ns": 3.536877328,
+      "proof_execute_and_decode_ns": 1.19232559,
+      "adapted_input_until_publication_ns": 4.80797986,
+      "source_lookahead_prepare_ns": 0.0,
+      "source_lookahead_wait_ns": 0.0
+    },
+    "proof_stages": [
+      {
+        "kind": "cairo",
+        "seconds": 1.19232559
+      }
+    ],
+    "ingress_stage_seconds": {
+      "paths_ns": 5.1626e-05,
+      "runtime_ns": 0.3372202,
+      "source_ns": 1.264633632,
+      "controllers_ns": 0.180244892,
+      "twiddles_ns": 0.083292825,
+      "allocation_ns": 0.182391707,
+      "binding_ns": 0.16226755,
+      "static_ns": 0.812720318,
+      "writers_ns": 0.415217234,
+      "statement_and_session_ns": 0.098837344
+    },
+    "proof_sha256": {
+      "proof.json": "bf963282d104deec420cdaec8e26f8b2fd235c2e2374a7a4f0b8d6eedf0f3109"
+    },
+    "verifier_results": {
+      "official_rust_cairo": "accepted",
+      "canonical_proof_digest": "matched"
+    },
+    "peak_device_bytes": 89698926592,
+    "idle_device_bytes": 634060800,
+    "nvml_samples": 516,
+    "planned_arena_bytes": 87875021696,
+    "verified": true,
+    "canonical_output": true,
+    "gpu_resident": true,
+    "security_profile": "canonical",
+    "qualification": "direct-unranked-unsandboxed",
+    "proof_stage_s": 1.19232559,
+    "timer_digest": "1d525125717c95da0af6ddfe4039547d15b9ba865da2318344b37081d9b72512",
+    "source_commit": "1433d61b590058980d02b3f5bc912fe073c1a646",
+    "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "binary_sha256": {
+      "stwo-cairo-cuda": "67da3557565e08e454e1062d2ea0a8404bc09362daba94f4cbabfbafc87f1758",
+      "stwo-circuit-recursion-cuda": "54370a0e99c993a0b2ef3681048cf313650f38a45dd269f649e5d3d105201a2b"
+    }
+  },
+  {
+    "case_id": "pie:15581148_15581148",
+    "family": "pie",
+    "time_s": 5.326155213,
+    "timing_boundary": "proof-execution-v2",
+    "timing_condition": "cold-process",
+    "phase_seconds": {
+      "ingress_ns": 3.501203114,
+      "proof_execute_and_decode_ns": 1.138537313,
+      "adapted_input_until_publication_ns": 4.750010753,
+      "source_lookahead_prepare_ns": 0.0,
+      "source_lookahead_wait_ns": 0.0
+    },
+    "proof_stages": [
+      {
+        "kind": "cairo",
+        "seconds": 1.138537313
+      }
+    ],
+    "ingress_stage_seconds": {
+      "paths_ns": 3.2448e-05,
+      "runtime_ns": 0.338483271,
+      "source_ns": 1.156834542,
+      "controllers_ns": 0.181718702,
+      "twiddles_ns": 0.070173925,
+      "allocation_ns": 0.170452918,
+      "binding_ns": 0.166303523,
+      "static_ns": 0.946513697,
+      "writers_ns": 0.369540487,
+      "statement_and_session_ns": 0.101149601
+    },
+    "proof_sha256": {
+      "proof.json": "fd4f9c27bad18a2c7f089b8af5eb7c8e3a3db1c7aeb3d38f3ad5b142f6061b3c"
+    },
+    "verifier_results": {
+      "official_rust_cairo": "accepted",
+      "canonical_proof_digest": "matched"
+    },
+    "peak_device_bytes": 84531544064,
+    "idle_device_bytes": 634060800,
+    "nvml_samples": 509,
+    "planned_arena_bytes": 82697758816,
+    "verified": true,
+    "canonical_output": true,
+    "gpu_resident": true,
+    "security_profile": "canonical",
+    "qualification": "direct-unranked-unsandboxed",
+    "proof_stage_s": 1.138537313,
+    "timer_digest": "1d525125717c95da0af6ddfe4039547d15b9ba865da2318344b37081d9b72512",
+    "source_commit": "1433d61b590058980d02b3f5bc912fe073c1a646",
+    "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "binary_sha256": {
+      "stwo-cairo-cuda": "67da3557565e08e454e1062d2ea0a8404bc09362daba94f4cbabfbafc87f1758",
+      "stwo-circuit-recursion-cuda": "54370a0e99c993a0b2ef3681048cf313650f38a45dd269f649e5d3d105201a2b"
+    }
+  },
+  {
+    "case_id": "pie:15590913_15590913",
+    "family": "pie",
+    "time_s": 5.782372564,
+    "timing_boundary": "proof-execution-v2",
+    "timing_condition": "cold-process",
+    "phase_seconds": {
+      "ingress_ns": 3.567331452,
+      "proof_execute_and_decode_ns": 1.50345204,
+      "adapted_input_until_publication_ns": 5.145986908,
+      "source_lookahead_prepare_ns": 0.0,
+      "source_lookahead_wait_ns": 0.0
+    },
+    "proof_stages": [
+      {
+        "kind": "cairo",
+        "seconds": 1.50345204
+      }
+    ],
+    "ingress_stage_seconds": {
+      "paths_ns": 6.4779e-05,
+      "runtime_ns": 0.340075106,
+      "source_ns": 1.362566078,
+      "controllers_ns": 0.248727115,
+      "twiddles_ns": 0.081377496,
+      "allocation_ns": 0.187784936,
+      "binding_ns": 0.161425087,
+      "static_ns": 0.677199918,
+      "writers_ns": 0.406400751,
+      "statement_and_session_ns": 0.101710186
+    },
+    "proof_sha256": {
+      "proof.json": "23ef11f1f7bbf0b31d6ede197bd67d2548975b951283c4cedc0fb6148e443af9"
+    },
+    "verifier_results": {
+      "official_rust_cairo": "accepted",
+      "canonical_proof_digest": "matched"
+    },
+    "peak_device_bytes": 105201074176,
+    "idle_device_bytes": 634060800,
+    "nvml_samples": 557,
+    "planned_arena_bytes": 103366794272,
+    "verified": true,
+    "canonical_output": true,
+    "gpu_resident": true,
+    "security_profile": "canonical",
+    "qualification": "direct-unranked-unsandboxed",
+    "proof_stage_s": 1.50345204,
+    "timer_digest": "1d525125717c95da0af6ddfe4039547d15b9ba865da2318344b37081d9b72512",
+    "source_commit": "1433d61b590058980d02b3f5bc912fe073c1a646",
+    "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "binary_sha256": {
+      "stwo-cairo-cuda": "67da3557565e08e454e1062d2ea0a8404bc09362daba94f4cbabfbafc87f1758",
+      "stwo-circuit-recursion-cuda": "54370a0e99c993a0b2ef3681048cf313650f38a45dd269f649e5d3d105201a2b"
+    }
+  },
+  {
+    "case_id": "pie:15588777_15588780",
+    "family": "pie",
+    "time_s": 6.780153067,
+    "timing_boundary": "proof-execution-v2",
+    "timing_condition": "cold-process",
+    "phase_seconds": {
+      "ingress_ns": 4.119753921,
+      "proof_execute_and_decode_ns": 1.878660846,
+      "adapted_input_until_publication_ns": 6.086745053,
+      "source_lookahead_prepare_ns": 0.0,
+      "source_lookahead_wait_ns": 0.0
+    },
+    "proof_stages": [
+      {
+        "kind": "cairo",
+        "seconds": 1.878660846
+      }
+    ],
+    "ingress_stage_seconds": {
+      "paths_ns": 6.18e-05,
+      "runtime_ns": 0.338850046,
+      "source_ns": 1.869990429,
+      "controllers_ns": 0.179320258,
+      "twiddles_ns": 0.078893901,
+      "allocation_ns": 0.255196464,
+      "binding_ns": 0.161549222,
+      "static_ns": 0.515790659,
+      "writers_ns": 0.622298715,
+      "statement_and_session_ns": 0.097802427
+    },
+    "proof_sha256": {
+      "proof.json": "8f24b5a15dceb4c1b850c39e9fb699acf9e1ddcecac2fc993960ce783c8ca310"
+    },
+    "verifier_results": {
+      "official_rust_cairo": "accepted",
+      "canonical_proof_digest": "matched"
+    },
+    "peak_device_bytes": 134057885696,
+    "idle_device_bytes": 634060800,
+    "nvml_samples": 653,
+    "planned_arena_bytes": 132228586352,
+    "verified": true,
+    "canonical_output": true,
+    "gpu_resident": true,
+    "security_profile": "canonical",
+    "qualification": "direct-unranked-unsandboxed",
+    "proof_stage_s": 1.878660846,
+    "timer_digest": "1d525125717c95da0af6ddfe4039547d15b9ba865da2318344b37081d9b72512",
+    "source_commit": "1433d61b590058980d02b3f5bc912fe073c1a646",
+    "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "binary_sha256": {
+      "stwo-cairo-cuda": "67da3557565e08e454e1062d2ea0a8404bc09362daba94f4cbabfbafc87f1758",
+      "stwo-circuit-recursion-cuda": "54370a0e99c993a0b2ef3681048cf313650f38a45dd269f649e5d3d105201a2b"
+    }
+  },
+  {
+    "case_id": "pie:15591789_15591789",
+    "family": "pie",
+    "time_s": 5.823559698,
+    "timing_boundary": "proof-execution-v2",
+    "timing_condition": "cold-process",
+    "phase_seconds": {
+      "ingress_ns": 3.467541975,
+      "proof_execute_and_decode_ns": 1.630306483,
+      "adapted_input_until_publication_ns": 5.188613303,
+      "source_lookahead_prepare_ns": 0.0,
+      "source_lookahead_wait_ns": 0.0
+    },
+    "proof_stages": [
+      {
+        "kind": "cairo",
+        "seconds": 1.630306483
+      }
+    ],
+    "ingress_stage_seconds": {
+      "paths_ns": 3.6552e-05,
+      "runtime_ns": 0.338800369,
+      "source_ns": 1.388711664,
+      "controllers_ns": 0.180813742,
+      "twiddles_ns": 0.096130314,
+      "allocation_ns": 0.211278624,
+      "binding_ns": 0.158937914,
+      "static_ns": 0.555188432,
+      "writers_ns": 0.436157423,
+      "statement_and_session_ns": 0.101486941
+    },
+    "proof_sha256": {
+      "proof.json": "3c39b6f0a59aec76ccc5c215a2530905a0617306260e3590284f11931578151a"
+    },
+    "verifier_results": {
+      "official_rust_cairo": "accepted",
+      "canonical_proof_digest": "matched"
+    },
+    "peak_device_bytes": 116240482304,
+    "idle_device_bytes": 634060800,
+    "nvml_samples": 559,
+    "planned_arena_bytes": 114411804960,
+    "verified": true,
+    "canonical_output": true,
+    "gpu_resident": true,
+    "security_profile": "canonical",
+    "qualification": "direct-unranked-unsandboxed",
+    "proof_stage_s": 1.630306483,
+    "timer_digest": "1d525125717c95da0af6ddfe4039547d15b9ba865da2318344b37081d9b72512",
+    "source_commit": "1433d61b590058980d02b3f5bc912fe073c1a646",
+    "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "binary_sha256": {
+      "stwo-cairo-cuda": "67da3557565e08e454e1062d2ea0a8404bc09362daba94f4cbabfbafc87f1758",
+      "stwo-circuit-recursion-cuda": "54370a0e99c993a0b2ef3681048cf313650f38a45dd269f649e5d3d105201a2b"
+    }
+  },
+  {
+    "case_id": "recursion:two-leaf-wrap-fold",
+    "family": "recursion",
+    "time_s": 2.578932393,
+    "timing_boundary": "proof-execution-v2",
+    "timing_condition": "cold-process",
+    "phase_seconds": {
+      "circuit_resident_ns": 0.555450879,
+      "circuit_verify_ns": 0.004597951,
+      "circuit_convert_ns": 0.000172585
+    },
+    "proof_stages": [
+      {
+        "kind": "fold",
+        "seconds": 0.555450879
+      }
+    ],
+    "ingress_stage_seconds": {},
+    "proof_sha256": {
+      "root.proof": "9093f941c4a9144fd653441c582cc0921bac8431df8df46bdd556b8e661af724",
+      "root_outputs.json": "abaefd94d716e2e4f07b5a2fcd521764e5d4c0f8dd04ec60e095bf74d0e1349b",
+      "root_packed.json": "72f17bf582e5438defd30e2f3c52f87ff47e5d6f0d1223b98d37bac8007c54a2"
+    },
+    "verifier_results": {
+      "canonical_root_digests": "matched",
+      "independent_circuit_verifier": "not_run_by_direct_qualifier"
+    },
+    "peak_device_bytes": 29405806592,
+    "idle_device_bytes": 634060800,
+    "nvml_samples": 237,
+    "planned_arena_bytes": 28132569632,
+    "verified": true,
+    "canonical_output": true,
+    "gpu_resident": true,
+    "security_profile": "canonical",
+    "qualification": "direct-unranked-unsandboxed",
+    "proof_stage_s": 0.555450879,
+    "timer_digest": "1d525125717c95da0af6ddfe4039547d15b9ba865da2318344b37081d9b72512",
+    "source_commit": "1433d61b590058980d02b3f5bc912fe073c1a646",
+    "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "binary_sha256": {
+      "stwo-cairo-cuda": "67da3557565e08e454e1062d2ea0a8404bc09362daba94f4cbabfbafc87f1758",
+      "stwo-circuit-recursion-cuda": "54370a0e99c993a0b2ef3681048cf313650f38a45dd269f649e5d3d105201a2b"
+    }
+  },
+  {
+    "case_id": "recursion:eight-distinct-pie-fold",
+    "family": "recursion",
+    "time_s": 7.279516098,
+    "timing_boundary": "proof-execution-v2",
+    "timing_condition": "cold-process",
+    "phase_seconds": {
+      "circuit_resident_ns": 2.794324416,
+      "circuit_verify_ns": 0.029460053,
+      "circuit_convert_ns": 0.00235929
+    },
+    "proof_stages": [
+      {
+        "kind": "fold",
+        "seconds": 0.531005843
+      },
+      {
+        "kind": "fold",
+        "seconds": 0.365515299
+      },
+      {
+        "kind": "fold",
+        "seconds": 0.377791853
+      },
+      {
+        "kind": "fold",
+        "seconds": 0.409711594
+      },
+      {
+        "kind": "fold",
+        "seconds": 0.368801435
+      },
+      {
+        "kind": "fold",
+        "seconds": 0.367087654
+      },
+      {
+        "kind": "fold",
+        "seconds": 0.374410738
+      }
+    ],
+    "ingress_stage_seconds": {},
+    "proof_sha256": {
+      "root.proof": "053157c56469b3c452435ca9b0569979e928405c130928b8b76b49fbbe2646a9",
+      "root_outputs.json": "5f88063eb7054713e3ee24507b239d972c668a781b99d067fa3b4f0e12fd968d",
+      "root_packed.json": "deb27b33f0057f9cd4cff1ae9eea782d588b3c4a7babce4551fe3a6f043786b4"
+    },
+    "verifier_results": {
+      "canonical_root_digests": "matched",
+      "independent_circuit_verifier": "not_run_by_direct_qualifier"
+    },
+    "peak_device_bytes": 29405806592,
+    "idle_device_bytes": 634060800,
+    "nvml_samples": 702,
+    "planned_arena_bytes": 28132569632,
+    "verified": true,
+    "canonical_output": true,
+    "gpu_resident": true,
+    "security_profile": "canonical",
+    "qualification": "direct-unranked-unsandboxed",
+    "proof_stage_s": 2.7943244160000003,
+    "timer_digest": "1d525125717c95da0af6ddfe4039547d15b9ba865da2318344b37081d9b72512",
+    "source_commit": "1433d61b590058980d02b3f5bc912fe073c1a646",
+    "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "binary_sha256": {
+      "stwo-cairo-cuda": "67da3557565e08e454e1062d2ea0a8404bc09362daba94f4cbabfbafc87f1758",
+      "stwo-circuit-recursion-cuda": "54370a0e99c993a0b2ef3681048cf313650f38a45dd269f649e5d3d105201a2b"
+    }
+  },
+  {
+    "case_id": "pipeline:two-leaf-root",
+    "family": "pipeline",
+    "time_s": 15.252233742,
+    "timing_boundary": "proof-execution-v2",
+    "timing_condition": "cold-process",
+    "phase_seconds": {
+      "circuit_resident_ns": 1.794118334,
+      "circuit_verify_ns": 0.013412401,
+      "circuit_convert_ns": 0.000908293,
+      "cairo_leaf_ingress_ns_sum": 6.013983894,
+      "cairo_leaf_proof_execute_and_decode_ns_sum": 0.874762642,
+      "cairo_leaf_adapted_input_until_publication_ns_sum": 6.977052982,
+      "cairo_leaf_source_lookahead_prepare_ns_sum": 0.0,
+      "cairo_leaf_source_lookahead_wait_ns_sum": 0.0
+    },
+    "proof_stages": [
+      {
+        "kind": "cairo",
+        "seconds": 0.441189028
+      },
+      {
+        "kind": "cairo",
+        "seconds": 0.433573614
+      },
+      {
+        "kind": "wrap",
+        "seconds": 0.63873862
+      },
+      {
+        "kind": "wrap",
+        "seconds": 0.590694216
+      },
+      {
+        "kind": "fold",
+        "seconds": 0.564685498
+      }
+    ],
+    "ingress_stage_seconds": {},
+    "proof_sha256": {
+      "root.proof": "9093f941c4a9144fd653441c582cc0921bac8431df8df46bdd556b8e661af724",
+      "root_outputs.json": "abaefd94d716e2e4f07b5a2fcd521764e5d4c0f8dd04ec60e095bf74d0e1349b",
+      "root_packed.json": "72f17bf582e5438defd30e2f3c52f87ff47e5d6f0d1223b98d37bac8007c54a2"
+    },
+    "verifier_results": {
+      "canonical_root_digests": "matched",
+      "independent_circuit_verifier": "not_run_by_direct_qualifier",
+      "resident_cairo_leaves": "verified",
+      "registry_rust_cairo_leaves": "not_serialized"
+    },
+    "peak_device_bytes": 69434146816,
+    "idle_device_bytes": 634060800,
+    "nvml_samples": 1446,
+    "planned_arena_bytes": 39429769536,
+    "verified": true,
+    "canonical_output": true,
+    "gpu_resident": true,
+    "security_profile": "canonical",
+    "qualification": "direct-unranked-unsandboxed",
+    "proof_stage_s": 2.668880976,
+    "timer_digest": "1d525125717c95da0af6ddfe4039547d15b9ba865da2318344b37081d9b72512",
+    "source_commit": "1433d61b590058980d02b3f5bc912fe073c1a646",
+    "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "binary_sha256": {
+      "stwo-cairo-cuda": "67da3557565e08e454e1062d2ea0a8404bc09362daba94f4cbabfbafc87f1758",
+      "stwo-circuit-recursion-cuda": "54370a0e99c993a0b2ef3681048cf313650f38a45dd269f649e5d3d105201a2b"
+    }
+  }
+]
