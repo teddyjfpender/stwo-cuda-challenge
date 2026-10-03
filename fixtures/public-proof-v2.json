@@ -25,7 +25,8 @@
         "planned_arena_bytes": 88627473376
       },
       "source": "stwo-zig/vectors/reports/recursive-product-20260918/pie-scale-study-20261001/pie-scale.csv",
-      "expected_proof_sha256": "fcc457fee3bcaca85efd97d308daa1a16e849c633b4571144417543158eb1eeb"
+      "expected_proof_sha256": "fcc457fee3bcaca85efd97d308daa1a16e849c633b4571144417543158eb1eeb",
+      "metric": "proof_stage_seconds"
     },
     {
       "id": "pie:15603744_15603744",
@@ -48,7 +49,8 @@
         "planned_arena_bytes": 87875021696
       },
       "source": "stwo-zig/vectors/reports/recursive-product-20260918/pie-scale-study-20261001/pie-scale.csv",
-      "expected_proof_sha256": "bf963282d104deec420cdaec8e26f8b2fd235c2e2374a7a4f0b8d6eedf0f3109"
+      "expected_proof_sha256": "bf963282d104deec420cdaec8e26f8b2fd235c2e2374a7a4f0b8d6eedf0f3109",
+      "metric": "proof_stage_seconds"
     },
     {
       "id": "pie:15581148_15581148",
@@ -71,7 +73,8 @@
         "planned_arena_bytes": 82697758816
       },
       "source": "stwo-zig/vectors/reports/recursive-product-20260918/pie-scale-study-20261001/pie-scale.csv",
-      "expected_proof_sha256": "fd4f9c27bad18a2c7f089b8af5eb7c8e3a3db1c7aeb3d38f3ad5b142f6061b3c"
+      "expected_proof_sha256": "fd4f9c27bad18a2c7f089b8af5eb7c8e3a3db1c7aeb3d38f3ad5b142f6061b3c",
+      "metric": "proof_stage_seconds"
     },
     {
       "id": "pie:15590913_15590913",
@@ -94,7 +97,8 @@
         "planned_arena_bytes": 103366794272
       },
       "source": "stwo-zig/vectors/reports/recursive-product-20260918/pie-scale-study-20261001/pie-scale.csv",
-      "expected_proof_sha256": "23ef11f1f7bbf0b31d6ede197bd67d2548975b951283c4cedc0fb6148e443af9"
+      "expected_proof_sha256": "23ef11f1f7bbf0b31d6ede197bd67d2548975b951283c4cedc0fb6148e443af9",
+      "metric": "proof_stage_seconds"
     },
     {
       "id": "pie:15588777_15588780",
@@ -117,7 +121,8 @@
         "planned_arena_bytes": 132228586352
       },
       "source": "stwo-zig/vectors/reports/recursive-product-20260918/pie-scale-study-20261001/pie-scale.csv",
-      "expected_proof_sha256": "8f24b5a15dceb4c1b850c39e9fb699acf9e1ddcecac2fc993960ce783c8ca310"
+      "expected_proof_sha256": "8f24b5a15dceb4c1b850c39e9fb699acf9e1ddcecac2fc993960ce783c8ca310",
+      "metric": "proof_stage_seconds"
     },
     {
       "id": "pie:15591789_15591789",
@@ -140,13 +145,14 @@
         "planned_arena_bytes": 144048695028
       },
       "source": "stwo-zig/vectors/reports/recursive-product-20260918/pie-scale-study-20261001/pie-scale.csv",
-      "expected_proof_sha256": "3c39b6f0a59aec76ccc5c215a2530905a0617306260e3590284f11931578151a"
+      "expected_proof_sha256": "3c39b6f0a59aec76ccc5c215a2530905a0617306260e3590284f11931578151a",
+      "metric": "proof_stage_seconds"
     },
     {
       "id": "recursion:two-leaf-wrap-fold",
       "family": "recursion",
       "kind": "fold_root",
-      "metric": "process_wall_s",
+      "metric": "proof_stage_seconds",
       "description": "one root fold over two distinct verified circuit leaves",
       "inputs": [
         {
@@ -177,7 +183,7 @@
       "id": "recursion:eight-distinct-pie-fold",
       "family": "recursion",
       "kind": "fold_root",
-      "metric": "process_wall_s",
+      "metric": "proof_stage_seconds",
       "description": "seven canonical folds over eight distinct state-continuous ten-block mainnet PIE leaves",
       "inputs": [
         {
@@ -264,7 +270,7 @@
       "id": "pipeline:two-leaf-root",
       "family": "pipeline",
       "kind": "full_pipeline",
-      "metric": "adapted_input_to_root_wall_s",
+      "metric": "proof_stage_seconds",
       "description": "both Cairo proofs, wraps, and one root publication",
       "input_ids": [
         "pipeline:two-leaf-root"
@@ -302,5 +308,5 @@
       "mode": "serial"
     }
   ],
-  "note": "Historical measurements are diagnostics only. H200 judge must freshly calibrate paired baseline before ranking."
+  "note": "Only proof execution stages are scored. Historical command timings and source-reported stage counters are diagnostics; fresh trusted backend-specific paired measurements are required before ranking."
 }

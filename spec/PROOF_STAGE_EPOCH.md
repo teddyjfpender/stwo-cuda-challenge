@@ -97,3 +97,22 @@ scores only those stage intervals, with memory as an admission gate. This is
 staging code: the current `benchmark.json` remains the h200-v1 command-time
 contract until new timer receipts, judge runners, and complete backend
 baselines qualify.
+
+Maintainers and early participants can inspect one backend's new source
+surface without disturbing the current v1 checkout or submission patch:
+
+```sh
+python3 challenge.py setup-proof --backend metal
+# Edit workspace/proof-v2-source/src/backends/metal or the listed Metal integration.
+python3 challenge.py capture-proof --backend metal
+python3 harness/check_contract.py --config benchmark-proof-v2.json
+```
+
+Use `cpu` or `cuda` in place of `metal` for those backends. The v2 source and
+baseline live at `workspace/proof-v2-source` and `workspace/proof-v2-baseline`;
+the captured diff is `candidate/proof-v2-changes.patch`. The setup validates
+the source pin and protected timer hashes, and capture validates the selected
+backend's edit surface. This is **staging**, not a proof-only score or a new
+public submission route. Until the source timer receipts and judge are
+qualified, the current v1 setup/capture/benchmark commands remain the only
+implemented challenge workflow.

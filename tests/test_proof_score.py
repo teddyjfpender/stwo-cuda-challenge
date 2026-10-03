@@ -51,7 +51,12 @@ class ProofEpochTest(unittest.TestCase):
         self.assertEqual(set(original) - {case["id"] for case in self.manifest["cases"]},
                          {"pipeline:two-leaf-batch-integrated"})
         for case in self.manifest["cases"]:
-            self.assertEqual(case, original[case["id"]])
+            self.assertEqual(case["metric"], "proof_stage_seconds")
+            previous = dict(original[case["id"]])
+            previous.pop("metric", None)
+            current = dict(case)
+            current.pop("metric")
+            self.assertEqual(current, previous)
 
     def test_all_backend_timer_owners_are_outside_the_edit_surface(self):
         check_protected(self.config)
