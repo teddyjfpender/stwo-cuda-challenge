@@ -36,11 +36,12 @@ instrumentation layer in the pinned prover. The candidate must not be able to
 move input-dependent work before the measured interval or forge, truncate, or
 rename the intervals. Public and private inputs are withheld until the frozen
 measurement boundary. A deliberately dishonest candidate that reports a tiny
-internal timer must not improve the score. CUDA's current product-level timer
-and circuit `resident_ns` are emitted from editable source, so the implemented
-`h200-v1` judge cannot be relabeled or ranked as proof-only. CPU/Metal Cairo's
-shared timer is outside the current editable surface, but the complete fold
-and pipeline timer set still needs an authenticated interface.
+internal timer must not improve the score. CUDA's product-level timer and
+circuit `resident_ns` were emitted from editable source under v1, so the
+implemented `h200-v1` judge cannot be relabeled or ranked as proof-only. The
+staged edit surfaces protect those files. The proposed source commit adds
+nanosecond timers at the shared Cairo, wrap, and fold prover call boundaries;
+the judge must still authenticate the stage receipts end to end.
 
 The new scorer keeps equal log-weight for the `pie`, `recursion`, and `pipeline`
 families, split equally within each family. For backend `b`, with paired
@@ -79,7 +80,7 @@ the accepted CUDA frontier, which upstream PR #206 has already absorbed),
 then collect fresh baselines under that exact pin. Historical H200 command
 measurements cannot serve as proof-only score denominators.
 
-Three [capacity probes on the newer source pin](../data/reports/m5-main-capacity-2026-10-03/README.md)
+Three [capacity probes on upstream `97510e52`](../data/reports/m5-main-capacity-2026-10-03/README.md)
 then proved the 25.38M-step EC outlier and 33.68M-step four-block PIE exactly
 on CPU, and the largest PIE exactly on Metal. Compact polynomial storage and
 four workers let the largest case finish on both backends: 203.52 s CPU and
@@ -87,8 +88,9 @@ four workers let the largest case finish on both backends: 203.52 s CPU and
 footprints respectively. The other public cases and private holdouts remain
 unqualified on the proposed pin.
 
-The staged [`benchmark-proof-v2.json`](../benchmark-proof-v2.json) pins upstream
-`97510e52`, after the accepted PR #17 improvements were upstreamed. Its
+The staged [`benchmark-proof-v2.json`](../benchmark-proof-v2.json) pins the
+proposed stage-timer commit `1433d61b`, based on upstream `97510e52` after
+the accepted PR #17 improvements were upstreamed. Its
 candidate edit surfaces exclude the timer-owning product files; timer-file
 digests are fixed separately per backend. The staged proof scorer validates
 one Cairo proof per standalone PIE, one proof per fold reduction, and two
@@ -96,7 +98,8 @@ Cairo plus two wrap plus one fold proof for the remaining pipeline job. It
 scores only those stage intervals, with memory as an admission gate. This is
 staging code: the current `benchmark.json` remains the h200-v1 command-time
 contract until new timer receipts, judge runners, and complete backend
-baselines qualify.
+baselines qualify. The M5 capacity records above predate this timing-only
+commit and are not score denominators.
 
 Maintainers and early participants can inspect one backend's new source
 surface without disturbing the current v1 checkout or submission patch:
@@ -112,7 +115,35 @@ Use `cpu` or `cuda` in place of `metal` for those backends. The v2 source and
 baseline live at `workspace/proof-v2-source` and `workspace/proof-v2-baseline`;
 the captured diff is `candidate/proof-v2-changes.patch`. The setup validates
 the source pin and protected timer hashes, and capture validates the selected
-backend's edit surface. This is **staging**, not a proof-only score or a new
+backend's edit surface. Re-running setup advances clean checkouts to a newer
+pin; it refuses to overwrite participant edits, which must be captured first.
+The accepted v1 CUDA frontier is already upstream on this new source line and
+is not overlaid again. This is **staging**, not a proof-only score or a new
 public submission route. Until the source timer receipts and judge are
 qualified, the current v1 setup/capture/benchmark commands remain the only
 implemented challenge workflow.
+
+For M5 capacity and exact-output research, the direct diagnostic runner can
+exercise one case or the full nine-case basket after building both Cairo and
+circuit products:
+
+```sh
+python3 scripts/qualify_proof_v2.py --backend cpu \
+  --source workspace/proof-v2-baseline \
+  --fixtures /path/to/hash-pinned-fixtures \
+  --case-id recursion:two-leaf-wrap-fold \
+  --out /path/to/local-diagnostic-results
+```
+
+The runner hashes every input and binary, validates the immutable timer files,
+checks exact proof or root bytes, and records a receipt per case. On the
+proposed timer commit it extracts precise Cairo, wrap, and fold prover-call
+intervals; older source falls back to rounded fold milliseconds and wrapper
+times that include setup. All direct runner output remains **unranked**. It
+qualifies correctness, M5 capacity, and timer coverage before the paired,
+sandboxed judge is activated.
+The M5 diagnostic defaults to 18 workers, except 30M-step-or-larger PIEs use
+four to stay within practical host memory. `--workers N` overrides that choice
+for a capacity experiment; comparisons require the same worker policy and an
+otherwise idle host. Do not run unreviewed PR source directly on the M5:
+this diagnostic runner is not the sandboxed judge.

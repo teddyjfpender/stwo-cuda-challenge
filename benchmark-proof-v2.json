@@ -4,7 +4,7 @@
   "name": "stwo-multibackend-proof-execution",
   "contractEpoch": "proof-v2",
   "sourceRepository": "https://github.com/teddyjfpender/stwo-zig.git",
-  "sourceCommit": "97510e52e2fd1d2703385a912177107ed72d8f88",
+  "sourceCommit": "1433d61b590058980d02b3f5bc912fe073c1a646",
   "fixtureManifest": "fixtures/public-proof-v2.json",
   "security": {
     "friQueries": 70,
@@ -43,7 +43,7 @@
         "src/integrations/circuit_cpu/recursion/fold.zig",
         "src/integrations/circuit_cpu/recursion/leaf_wrap.zig"
       ],
-      "timerDigest": "b2a590f397f8a67ec487aeb76133aaa4838212229a9d140a6a82f4a672be90a7"
+      "timerDigest": "1d525125717c95da0af6ddfe4039547d15b9ba865da2318344b37081d9b72512"
     },
     "metal": {
       "host": "Apple M5 Max 64 GB",
@@ -60,7 +60,7 @@
         "src/integrations/circuit_cpu/recursion/fold.zig",
         "src/integrations/circuit_cpu/recursion/leaf_wrap.zig"
       ],
-      "timerDigest": "027aa903356cc07a9feacf32a5f2705b26529433a39de2caaf8ea025d2c89348"
+      "timerDigest": "27e212040c3633065bd30bcf427f1aa1d12454513f78b6df51473a8e1438b8e9"
     },
     "cpu": {
       "host": "Apple M5 Max 64 GB",
@@ -80,7 +80,7 @@
         "src/integrations/circuit_cpu/recursion/fold.zig",
         "src/integrations/circuit_cpu/recursion/leaf_wrap.zig"
       ],
-      "timerDigest": "027aa903356cc07a9feacf32a5f2705b26529433a39de2caaf8ea025d2c89348"
+      "timerDigest": "27e212040c3633065bd30bcf427f1aa1d12454513f78b6df51473a8e1438b8e9"
     }
   },
   "tracks": [

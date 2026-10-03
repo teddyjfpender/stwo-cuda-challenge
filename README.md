@@ -1,5 +1,14 @@
 # Stwo CUDA Challenge
 
+The [proof-only multi-backend trial](spec/PROOF_STAGE_EPOCH.md) is now available
+for local testing. It uses the same nine unique canonical jobs on CUDA H200,
+Metal M5 Max, and CPU M5 Max; only Cairo, wrap, and fold prover intervals
+enter its staged score. Start at the [agent task](TASK.md#proof-only-cuda-metal-and-cpu-trial)
+and use `challenge.py setup-proof`, `benchmark-proof`, and `capture-proof`.
+Exact output checks and protected timer hashes are implemented, but the
+paired sandboxed judge and fresh backend baselines are still qualification
+gates. Trial results are unranked until those gates pass.
+
 Optimize the production Cairo and circuit-recursion CUDA paths in
 [`stwo-zig`](https://github.com/teddyjfpender/stwo-zig) on one H200. The ranked
 workload starts with **already adapted** Starknet PIE inputs, proves each PIE,

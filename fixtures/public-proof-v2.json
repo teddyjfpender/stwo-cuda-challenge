@@ -1,7 +1,7 @@
 {
   "schema": "stwo-proof-challenge-fixtures-v2",
   "contract_epoch": "proof-v2",
-  "source_commit": "97510e52e2fd1d2703385a912177107ed72d8f88",
+  "source_commit": "1433d61b590058980d02b3f5bc912fe073c1a646",
   "fixture_root_env": "STWO_FIXTURE_ROOT",
   "cases": [
     {

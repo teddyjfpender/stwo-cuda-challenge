@@ -4,6 +4,7 @@ import copy
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 
@@ -60,8 +61,9 @@ class ProofEpochTest(unittest.TestCase):
 
     def test_all_backend_timer_owners_are_outside_the_edit_surface(self):
         check_protected(self.config)
-        source = ROOT / "workspace/baseline"
-        if source.is_dir() and (source / "src/products/cairo_cuda/app.zig").is_file():
+        source = ROOT / "workspace/proof-v2-source"
+        if source.is_dir() and subprocess.check_output(
+                ["git", "-C", str(source), "rev-parse", "HEAD"], text=True).strip() == self.config["sourceCommit"]:
             for backend, item in self.config["backends"].items():
                 self.assertEqual(item["timerDigest"], digest(source, item["timerFiles"]), backend)
 

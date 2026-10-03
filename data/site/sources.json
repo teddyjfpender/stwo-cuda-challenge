@@ -8,6 +8,11 @@
   "runs": "data/reports/h200-direct-2026-10-02-runs.tsv",
   "reviews": "data/reports/submission-review-2026-10-03.tsv",
   "research": "data/reports/submission-research-2026-10-03.tsv",
+  "proofBenchmark": "benchmark-proof-v2.json",
+  "proofFixture": "fixtures/public-proof-v2.json",
+  "proofObservations": [
+    "data/reports/m5-proof-v2-2026-10-03-summary.tsv"
+  ],
   "ingressStudy": "data/reports/h200-pr212-ingress-2026-10-03-summary.tsv",
   "scorecards": "data/site/scorecards.json"
 }

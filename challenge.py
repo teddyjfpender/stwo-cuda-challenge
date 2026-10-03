@@ -16,6 +16,7 @@ COMMANDS = {
     "benchmark": ([sys.executable, "harness/rank.py"], "Run smoke, qualify, or rank on a prepared H200 host."),
     "setup-proof": ([sys.executable, "scripts/setup_proof_v2.py"], "Stage one proof-v2 backend checkout; pass --backend cuda|metal|cpu."),
     "capture-proof": ([sys.executable, "scripts/capture_proof_v2.py"], "Capture a staged proof-v2 patch; pass --backend cuda|metal|cpu."),
+    "benchmark-proof": ([sys.executable, "scripts/benchmark_proof_v2.py"], "Run exact proof-stage diagnostics for cuda, metal, or cpu."),
 }
 
 

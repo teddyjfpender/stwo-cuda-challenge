@@ -23,8 +23,19 @@ def head(source: Path) -> str:
     return subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"], text=True).strip()
 
 
+def repin_clean(source: Path, commit: str) -> None:
+    if head(source) == commit:
+        return
+    if subprocess.check_output(["git", "-C", str(source), "status", "--porcelain"]):
+        raise ValueError(f"{source} has edits; capture them before changing the source pin")
+    if subprocess.run(["git", "-C", str(source), "cat-file", "-e", commit + "^{commit}"],
+                      capture_output=True, check=False).returncode != 0:
+        command("git", "fetch", "origin", commit, cwd=source)
+    command("git", "checkout", "--detach", commit, cwd=source)
+
+
 def prepare(config: dict, backend: str, *, apply_candidate: bool = False,
-            build: bool = False) -> tuple[Path, Path]:
+            build: bool = False, build_baseline: bool = False) -> tuple[Path, Path]:
     if config.get("contractEpoch") != "proof-v2":
         raise ValueError("setup requires the proof-v2 contract")
     if backend not in config["backends"]:
@@ -47,12 +58,10 @@ def prepare(config: dict, backend: str, *, apply_candidate: bool = False,
                     config["sourceRepository"], str(source))
             command("git", "fetch", "origin", commit, cwd=source)
             command("git", "checkout", "--detach", commit, cwd=source)
-    if head(source) != commit:
-        raise ValueError(f"editable checkout is not pinned at {commit}")
+    repin_clean(source, commit)
     if not baseline.exists():
         command("git", "worktree", "add", "--detach", str(baseline), commit, cwd=source)
-    if head(baseline) != commit:
-        raise ValueError(f"baseline checkout is not pinned at {commit}")
+    repin_clean(baseline, commit)
     if subprocess.check_output(["git", "-C", str(baseline), "status", "--porcelain"]):
         raise ValueError("baseline checkout has source changes")
     attest(baseline, config, backend)
@@ -63,10 +72,10 @@ def prepare(config: dict, backend: str, *, apply_candidate: bool = False,
         check_patch(patch, source, config, backend=backend)
         command("git", "apply", str(patch), cwd=source)
     attest(source, config, backend)
-    if build:
+    if build or build_baseline:
         if shutil.which("zig") is None:
             raise ValueError("Zig is required to build prover products")
-        for tree in (baseline, source):
+        for tree in ((baseline, source) if build_baseline else (source,)):
             if backend == "cuda":
                 if shutil.which("nvcc") is None:
                     raise ValueError("nvcc is required for CUDA builds")
@@ -89,9 +98,12 @@ def main() -> None:
     parser.add_argument("--config", type=Path, default=ROOT / "benchmark-proof-v2.json")
     parser.add_argument("--apply-candidate", action="store_true")
     parser.add_argument("--build", action="store_true")
+    parser.add_argument("--build-baseline", action="store_true",
+                        help="also build the pinned baseline; not needed for a first smoke test")
     args = parser.parse_args()
     source, baseline = prepare(json.loads(args.config.read_text()), args.backend,
-                               apply_candidate=args.apply_candidate, build=args.build)
+                               apply_candidate=args.apply_candidate, build=args.build,
+                               build_baseline=args.build_baseline)
     print(f"Proof-v2 {args.backend} source: {source}; baseline: {baseline}")
     print("Staging only: no ranked proof-only judge is active yet.")
 
