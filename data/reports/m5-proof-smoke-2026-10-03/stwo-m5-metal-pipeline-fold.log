@@ -1,0 +1,48 @@
+info(circuit_recursion): reducing layer 0 with 2 entries
+info: device composition metallib admitted: circuit_air_composition_bounded_v1 (bbcfb8879ae76b0c9cb771cd70fe335abaa9ee319cbf30491d161b2dc2090473, 367765 bytes)
+info: composition tiled admission: qm31_ops: 1048576 rows per tile, 144 MiB arena
+info: composition tiled admission: blake_g_gate: 1048576 rows per tile, 492 MiB arena
+info: device composition stage open: 11/11 components accepted, arena 492 MiB
+info: composition tile staging: qm31_ops: 2048 MiB across 32 read sites
+info: composition tile staging: blake_g_gate: 7616 MiB across 119 read sites
+info: device composition: trace staging 177.268 ms over 10872 MiB (native 1208 MiB, tiled 9664 MiB; 64.31 GB/s), 41 dispatches in 41 submissions, device 81.226 ms
+info: sampled coefficient evaluation: 1425082368 source words in 319 columns; bounded source streaming true
+info(circuit_recursion): reduce layer 1 pair 0 (root): build 427 ms, prove 10585 ms
+info: recursive tree: 2 leaves, 1 layers, 1 reductions
+fold_canonical_build 1.571 s
+fold_reduce_root 11.013 s
+  fold_build 0.428 s
+  circuit_commit_preprocessed 0.627 s
+    merkle_commit 0.110 s
+  circuit_base_witness 0.343 s
+  circuit_commit_base 1.522 s
+    merkle_commit 0.056 s
+  circuit_interaction_pow 0.002 s
+  circuit_interaction_witness 1.234 s
+  circuit_commit_interaction 1.397 s
+    merkle_commit 0.088 s
+  circuit_bind_components 0.000 s
+  draw_random_coeff 0.000 s
+  composition_trace_extract 0.000 s
+  composition_evaluation 2.025 s
+    cairo_composition_component_device 0.093 s
+    cairo_composition_component_device 0.354 s
+    cairo_composition_component_device 0.068 s
+    cairo_composition_component_device 0.055 s
+    cairo_composition_component_device 1.225 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.057 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.004 s
+    cairo_composition_component_device 0.001 s
+  composition_interpolate_and_split 0.020 s
+  composition_commit 0.149 s
+  oods_point_and_mask_points 0.000 s
+  sampled_value_evaluation 0.912 s
+  sampled_value_channel_mix 0.000 s
+  fri_quotient_build_and_commit 0.687 s
+  proof_of_work 0.017 s
+  fri_decommit 0.003 s
+  trace_decommit 1.605 s
+  constraint_check_and_assembly 0.000 s

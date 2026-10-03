@@ -13,7 +13,18 @@ def allowed(path: str, prefixes: list[str]) -> bool:
 
 
 def check_patch(patch: Path, workspace: Path, config: dict,
-                *, already_applied: bool = False) -> list[str]:
+                *, already_applied: bool = False, backend: str | None = None) -> list[str]:
+    if "backends" in config:
+        if backend not in config["backends"]:
+            raise ValueError("a configured backend is required for this epoch")
+        selected = config["backends"][backend]
+        editable = selected["editablePaths"]
+        protected = set(selected.get("protectedPaths", []))
+    else:
+        if backend is not None:
+            raise ValueError("the current epoch has no backend selection")
+        editable = config["editablePaths"]
+        protected = set(config.get("protectedPaths", []))
     if not patch.is_file() or patch.stat().st_size == 0:
         raise ValueError("candidate patch is missing or empty")
     if patch.stat().st_size > 16 * 1024 * 1024:
@@ -31,7 +42,7 @@ def check_patch(patch: Path, workspace: Path, config: dict,
             path = parts[2].decode("utf-8")
         except UnicodeDecodeError as error:
             raise ValueError("patch path is not UTF-8") from error
-        if not allowed(path, config["editablePaths"]):
+        if not allowed(path, editable) or path in protected:
             raise ValueError(f"path outside editable surface: {path}")
         if parts[0] == b"-" or parts[1] == b"-":
             raise ValueError("binary patches are not allowed")
@@ -61,9 +72,11 @@ def main() -> None:
     parser.add_argument("--workspace", type=Path, default=Path("workspace/stwo-zig"))
     parser.add_argument("--config", type=Path, default=Path("benchmark.json"))
     parser.add_argument("--already-applied", action="store_true")
+    parser.add_argument("--backend", choices=("cuda", "metal", "cpu"))
     args = parser.parse_args()
     for path in check_patch(args.patch.resolve(), args.workspace.resolve(),
-                            json.loads(args.config.read_text()), already_applied=args.already_applied):
+                            json.loads(args.config.read_text()), already_applied=args.already_applied,
+                            backend=args.backend):
         print(path)
 
 

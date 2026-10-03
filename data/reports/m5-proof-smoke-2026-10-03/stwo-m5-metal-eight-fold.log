@@ -1,0 +1,320 @@
+info(circuit_recursion): reducing layer 0 with 8 entries
+info: device composition metallib admitted: circuit_air_composition_bounded_v1 (bbcfb8879ae76b0c9cb771cd70fe335abaa9ee319cbf30491d161b2dc2090473, 367765 bytes)
+info: composition tiled admission: qm31_ops: 1048576 rows per tile, 144 MiB arena
+info: composition tiled admission: blake_g_gate: 1048576 rows per tile, 492 MiB arena
+info: device composition stage open: 11/11 components accepted, arena 492 MiB
+info: composition tile staging: qm31_ops: 2048 MiB across 32 read sites
+info: composition tile staging: blake_g_gate: 7616 MiB across 119 read sites
+info: device composition: trace staging 162.420 ms over 10872 MiB (native 1208 MiB, tiled 9664 MiB; 70.19 GB/s), 41 dispatches in 41 submissions, device 73.728 ms
+info: sampled coefficient evaluation: 1425082368 source words in 319 columns; bounded source streaming true
+info(circuit_recursion): reduce layer 1 pair 0: build 418 ms, prove 10162 ms
+info: device composition metallib admitted: circuit_air_composition_bounded_v1 (bbcfb8879ae76b0c9cb771cd70fe335abaa9ee319cbf30491d161b2dc2090473, 367765 bytes)
+info: composition tiled admission: qm31_ops: 1048576 rows per tile, 144 MiB arena
+info: composition tiled admission: blake_g_gate: 1048576 rows per tile, 492 MiB arena
+info: device composition stage open: 11/11 components accepted, arena 492 MiB
+info: composition tile staging: qm31_ops: 2048 MiB across 32 read sites
+info: composition tile staging: blake_g_gate: 7616 MiB across 119 read sites
+info: device composition: trace staging 160.099 ms over 10872 MiB (native 1208 MiB, tiled 9664 MiB; 71.21 GB/s), 41 dispatches in 41 submissions, device 86.633 ms
+info: sampled coefficient evaluation: 1425082368 source words in 319 columns; bounded source streaming true
+info(circuit_recursion): reduce layer 1 pair 1: build 422 ms, prove 10162 ms
+info: device composition metallib admitted: circuit_air_composition_bounded_v1 (bbcfb8879ae76b0c9cb771cd70fe335abaa9ee319cbf30491d161b2dc2090473, 367765 bytes)
+info: composition tiled admission: qm31_ops: 1048576 rows per tile, 144 MiB arena
+info: composition tiled admission: blake_g_gate: 1048576 rows per tile, 492 MiB arena
+info: device composition stage open: 11/11 components accepted, arena 492 MiB
+info: composition tile staging: qm31_ops: 2048 MiB across 32 read sites
+info: composition tile staging: blake_g_gate: 7616 MiB across 119 read sites
+info: device composition: trace staging 164.680 ms over 10872 MiB (native 1208 MiB, tiled 9664 MiB; 69.23 GB/s), 41 dispatches in 41 submissions, device 72.415 ms
+info: sampled coefficient evaluation: 1425082368 source words in 319 columns; bounded source streaming true
+info(circuit_recursion): reduce layer 1 pair 2: build 424 ms, prove 10374 ms
+info: device composition metallib admitted: circuit_air_composition_bounded_v1 (bbcfb8879ae76b0c9cb771cd70fe335abaa9ee319cbf30491d161b2dc2090473, 367765 bytes)
+info: composition tiled admission: qm31_ops: 1048576 rows per tile, 144 MiB arena
+info: composition tiled admission: blake_g_gate: 1048576 rows per tile, 492 MiB arena
+info: device composition stage open: 11/11 components accepted, arena 492 MiB
+info: composition tile staging: qm31_ops: 2048 MiB across 32 read sites
+info: composition tile staging: blake_g_gate: 7616 MiB across 119 read sites
+info: device composition: trace staging 168.667 ms over 10872 MiB (native 1208 MiB, tiled 9664 MiB; 67.59 GB/s), 41 dispatches in 41 submissions, device 83.247 ms
+info: sampled coefficient evaluation: 1425082368 source words in 319 columns; bounded source streaming true
+info(circuit_recursion): reduce layer 1 pair 3: build 426 ms, prove 10348 ms
+info(circuit_recursion): reducing layer 1 with 4 entries
+info: device composition metallib admitted: circuit_air_composition_bounded_v1 (bbcfb8879ae76b0c9cb771cd70fe335abaa9ee319cbf30491d161b2dc2090473, 367765 bytes)
+info: composition tiled admission: qm31_ops: 1048576 rows per tile, 144 MiB arena
+info: composition tiled admission: blake_g_gate: 1048576 rows per tile, 492 MiB arena
+info: device composition stage open: 11/11 components accepted, arena 492 MiB
+info: composition tile staging: qm31_ops: 2048 MiB across 32 read sites
+info: composition tile staging: blake_g_gate: 7616 MiB across 119 read sites
+info: device composition: trace staging 164.880 ms over 10872 MiB (native 1208 MiB, tiled 9664 MiB; 69.15 GB/s), 41 dispatches in 41 submissions, device 75.664 ms
+info: sampled coefficient evaluation: 1425082368 source words in 319 columns; bounded source streaming true
+info(circuit_recursion): reduce layer 2 pair 0: build 424 ms, prove 10359 ms
+info: device composition metallib admitted: circuit_air_composition_bounded_v1 (bbcfb8879ae76b0c9cb771cd70fe335abaa9ee319cbf30491d161b2dc2090473, 367765 bytes)
+info: composition tiled admission: qm31_ops: 1048576 rows per tile, 144 MiB arena
+info: composition tiled admission: blake_g_gate: 1048576 rows per tile, 492 MiB arena
+info: device composition stage open: 11/11 components accepted, arena 492 MiB
+info: composition tile staging: qm31_ops: 2048 MiB across 32 read sites
+info: composition tile staging: blake_g_gate: 7616 MiB across 119 read sites
+info: device composition: trace staging 161.808 ms over 10872 MiB (native 1208 MiB, tiled 9664 MiB; 70.46 GB/s), 41 dispatches in 41 submissions, device 74.507 ms
+info: sampled coefficient evaluation: 1425082368 source words in 319 columns; bounded source streaming true
+info(circuit_recursion): reduce layer 2 pair 1: build 426 ms, prove 10420 ms
+info(circuit_recursion): reducing layer 2 with 2 entries
+info: device composition metallib admitted: circuit_air_composition_bounded_v1 (bbcfb8879ae76b0c9cb771cd70fe335abaa9ee319cbf30491d161b2dc2090473, 367765 bytes)
+info: composition tiled admission: qm31_ops: 1048576 rows per tile, 144 MiB arena
+info: composition tiled admission: blake_g_gate: 1048576 rows per tile, 492 MiB arena
+info: device composition stage open: 11/11 components accepted, arena 492 MiB
+info: composition tile staging: qm31_ops: 2048 MiB across 32 read sites
+info: composition tile staging: blake_g_gate: 7616 MiB across 119 read sites
+info: device composition: trace staging 162.283 ms over 10872 MiB (native 1208 MiB, tiled 9664 MiB; 70.25 GB/s), 41 dispatches in 41 submissions, device 75.654 ms
+info: sampled coefficient evaluation: 1425082368 source words in 319 columns; bounded source streaming true
+info(circuit_recursion): reduce layer 3 pair 0 (root): build 427 ms, prove 10365 ms
+info: recursive tree: 8 leaves, 3 layers, 7 reductions
+fold_canonical_build 1.530 s
+fold_reduce_internal 10.581 s
+  fold_build 0.419 s
+  circuit_commit_preprocessed 0.588 s
+    merkle_commit 0.091 s
+  circuit_base_witness 0.344 s
+  circuit_commit_base 1.454 s
+    merkle_commit 0.054 s
+  circuit_interaction_pow 0.003 s
+  circuit_interaction_witness 1.203 s
+  circuit_commit_interaction 1.309 s
+    merkle_commit 0.076 s
+  circuit_bind_components 0.000 s
+  draw_random_coeff 0.000 s
+  composition_trace_extract 0.000 s
+  composition_evaluation 1.962 s
+    cairo_composition_component_device 0.088 s
+    cairo_composition_component_device 0.335 s
+    cairo_composition_component_device 0.061 s
+    cairo_composition_component_device 0.044 s
+    cairo_composition_component_device 1.206 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.059 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.004 s
+    cairo_composition_component_device 0.001 s
+  composition_interpolate_and_split 0.022 s
+  composition_commit 0.134 s
+  oods_point_and_mask_points 0.000 s
+  sampled_value_evaluation 0.898 s
+  sampled_value_channel_mix 0.000 s
+  fri_quotient_build_and_commit 0.665 s
+  proof_of_work 0.003 s
+  fri_decommit 0.003 s
+  trace_decommit 1.534 s
+  constraint_check_and_assembly 0.000 s
+fold_reduce_internal 10.585 s
+  fold_build 0.423 s
+  circuit_commit_preprocessed 0.557 s
+    merkle_commit 0.093 s
+  circuit_base_witness 0.378 s
+  circuit_commit_base 1.460 s
+    merkle_commit 0.057 s
+  circuit_interaction_pow 0.002 s
+  circuit_interaction_witness 1.235 s
+  circuit_commit_interaction 1.323 s
+    merkle_commit 0.081 s
+  circuit_bind_components 0.000 s
+  draw_random_coeff 0.000 s
+  composition_trace_extract 0.000 s
+  composition_evaluation 1.967 s
+    cairo_composition_component_device 0.087 s
+    cairo_composition_component_device 0.336 s
+    cairo_composition_component_device 0.062 s
+    cairo_composition_component_device 0.045 s
+    cairo_composition_component_device 1.210 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.053 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.000 s
+    cairo_composition_component_device 0.004 s
+    cairo_composition_component_device 0.001 s
+  composition_interpolate_and_split 0.020 s
+  composition_commit 0.130 s
+  oods_point_and_mask_points 0.000 s
+  sampled_value_evaluation 0.897 s
+  sampled_value_channel_mix 0.000 s
+  fri_quotient_build_and_commit 0.678 s
+  proof_of_work 0.005 s
+  fri_decommit 0.003 s
+  trace_decommit 1.468 s
+  constraint_check_and_assembly 0.000 s
+fold_reduce_internal 10.744 s
+  fold_build 0.425 s
+  circuit_commit_preprocessed 0.565 s
+    merkle_commit 0.094 s
+  circuit_base_witness 0.408 s
+  circuit_commit_base 1.482 s
+    merkle_commit 0.054 s
+  circuit_interaction_pow 0.002 s
+  circuit_interaction_witness 1.200 s
+  circuit_commit_interaction 1.334 s
+    merkle_commit 0.087 s
+  circuit_bind_components 0.000 s
+  draw_random_coeff 0.000 s
+  composition_trace_extract 0.000 s
+  composition_evaluation 1.980 s
+    cairo_composition_component_device 0.089 s
+    cairo_composition_component_device 0.341 s
+    cairo_composition_component_device 0.063 s
+    cairo_composition_component_device 0.044 s
+    cairo_composition_component_device 1.214 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.057 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.003 s
+    cairo_composition_component_device 0.000 s
+  composition_interpolate_and_split 0.022 s
+  composition_commit 0.133 s
+  oods_point_and_mask_points 0.000 s
+  sampled_value_evaluation 0.901 s
+  sampled_value_channel_mix 0.000 s
+  fri_quotient_build_and_commit 0.693 s
+  proof_of_work 0.013 s
+  fri_decommit 0.003 s
+  trace_decommit 1.545 s
+  constraint_check_and_assembly 0.000 s
+fold_reduce_internal 10.775 s
+  fold_build 0.426 s
+  circuit_commit_preprocessed 0.568 s
+    merkle_commit 0.095 s
+  circuit_base_witness 0.402 s
+  circuit_commit_base 1.482 s
+    merkle_commit 0.055 s
+  circuit_interaction_pow 0.004 s
+  circuit_interaction_witness 1.243 s
+  circuit_commit_interaction 1.337 s
+    merkle_commit 0.082 s
+  circuit_bind_components 0.000 s
+  draw_random_coeff 0.000 s
+  composition_trace_extract 0.000 s
+  composition_evaluation 1.991 s
+    cairo_composition_component_device 0.098 s
+    cairo_composition_component_device 0.341 s
+    cairo_composition_component_device 0.062 s
+    cairo_composition_component_device 0.044 s
+    cairo_composition_component_device 1.220 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.055 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.004 s
+    cairo_composition_component_device 0.001 s
+  composition_interpolate_and_split 0.019 s
+  composition_commit 0.135 s
+  oods_point_and_mask_points 0.000 s
+  sampled_value_evaluation 0.900 s
+  sampled_value_channel_mix 0.000 s
+  fri_quotient_build_and_commit 0.692 s
+  proof_of_work 0.019 s
+  fri_decommit 0.002 s
+  trace_decommit 1.515 s
+  constraint_check_and_assembly 0.000 s
+fold_reduce_internal 10.784 s
+  fold_build 0.425 s
+  circuit_commit_preprocessed 0.580 s
+    merkle_commit 0.103 s
+  circuit_base_witness 0.413 s
+  circuit_commit_base 1.486 s
+    merkle_commit 0.055 s
+  circuit_interaction_pow 0.002 s
+  circuit_interaction_witness 1.238 s
+  circuit_commit_interaction 1.350 s
+    merkle_commit 0.083 s
+  circuit_bind_components 0.000 s
+  draw_random_coeff 0.000 s
+  composition_trace_extract 0.000 s
+  composition_evaluation 1.988 s
+    cairo_composition_component_device 0.090 s
+    cairo_composition_component_device 0.341 s
+    cairo_composition_component_device 0.061 s
+    cairo_composition_component_device 0.045 s
+    cairo_composition_component_device 1.218 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.058 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.004 s
+    cairo_composition_component_device 0.001 s
+  composition_interpolate_and_split 0.021 s
+  composition_commit 0.130 s
+  oods_point_and_mask_points 0.000 s
+  sampled_value_evaluation 0.901 s
+  sampled_value_channel_mix 0.000 s
+  fri_quotient_build_and_commit 0.693 s
+  proof_of_work 0.004 s
+  fri_decommit 0.002 s
+  trace_decommit 1.510 s
+  constraint_check_and_assembly 0.000 s
+fold_reduce_internal 10.846 s
+  fold_build 0.426 s
+  circuit_commit_preprocessed 0.580 s
+    merkle_commit 0.093 s
+  circuit_base_witness 0.421 s
+  circuit_commit_base 1.474 s
+    merkle_commit 0.053 s
+  circuit_interaction_pow 0.002 s
+  circuit_interaction_witness 1.288 s
+  circuit_commit_interaction 1.344 s
+    merkle_commit 0.084 s
+  circuit_bind_components 0.000 s
+  draw_random_coeff 0.000 s
+  composition_trace_extract 0.000 s
+  composition_evaluation 1.979 s
+    cairo_composition_component_device 0.090 s
+    cairo_composition_component_device 0.338 s
+    cairo_composition_component_device 0.062 s
+    cairo_composition_component_device 0.043 s
+    cairo_composition_component_device 1.219 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.053 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.004 s
+    cairo_composition_component_device 0.001 s
+  composition_interpolate_and_split 0.021 s
+  composition_commit 0.131 s
+  oods_point_and_mask_points 0.000 s
+  sampled_value_evaluation 0.899 s
+  sampled_value_channel_mix 0.000 s
+  fri_quotient_build_and_commit 0.694 s
+  proof_of_work 0.005 s
+  fri_decommit 0.002 s
+  trace_decommit 1.539 s
+  constraint_check_and_assembly 0.000 s
+fold_reduce_root 10.792 s
+  fold_build 0.427 s
+  circuit_commit_preprocessed 0.573 s
+    merkle_commit 0.094 s
+  circuit_base_witness 0.402 s
+  circuit_commit_base 1.473 s
+    merkle_commit 0.051 s
+  circuit_interaction_pow 0.002 s
+  circuit_interaction_witness 1.276 s
+  circuit_commit_interaction 1.346 s
+    merkle_commit 0.081 s
+  circuit_bind_components 0.000 s
+  draw_random_coeff 0.000 s
+  composition_trace_extract 0.000 s
+  composition_evaluation 1.970 s
+    cairo_composition_component_device 0.089 s
+    cairo_composition_component_device 0.338 s
+    cairo_composition_component_device 0.061 s
+    cairo_composition_component_device 0.044 s
+    cairo_composition_component_device 1.211 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.053 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.001 s
+    cairo_composition_component_device 0.004 s
+    cairo_composition_component_device 0.001 s
+  composition_interpolate_and_split 0.022 s
+  composition_commit 0.133 s
+  oods_point_and_mask_points 0.000 s
+  sampled_value_evaluation 0.901 s
+  sampled_value_channel_mix 0.000 s
+  fri_quotient_build_and_commit 0.697 s
+  proof_of_work 0.013 s
+  fri_decommit 0.003 s
+  trace_decommit 1.515 s
+  constraint_check_and_assembly 0.000 s

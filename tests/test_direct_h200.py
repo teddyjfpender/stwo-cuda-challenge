@@ -73,6 +73,14 @@ class DirectH200Tests(unittest.TestCase):
                 "circuit_resident_ns": 2.0, "circuit_verify_ns": 0.3,
                 "circuit_convert_ns": 0.1})
 
+    def test_proof_epoch_excludes_ingress_and_requires_all_pipeline_stages(self):
+        case = {"id": "pipeline:test", "family": "pipeline"}
+        phases = {"cairo_leaf_proof_execute_and_decode_ns_sum": 2.0,
+                  "circuit_resident_ns": 3.0, "ingress_ns": 100.0}
+        self.assertEqual(direct.proof_v2_seconds(case, phases), 5.0)
+        with self.assertRaisesRegex(ValueError, "complete proof-stage"):
+            direct.proof_v2_seconds(case, {"ingress_ns": 100.0, "circuit_resident_ns": 3.0})
+
 
 if __name__ == "__main__":
     unittest.main()

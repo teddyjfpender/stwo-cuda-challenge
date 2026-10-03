@@ -7,6 +7,7 @@ ranked receipt because it does not enforce the Docker/network/output quota gates
 
 import argparse
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -17,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from harness.run_arm import (Nvml, candidate_env, checked_file, proof_verifier,
                              registry_proof_verifier, run, sha)
+from harness.timer_owner import attest
 
 SECURITY = {"query_count": 70, "query_pow_bits": 26,
             "interaction_pow_bits": 24, "log_blowup_factor": 1,
@@ -45,6 +47,20 @@ def circuit_phase_seconds(logs: list[Path]) -> dict[str, float]:
             totals["circuit_convert_ns"] += int(convert)
             count += 1
     return {key: value / 1e9 for key, value in totals.items()} if count else {}
+
+
+def proof_v2_seconds(case: dict, phases: dict[str, float]) -> float:
+    if case["family"] == "pie":
+        result = phases.get("proof_execute_and_decode_ns")
+    elif case["family"] == "recursion":
+        result = phases.get("circuit_resident_ns")
+    else:
+        cairo = phases.get("cairo_leaf_proof_execute_and_decode_ns_sum")
+        circuit = phases.get("circuit_resident_ns")
+        result = cairo + circuit if cairo is not None and circuit is not None else None
+    if result is None or not math.isfinite(result) or result <= 0:
+        raise ValueError(f"{case['id']} lacks complete proof-stage telemetry")
+    return result
 
 
 def check_report(path: Path, input_digest: str) -> int:
@@ -210,12 +226,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, default=ROOT / "workspace/baseline")
     parser.add_argument("--fixtures", type=Path, default=ROOT / "data/inputs")
-    parser.add_argument("--manifest", type=Path, default=ROOT / "fixtures/public-v1.json")
+    parser.add_argument("--manifest", type=Path)
+    parser.add_argument("--config", type=Path, default=ROOT / "benchmark.json")
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--case-id", action="append")
     args = parser.parse_args()
-    config = json.loads((ROOT / "benchmark.json").read_text())
-    manifest = json.loads(args.manifest.read_text())
+    config = json.loads(args.config.read_text())
+    manifest_path = args.manifest or ROOT / config["fixtureManifest"]
+    manifest = json.loads(manifest_path.read_text())
     if manifest["contract_epoch"] != config["contractEpoch"] or manifest["source_commit"] != config["sourceCommit"]:
         parser.error("fixture manifest is not bound to source and epoch")
     cases = [case for case in manifest["cases"] if args.case_id is None or case["id"] in args.case_id]
@@ -241,15 +259,23 @@ def main() -> None:
             parser.error(f"required asset missing: {asset}")
     out.mkdir(parents=True, exist_ok=True)
     env = candidate_env(os.environ, preprocessed, artifacts)
-    nvml = Nvml(config["hardware"]["deviceBytes"])
+    proof_v2 = config["contractEpoch"] == "proof-v2"
+    timer_digest = attest(source, config, "cuda") if proof_v2 else None
+    hardware = config["backends"]["cuda"] if proof_v2 else config["hardware"]
+    nvml = Nvml(hardware["deviceBytes"])
     rows = []
     try:
         for case in cases:
             row = qualify_case(case, source, fixtures, out, verifier,
                                registry_verifier, nvml, env)
+            if proof_v2:
+                row.update(proof_stage_s=proof_v2_seconds(case, row["phase_seconds"]),
+                           timing_boundary="proof-execution-v2",
+                           timer_digest=timer_digest,
+                           source_commit=config["sourceCommit"])
             rows.append(row)
             (out / "direct-results.json").write_text(json.dumps(rows, indent=2) + "\n")
-            print(f"{row['case_id']}: {row['time_s']:.3f}s, "
+            print(f"{row['case_id']}: {row.get('proof_stage_s', row['time_s']):.3f}s, "
                   f"{row['peak_device_bytes']} peak device bytes", flush=True)
     finally:
         nvml.close()

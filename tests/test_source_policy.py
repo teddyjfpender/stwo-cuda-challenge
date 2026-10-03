@@ -41,6 +41,19 @@ class SourcePolicyTests(unittest.TestCase):
                              ["src/backends/cuda/example.zig"])
             target.write_text("old\n")
             self.assertEqual(check_patch(patch, repo, config), ["src/backends/cuda/example.zig"])
+            staged = {"sourceCommit": commit, "backends": {
+                "cuda": {"editablePaths": ["src/backends/cuda"], "protectedPaths": [
+                    "src/backends/cuda/example.zig"]},
+                "metal": {"editablePaths": ["src/backends/metal"], "protectedPaths": []}}}
+            with self.assertRaises(ValueError):
+                check_patch(patch, repo, staged)
+            with self.assertRaises(ValueError):
+                check_patch(patch, repo, staged, backend="cuda")
+            with self.assertRaises(ValueError):
+                check_patch(patch, repo, staged, backend="metal")
+            staged["backends"]["cuda"]["protectedPaths"] = []
+            self.assertEqual(check_patch(patch, repo, staged, backend="cuda"),
+                             ["src/backends/cuda/example.zig"])
 
     def test_patch_rejects_locked_path(self):
         with tempfile.TemporaryDirectory() as directory:

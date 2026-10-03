@@ -1,0 +1,91 @@
+info: device composition metallib admitted: air_template_composition_bounded_v4 (a11c91fc929fc1cf978e7b3ce5db03cdb5ce11cc88fa1fcf1d46df4f87cab9d1, 10121115 bytes)
+info: composition tiled admission: blake_g: 1048576 rows per tile, 388 MiB arena
+info: composition tiled admission: pedersen_points_table_window_bits_18: 1048576 rows per tile, 280 MiB arena
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_sd_fcc8f5afb0bcbbd1
+info: composition host admission: add_mod_builtin: kernel stwo_zig_eval_sd_fcc8f5afb0bcbbd1: PolynomialEvaluationFailed
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_sd_873f0f156f78c440
+info: composition host admission: bitwise_builtin: kernel stwo_zig_eval_sd_873f0f156f78c440: PolynomialEvaluationFailed
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_sd_6bc06b7e1d5f462e
+info: composition host admission: mul_mod_builtin: kernel stwo_zig_eval_sd_6bc06b7e1d5f462e: PolynomialEvaluationFailed
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_sd_96e06dea6d3fdbfa
+info: composition host admission: pedersen_builtin: kernel stwo_zig_eval_sd_96e06dea6d3fdbfa: PolynomialEvaluationFailed
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_sd_720b8fde9f705159
+info: composition host admission: poseidon_builtin: kernel stwo_zig_eval_sd_720b8fde9f705159: PolynomialEvaluationFailed
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_sd_11bedfb242445927
+info: composition host admission: range_check96_builtin: kernel stwo_zig_eval_sd_11bedfb242445927: PolynomialEvaluationFailed
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_sd_5c66a4b833fd0a10
+info: composition host admission: range_check_builtin: kernel stwo_zig_eval_sd_5c66a4b833fd0a10: PolynomialEvaluationFailed
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_sd_588be4c54bd57302
+info: composition host admission: ec_op_builtin: kernel stwo_zig_eval_sd_588be4c54bd57302: PolynomialEvaluationFailed
+error: Metal evaluation pipeline resolution failed: Missing Metal function stwo_zig_eval_sd_5f44948e90da1490
+info: composition host admission: memory_address_to_id: kernel stwo_zig_eval_sd_5f44948e90da1490: PolynomialEvaluationFailed
+info: device composition stage open: 70/79 components accepted, arena 440 MiB
+info: composition tile staging: blake_g: 744 MiB across 93 read sites
+info: composition tile staging: pedersen_points_table_window_bits_18: 4224 MiB across 66 read sites
+info: device composition: trace staging 134.634 ms over 7255 MiB (native 2287 MiB, tiled 4968 MiB; 56.51 GB/s), 86 dispatches in 86 submissions, device 57.030 ms
+info: sampled coefficient evaluation: 1047046720 source words in 8500 columns; bounded source streaming true
+info(circuit_recursion): leaf topology c5b609ebdc4a3437b646a06b0f5e926071d4e8a7e4f4eb2e6848bc2096e1ff82: built, 44505598 variables
+info: device composition metallib admitted: circuit_air_composition_bounded_v1 (bbcfb8879ae76b0c9cb771cd70fe335abaa9ee319cbf30491d161b2dc2090473, 367765 bytes)
+info: composition tiled admission: qm31_ops: 1048576 rows per tile, 144 MiB arena
+info: composition tiled admission: blake_g_gate: 1048576 rows per tile, 492 MiB arena
+info: device composition stage open: 11/11 components accepted, arena 492 MiB
+info: composition tile staging: qm31_ops: 2048 MiB across 32 read sites
+info: composition tile staging: blake_g_gate: 7616 MiB across 119 read sites
+info: device composition: trace staging 178.822 ms over 10872 MiB (native 1208 MiB, tiled 9664 MiB; 63.75 GB/s), 41 dispatches in 41 submissions, device 84.912 ms
+info: sampled coefficient evaluation: 1425082368 source words in 319 columns; bounded source streaming true
+leaf-wrap: load 0.02 s, cairo prove 18.50 s, wrap 12.36 s; circuit hash 41aa3c1f626986f7ce55cb4c896e58b2aac047ff4431c7241e0d9ef22bcafcd9
+leaf_wrap_build 0.512 s
+leaf_wrap_preprocess 0.987 s
+circuit_commit_preprocessed 0.642 s
+  merkle_commit 0.114 s
+circuit_base_witness 0.366 s
+circuit_commit_base 1.539 s
+  merkle_commit 0.056 s
+circuit_interaction_pow 0.002 s
+circuit_interaction_witness 1.410 s
+circuit_commit_interaction 1.432 s
+  merkle_commit 0.088 s
+circuit_bind_components 0.000 s
+draw_random_coeff 0.000 s
+composition_trace_extract 0.000 s
+composition_evaluation 2.047 s
+  cairo_composition_component_device 0.090 s
+  cairo_composition_component_device 0.349 s
+  cairo_composition_component_device 0.064 s
+  cairo_composition_component_device 0.053 s
+  cairo_composition_component_device 1.234 s
+  cairo_composition_component_device 0.001 s
+  cairo_composition_component_device 0.062 s
+  cairo_composition_component_device 0.001 s
+  cairo_composition_component_device 0.001 s
+  cairo_composition_component_device 0.004 s
+  cairo_composition_component_device 0.001 s
+composition_interpolate_and_split 0.021 s
+composition_commit 0.150 s
+oods_point_and_mask_points 0.000 s
+sampled_value_evaluation 0.914 s
+sampled_value_channel_mix 0.000 s
+fri_quotient_build_and_commit 0.706 s
+proof_of_work 0.010 s
+fri_decommit 0.003 s
+trace_decommit 1.563 s
+constraint_check_and_assembly 0.000 s
+leaf_wrap_serialize 0.001 s
+       30.92 real        58.20 user        11.83 sys
+         17043914752  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+             6729268  page reclaims
+                   0  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                   2  voluntary context switches
+               32302  involuntary context switches
+        830320221180  instructions retired
+        286290966335  cycles elapsed
+         33940628456  peak memory footprint

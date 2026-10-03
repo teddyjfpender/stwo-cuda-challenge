@@ -1,0 +1,47 @@
+info(circuit_recursion): leaf topology c5b609ebdc4a3437b646a06b0f5e926071d4e8a7e4f4eb2e6848bc2096e1ff82: built, 44505598 variables
+leaf-wrap: load 0.02 s, cairo prove 33.07 s, wrap 12.72 s; circuit hash 41aa3c1f626986f7ce55cb4c896e58b2aac047ff4431c7241e0d9ef22bcafcd9
+leaf_wrap_build 0.499 s
+leaf_wrap_preprocess 0.936 s
+circuit_commit_preprocessed 0.000 s
+circuit_base_witness 0.360 s
+circuit_commit_base 1.412 s
+circuit_interaction_pow 0.000 s
+circuit_interaction_witness 1.350 s
+circuit_commit_interaction 1.378 s
+circuit_bind_components 0.000 s
+draw_random_coeff 0.000 s
+composition_trace_extract 0.000 s
+composition_evaluation 1.793 s
+  cpu_composition_component 1.077 s
+    cpu_native_air_part 0.000 s
+  cpu_composition_component 0.021 s
+    cpu_native_air_part 0.000 s
+  cpu_composition_component 0.317 s
+    cpu_native_air_part 0.000 s
+  cpu_composition_component 0.053 s
+    cpu_native_air_part 0.000 s
+  cpu_composition_component 0.064 s
+    cpu_native_air_part 0.000 s
+  cpu_composition_component 0.000 s
+    cpu_native_air_part 0.000 s
+  cpu_composition_component 0.056 s
+    cpu_native_air_part 0.000 s
+  cpu_composition_component 0.000 s
+    cpu_native_air_part 0.000 s
+  cpu_composition_component 0.000 s
+    cpu_native_air_part 0.000 s
+  cpu_composition_component 0.005 s
+    cpu_native_air_part 0.000 s
+  cpu_composition_component 0.000 s
+    cpu_native_air_part 0.000 s
+composition_interpolate_and_split 0.051 s
+composition_commit 0.201 s
+oods_point_and_mask_points 0.000 s
+sampled_value_evaluation 0.315 s
+sampled_value_channel_mix 0.000 s
+fri_quotient_build_and_commit 2.324 s
+proof_of_work 0.120 s
+fri_decommit 0.224 s
+trace_decommit 1.715 s
+constraint_check_and_assembly 0.000 s
+leaf_wrap_serialize 0.001 s
