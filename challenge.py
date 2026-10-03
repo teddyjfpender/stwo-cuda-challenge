@@ -13,6 +13,7 @@ COMMANDS = {
     "setup-proof": ([sys.executable, "scripts/setup_proof_v2.py"], "Create one proof-v2 backend checkout; pass --backend cuda|metal|cpu."),
     "paths": ([], "Show the selected backend's checkout and editable paths; pass --backend cuda|metal|cpu."),
     "benchmark-proof": ([sys.executable, "scripts/benchmark_proof_v2.py"], "Run exact proof-stage diagnostics for cuda, metal, or cpu."),
+    "compare-proof": ([sys.executable, "scripts/compare_proof_v2.py"], "Compare two exact public baskets; research only, never ranked."),
     "capture-proof": ([sys.executable, "scripts/capture_proof_v2.py"], "Capture a proof-v2 backend patch for a review PR."),
 }
 LEGACY = {

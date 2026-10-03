@@ -70,11 +70,15 @@ def bind_rows(rows, cases, backend, hardware, timer_digest, host_id, label):
         command_time = positive(row.get("command_time_s"), f"{label} {case_id} command time")
         if proof_time > command_time + 1e-6:
             raise InvalidProofEvidence(f"{label} {case_id} proof exceeds whole command")
-        peak = positive(row.get("peak_bytes"), f"{label} {case_id} memory peak")
         if backend == "cuda":
+            peak = positive(row.get("peak_bytes"), f"{label} {case_id} memory peak")
             plan = positive(row.get("planned_arena_bytes"), f"{label} {case_id} arena plan")
             if peak >= hardware["deviceBytes"] or plan > hardware["deviceBytes"] - hardware["reserveBytes"]:
                 raise InvalidProofEvidence(f"{label} {case_id} exceeds H200 capacity")
+        elif row.get("peak_bytes") is not None:
+            # macOS physical footprint can exceed installed unified memory when compression
+            # and swap are active. Completion and the host watchdog own its capacity gate.
+            positive(row["peak_bytes"], f"{label} {case_id} memory peak")
         grouped[case_id][round_id] = row
     return grouped
 

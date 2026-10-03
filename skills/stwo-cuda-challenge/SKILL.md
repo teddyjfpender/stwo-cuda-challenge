@@ -30,6 +30,14 @@ requires the H200 assets and verifiers in [the runbook](../../spec/H200_RUNBOOK.
 Test a PIE and fold before the full basket. Keep the GPU idle during repeated
 baseline/candidate comparisons.
 
+On CPU/Metal, export a completed baseline or candidate basket with
+`python3 scripts/export_proof_v2.py --backend BACKEND --root RESULT_DIR
+--out RESULT.tsv`. It checks each on-disk proof/root against the manifest.
+Use `python3 challenge.py compare-proof --backend BACKEND --baseline
+BASELINE.tsv --candidate CANDIDATE.tsv --out COMPARISON.json` for an
+unranked, family-weighted research comparison. The ranked judge will make
+fresh paired measurements; do not present this direct comparison as a rank.
+
 For a submission, run `python3 challenge.py capture-proof --backend BACKEND`,
 commit `candidate/proof-v2-changes.patch` and a note naming the backend,
 changed paths, hypothesis, before/after proof times, memory, exact proof

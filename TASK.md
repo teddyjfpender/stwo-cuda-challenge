@@ -29,3 +29,12 @@ diagnostic requires the H200 assets and independent Rust verifiers from the
 `candidate/proof-v2-changes.patch` in a review PR with the selected backend,
 timings, proof hashes, memory, and a short mechanism explanation. This epoch
 is in **staging**: trial runs are reviewable research, not ranked receipts.
+
+For a complete CPU/Metal experiment, run the same basket from
+`workspace/proof-v2-baseline` and `workspace/proof-v2-source` into separate
+result directories. Export each with `python3 scripts/export_proof_v2.py
+--backend BACKEND --root RESULT_DIR --out RESULT.tsv`; the exporter rehashes
+every reference proof/root and refuses an incomplete basket. Then run
+`python3 challenge.py compare-proof --backend BACKEND --baseline BASELINE.tsv
+--candidate CANDIDATE.tsv --out COMPARISON.json`. This single-pass comparison
+is unranked; it helps reject weak ideas before expensive paired judging.
