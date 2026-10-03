@@ -30,6 +30,8 @@ def main() -> None:
     patch = ROOT / "candidate/proof-v2-changes.patch"
     patch.parent.mkdir(parents=True, exist_ok=True)
     source_diff = subprocess.check_output(["git", "-C", str(source), "diff", "--binary", "HEAD"])
+    if not source_diff:
+        parser.error("no source edits to capture; edit an allowed backend file first")
     patch.write_bytes(source_diff)
     try:
         paths = check_patch(patch, source, config, already_applied=True, backend=args.backend)
