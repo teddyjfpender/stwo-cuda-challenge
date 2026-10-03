@@ -1,4 +1,38 @@
-# H200 direct qualification
+# Direct qualification reports
+
+## Proof-v2 M5 Max public basket, 2026-10-03
+
+The [full observation TSV](m5-proof-v2-2026-10-03-full.tsv) contains one exact,
+unranked pass of all nine proof-v2 public jobs on each M5 Max backend, CPU and
+Metal. Both runs used the clean pinned `stwo-zig@1433d61b` source, the same
+hash-checked inputs, and the protected proof-call timers from merged upstream
+PR #213. Every Cairo proof and recursive root matched its pinned output hash.
+The exporter rehashed the actual artifacts and receipts before publication.
+There were no candidate edits or paired trials, so these are diagnostic
+observations and **not** ranking baselines. Earlier two-leaf smoke receipts
+remain in [the separate summary](m5-proof-v2-2026-10-03-summary.tsv).
+
+| Job | CPU proof s | Metal proof s | CPU command s | Metal command s |
+| --- | ---: | ---: | ---: | ---: |
+| PIE 15582797 | 41.083 | 42.544 | 42.415 | 43.941 |
+| PIE 15603744 | 42.175 | 41.533 | 42.903 | 41.905 |
+| PIE 15581148 | 39.700 | 38.209 | 40.385 | 38.864 |
+| PIE 15590913 | 93.480 | 137.763 | 93.891 | 138.232 |
+| PIE 15588777–15588780 | 206.007 | 245.816 | 206.757 | 246.684 |
+| PIE 15591789 | 99.243 | 155.392 | 99.970 | 155.951 |
+| Two-leaf fold | 6.203 | 10.412 | 8.587 | 12.611 |
+| Eight-distinct-leaf fold | 46.105 | 73.565 | 50.957 | 78.564 |
+| Two-leaf PIE → wrap → fold root | 100.138 | 71.350 | 105.969 | 77.286 |
+
+PIE rows include the process's peak physical footprint in the TSV, roughly
+44–78 GB on CPU and 44–77 GB on Metal; recursive rows do not have a comparable
+peak measurement. The pipeline proof interval sums two Cairo proves, two
+wraps, and one fold. The command column includes all leaf commands and the
+fold command. These backends shared one host and were run sequentially, but
+one pass does not establish comparative throughput or variance. The H200
+proof-v2 basket still needs a new run at this source pin.
+
+## H200 direct qualification
 
 ## Upstream CUDA ingress PR #212, 2026-10-03
 
