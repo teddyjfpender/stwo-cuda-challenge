@@ -19,6 +19,22 @@ def command(*args: str) -> str:
     return subprocess.check_output(args, cwd=ROOT, text=True).strip()
 
 
+def archive_previous_frontier(frontier_dir: Path, digest: str) -> None:
+    """Keep the exact parent patch so unchanged participant workspaces can advance."""
+    old_patch = frontier_dir / "changes.patch"
+    if not old_patch.is_file():
+        raise SystemExit("previous frontier patch is missing")
+    raw = old_patch.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != digest:
+        raise SystemExit("previous frontier patch differs from its manifest")
+    history = frontier_dir / "history"
+    history.mkdir(exist_ok=True)
+    archived = history / f"{digest}.patch"
+    if archived.exists() and archived.read_bytes() != raw:
+        raise SystemExit("archived parent frontier differs from the reviewed patch")
+    archived.write_bytes(raw)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pr", type=int, required=True)
@@ -77,12 +93,14 @@ def main() -> None:
         "patchSha256": digest,
         "parentPatchSha256": parent_digest,
         "qualification": reviewed["qualification"] if reviewed is not None else "operator-approved",
-        "ranking": "unranked" if reviewed is not None else "see signed receipt",
+        "ranking": "unranked",
     }
     print(json.dumps({"manifest": manifest, "changedPaths": changed}, indent=2))
     if args.dry_run:
         return
     frontier_dir.mkdir(parents=True, exist_ok=True)
+    if parent_digest is not None:
+        archive_previous_frontier(frontier_dir, parent_digest)
     (frontier_dir / "changes.patch").write_bytes(raw)
     (frontier_dir / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
 

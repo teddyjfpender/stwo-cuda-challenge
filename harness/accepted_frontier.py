@@ -18,12 +18,24 @@ def _migrate_unchanged_frontier(root: Path, workspace: Path, marker: Path,
                                 current_digest: str) -> bool:
     """Advance a prior frontier only when its removal leaves a clean checkout."""
     old_patch = root / "frontier/history" / f"{previous_digest}.patch"
+    # `challenge.py capture` uses intent-to-add for files introduced by a
+    # frontier. Reversing the patch removes the worktree file but leaves that
+    # empty index placeholder, which would otherwise look like participant work.
+    old_added = _git(workspace, "diff", "--name-only", "--diff-filter=A", "HEAD").stdout.splitlines()
     if (not old_patch.is_file() or
             hashlib.sha256(old_patch.read_bytes()).hexdigest() != previous_digest or
             _git(workspace, "apply", "--reverse", "--check", str(old_patch)).returncode != 0):
         return False
     if _git(workspace, "apply", "--reverse", str(old_patch)).returncode != 0:
         return False
+    for name in old_added:
+        if (workspace / name).exists():
+            continue
+        staged = _git(workspace, "ls-files", "--stage", "--", name).stdout.rstrip("\n")
+        if staged == f"100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0\t{name}":
+            cleared = _git(workspace, "update-index", "--force-remove", "--", name)
+            if cleared.returncode != 0:
+                raise SystemExit(f"could not clear old frontier index placeholder: {cleared.stderr.strip()}")
     if _git(workspace, "status", "--porcelain", "--untracked-files=normal").stdout.strip():
         restored = _git(workspace, "apply", str(old_patch))
         if restored.returncode != 0:

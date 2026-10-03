@@ -105,9 +105,10 @@ does not show ranked entries while the challenge status is `staging`.
 The challenge repository stores the accepted **cumulative source patch** at
 [`frontier/changes.patch`](../frontier/changes.patch), with PR number, immutable
 head SHA, patch digest, source pin, and qualification in
-[`frontier/manifest.json`](../frontier/manifest.json). The initial frontier is
-reviewed PR #6. It was promoted as direct H200 research, **not** as a signed
-ranked result. Acceptance makes its code available to new participants; it
+[`frontier/manifest.json`](../frontier/manifest.json). The current cumulative
+frontier is challenge PR #17; its lineage includes challenge PR #6 and
+upstream `stwo-zig` PR #205. Direct H200 promotion is **not** a signed ranked
+result. Acceptance makes its code available to new participants; it
 does not alter `benchmark.json`, the original baseline, or the scoring epoch.
 
 After approving a new PR, freeze its exact head and run:
@@ -209,7 +210,7 @@ staging deployment is
 4. Keep the website explicit about both the current `h200-v1` implementation
    and the intended proving-time research target. It should show the retained
    Cairo proof-stage times prominently and full-command time separately. The
-   two direct H200 runs are unranked research context. A live leaderboard
+   direct H200 studies are unranked research context. A live leaderboard
    still requires the trusted signed-receipt feed and a fresh paired baseline
    for each ranked submission; do not derive judged absolute values from the
    unpaired direct-run context.

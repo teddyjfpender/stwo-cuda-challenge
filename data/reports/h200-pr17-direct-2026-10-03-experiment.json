@@ -1,0 +1,321 @@
+{
+  "candidate_options": {
+    "source_lookahead": false
+  },
+  "hypothesis": "Composed CUDA fixed-data ingress and circuit-static reuse lower canonical full-basket command time from the frozen source pin",
+  "max_companion_regression": 0.1,
+  "min_stage_gain": 0.05,
+  "min_target_command_gain": 0.0,
+  "preflight": {
+    "baseline": {
+      "binary_sha256": {
+        "stwo-cairo-cuda": "a94b57bc0b821ae2dca158020ee12b974ecc70934085cf07564d762754dcd9b6",
+        "stwo-cairo-official-verifier": "2a8b805031d48d9b94a78a1491e3b6dd0c5a4d8075760a9d0cb6e3d83837ba88",
+        "stwo-circuit-recursion-cuda": "34b62a8ccb8ec66c693ca9a6e566141c652e6ce0fa198079395259871374247e",
+        "verify_cairo_cuda_json": "779e0a9b3ba46069f8fe3d94469ba2eb5e1855ab9438912ef119d7a0f728af67"
+      },
+      "build_cache": {
+        "archive": "/root/stwo-build-cache/cuda-archives",
+        "ccache": "/root/.cache/ccache"
+      },
+      "cases": [
+        "pie:15588777_15588780",
+        "recursion:eight-distinct-pie-fold"
+      ],
+      "contract_epoch": "h200-v1",
+      "cuda_build_options": [
+        "-Dcuda-nvcc=/root/stwo-build-cache/toolchain/nvcc",
+        "-Dcuda-host-cxx=/usr/bin/x86_64-linux-gnu-g++-13",
+        "-Dcuda-host-runtime=/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+        "-Dcuda-host-unwind-runtime=/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "-Dcuda-ar=/usr/bin/x86_64-linux-gnu-ar",
+        "-Dcuda-home=/usr/local/cuda-12.8",
+        "-Dcuda-library-dir=/usr/local/cuda-12.8/targets/x86_64-linux/lib",
+        "-Dcuda-arch=90",
+        "-Dcuda-build-jobs=6"
+      ],
+      "idle_device_bytes": 634060800,
+      "mode": "direct",
+      "preprocessed_sha256": "4d4fda06dfa3bca19554510a158f6c50abad06a74d29c17885ed4cbb88ada34d",
+      "qualification": "prerequisites-only",
+      "schema": "stwo-h200-preflight-v1",
+      "shared_asset_snapshot": {
+        "fixtures": {
+          "15588777_15588780.cpi": {
+            "bytes": 662633424,
+            "ctime_ns": 1791003692959404275,
+            "device": 70,
+            "inode": 238382177791084495,
+            "mtime_ns": 1791003692959404275,
+            "path": "/workspace/challenge/data/inputs/15588777_15588780.cpi"
+          },
+          "_tree8_proofs/15578420_15578429.leaf.json": {
+            "bytes": 735532,
+            "ctime_ns": 1791003387394363065,
+            "device": 70,
+            "inode": 8226086572418836407,
+            "mtime_ns": 1791003387394363065,
+            "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578420_15578429.leaf.json"
+          },
+          "_tree8_proofs/15578430_15578439.leaf.json": {
+            "bytes": 734453,
+            "ctime_ns": 1791003387416296189,
+            "device": 70,
+            "inode": 10989612108269080742,
+            "mtime_ns": 1791003387416296189,
+            "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578430_15578439.leaf.json"
+          },
+          "_tree8_proofs/15578440_15578449.leaf.json": {
+            "bytes": 740937,
+            "ctime_ns": 1791003387438294843,
+            "device": 70,
+            "inode": 911057549143251955,
+            "mtime_ns": 1791003387438294843,
+            "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578440_15578449.leaf.json"
+          },
+          "_tree8_proofs/15578450_15578459.leaf.json": {
+            "bytes": 734904,
+            "ctime_ns": 1791003387460705896,
+            "device": 70,
+            "inode": 8509513876927047387,
+            "mtime_ns": 1791003387460705896,
+            "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578450_15578459.leaf.json"
+          },
+          "_tree8_proofs/15578460_15578469.leaf.json": {
+            "bytes": 737748,
+            "ctime_ns": 1791003387482947173,
+            "device": 70,
+            "inode": 17247255190048737586,
+            "mtime_ns": 1791003387482947173,
+            "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578460_15578469.leaf.json"
+          },
+          "_tree8_proofs/15578470_15578479.leaf.json": {
+            "bytes": 735438,
+            "ctime_ns": 1791003387504867004,
+            "device": 70,
+            "inode": 17947146979105238085,
+            "mtime_ns": 1791003387504867004,
+            "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578470_15578479.leaf.json"
+          },
+          "_tree8_proofs/15578480_15578489.leaf.json": {
+            "bytes": 736404,
+            "ctime_ns": 1791003387526184404,
+            "device": 70,
+            "inode": 16480313421841705314,
+            "mtime_ns": 1791003387526184404,
+            "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578480_15578489.leaf.json"
+          },
+          "_tree8_proofs/15578490_15578499.leaf.json": {
+            "bytes": 735983,
+            "ctime_ns": 1791003387547876525,
+            "device": 70,
+            "inode": 7058397620550111617,
+            "mtime_ns": 1791003387547876525,
+            "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578490_15578499.leaf.json"
+          }
+        },
+        "manifest": {
+          "bytes": 12610,
+          "ctime_ns": 1791003387824534021,
+          "device": 70,
+          "inode": 14238083012515231906,
+          "mtime_ns": 1791003387824534021,
+          "path": "/workspace/challenge/fixtures/public-v1.json"
+        },
+        "preprocessed": {
+          "bytes": 2172407516,
+          "ctime_ns": 1791003645056402970,
+          "device": 70,
+          "inode": 16494777469588208512,
+          "mtime_ns": 1791003645052417684,
+          "path": "/workspace/challenge/.cache/preprocessed-canonical.bin"
+        }
+      },
+      "shared_asset_verification": "full-sha256",
+      "sources": {
+        "runtime_files": 12,
+        "source_commit": "b2873365dc28ed4bc4b27de10e01ea0beeef7c93",
+        "verified_cuda_artifacts": 8
+      },
+      "toolchain": {
+        "cargo": "cargo 1.75.0",
+        "nvcc": "nvcc: NVIDIA (R) Cuda compiler driver"
+      },
+      "verified_fixture_files": 9
+    },
+    "candidate": {
+      "binary_sha256": {
+        "stwo-cairo-cuda": "6fceb9ce8cd669089c637e522db147061c345e07ce644cc7077d28753c9e2001",
+        "stwo-cairo-official-verifier": "2a8b805031d48d9b94a78a1491e3b6dd0c5a4d8075760a9d0cb6e3d83837ba88",
+        "stwo-circuit-recursion-cuda": "c04d19bcfef9bda0d4d1e766bbe9f2a58c05206bdeb5263816bba25347aa584a",
+        "verify_cairo_cuda_json": "779e0a9b3ba46069f8fe3d94469ba2eb5e1855ab9438912ef119d7a0f728af67"
+      },
+      "build_cache": {
+        "archive": "/root/stwo-build-cache/cuda-archives",
+        "ccache": "/root/.cache/ccache"
+      },
+      "cases": [
+        "pie:15588777_15588780",
+        "recursion:eight-distinct-pie-fold"
+      ],
+      "contract_epoch": "h200-v1",
+      "cuda_build_options": [
+        "-Dcuda-nvcc=/root/stwo-build-cache/toolchain/nvcc",
+        "-Dcuda-host-cxx=/usr/bin/x86_64-linux-gnu-g++-13",
+        "-Dcuda-host-runtime=/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+        "-Dcuda-host-unwind-runtime=/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "-Dcuda-ar=/usr/bin/x86_64-linux-gnu-ar",
+        "-Dcuda-home=/usr/local/cuda-12.8",
+        "-Dcuda-library-dir=/usr/local/cuda-12.8/targets/x86_64-linux/lib",
+        "-Dcuda-arch=90",
+        "-Dcuda-build-jobs=6"
+      ],
+      "idle_device_bytes": 634060800,
+      "mode": "direct",
+      "newly_hashed_fixture_files": 0,
+      "preprocessed_sha256": "4d4fda06dfa3bca19554510a158f6c50abad06a74d29c17885ed4cbb88ada34d",
+      "qualification": "prerequisites-only",
+      "schema": "stwo-h200-preflight-v1",
+      "shared_asset_snapshot": {
+        "fixtures": {
+          "15588777_15588780.cpi": {
+            "bytes": 662633424,
+            "ctime_ns": 1791003692959404275,
+            "device": 70,
+            "inode": 238382177791084495,
+            "mtime_ns": 1791003692959404275,
+            "path": "/workspace/challenge/data/inputs/15588777_15588780.cpi"
+          },
+          "_tree8_proofs/15578420_15578429.leaf.json": {
+            "bytes": 735532,
+            "ctime_ns": 1791003387394363065,
+            "device": 70,
+            "inode": 8226086572418836407,
+            "mtime_ns": 1791003387394363065,
+            "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578420_15578429.leaf.json"
+          },
+          "_tree8_proofs/15578430_15578439.leaf.json": {
+            "bytes": 734453,
+            "ctime_ns": 1791003387416296189,
+            "device": 70,
+            "inode": 10989612108269080742,
+            "mtime_ns": 1791003387416296189,
+            "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578430_15578439.leaf.json"
+          },
+          "_tree8_proofs/15578440_15578449.leaf.json": {
+            "bytes": 740937,
+            "ctime_ns": 1791003387438294843,
+            "device": 70,
+            "inode": 911057549143251955,
+            "mtime_ns": 1791003387438294843,
+            "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578440_15578449.leaf.json"
+          },
+          "_tree8_proofs/15578450_15578459.leaf.json": {
+            "bytes": 734904,
+            "ctime_ns": 1791003387460705896,
+            "device": 70,
+            "inode": 8509513876927047387,
+            "mtime_ns": 1791003387460705896,
+            "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578450_15578459.leaf.json"
+          },
+          "_tree8_proofs/15578460_15578469.leaf.json": {
+            "bytes": 737748,
+            "ctime_ns": 1791003387482947173,
+            "device": 70,
+            "inode": 17247255190048737586,
+            "mtime_ns": 1791003387482947173,
+            "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578460_15578469.leaf.json"
+          },
+          "_tree8_proofs/15578470_15578479.leaf.json": {
+            "bytes": 735438,
+            "ctime_ns": 1791003387504867004,
+            "device": 70,
+            "inode": 17947146979105238085,
+            "mtime_ns": 1791003387504867004,
+            "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578470_15578479.leaf.json"
+          },
+          "_tree8_proofs/15578480_15578489.leaf.json": {
+            "bytes": 736404,
+            "ctime_ns": 1791003387526184404,
+            "device": 70,
+            "inode": 16480313421841705314,
+            "mtime_ns": 1791003387526184404,
+            "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578480_15578489.leaf.json"
+          },
+          "_tree8_proofs/15578490_15578499.leaf.json": {
+            "bytes": 735983,
+            "ctime_ns": 1791003387547876525,
+            "device": 70,
+            "inode": 7058397620550111617,
+            "mtime_ns": 1791003387547876525,
+            "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578490_15578499.leaf.json"
+          }
+        },
+        "manifest": {
+          "bytes": 12610,
+          "ctime_ns": 1791003387824534021,
+          "device": 70,
+          "inode": 14238083012515231906,
+          "mtime_ns": 1791003387824534021,
+          "path": "/workspace/challenge/fixtures/public-v1.json"
+        },
+        "preprocessed": {
+          "bytes": 2172407516,
+          "ctime_ns": 1791003645056402970,
+          "device": 70,
+          "inode": 16494777469588208512,
+          "mtime_ns": 1791003645052417684,
+          "path": "/workspace/challenge/.cache/preprocessed-canonical.bin"
+        }
+      },
+      "shared_asset_verification": "reused-full-sha256-with-file-identity",
+      "sources": {
+        "runtime_files": 12,
+        "source_commit": "b2873365dc28ed4bc4b27de10e01ea0beeef7c93",
+        "verified_cuda_artifacts": 8
+      },
+      "toolchain": {
+        "cargo": "cargo 1.75.0",
+        "nvcc": "nvcc: NVIDIA (R) Cuda compiler driver"
+      },
+      "verified_fixture_files": 9
+    }
+  },
+  "preparation_seconds": 22.063578238,
+  "qualification": "direct-unranked-unsandboxed",
+  "schema": "stwo-h200-direct-experiment-v1",
+  "sources": {
+    "baseline": {
+      "binary_sha256": {
+        "stwo-cairo-cuda": "a94b57bc0b821ae2dca158020ee12b974ecc70934085cf07564d762754dcd9b6",
+        "stwo-cairo-official-verifier": "2a8b805031d48d9b94a78a1491e3b6dd0c5a4d8075760a9d0cb6e3d83837ba88",
+        "stwo-circuit-recursion-cuda": "34b62a8ccb8ec66c693ca9a6e566141c652e6ce0fa198079395259871374247e",
+        "verify_cairo_cuda_json": "779e0a9b3ba46069f8fe3d94469ba2eb5e1855ab9438912ef119d7a0f728af67"
+      },
+      "commit": "b2873365dc28ed4bc4b27de10e01ea0beeef7c93",
+      "tracked_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "untracked_source_sha256": {}
+    },
+    "candidate": {
+      "binary_sha256": {
+        "stwo-cairo-cuda": "6fceb9ce8cd669089c637e522db147061c345e07ce644cc7077d28753c9e2001",
+        "stwo-cairo-official-verifier": "2a8b805031d48d9b94a78a1491e3b6dd0c5a4d8075760a9d0cb6e3d83837ba88",
+        "stwo-circuit-recursion-cuda": "c04d19bcfef9bda0d4d1e766bbe9f2a58c05206bdeb5263816bba25347aa584a",
+        "verify_cairo_cuda_json": "779e0a9b3ba46069f8fe3d94469ba2eb5e1855ab9438912ef119d7a0f728af67"
+      },
+      "commit": "b2873365dc28ed4bc4b27de10e01ea0beeef7c93",
+      "tracked_diff_sha256": "63589936c62268b2e6613cfa2b69527adf7d23564d1261960c380bfb56e26d65",
+      "untracked_source_sha256": {
+        "src/products/cairo_cuda/ingress_jobs.zig": "a2f63de3494f7d330e06d38d3e91896fd1fa6c8bcfaaa1d22e37aa25a759302f"
+      }
+    }
+  },
+  "target_case": "pie:15588777_15588780",
+  "target_stage": "ingress_ns",
+  "timing_boundaries": {
+    "cold_input_to_publication": "NVML-sampled fresh process from adapted CPI to published proof and exit",
+    "internal_phases": "candidate-reported diagnostics; not trusted rank timers",
+    "preparation": "fixture/build/preflight before measured proof commands; not timed",
+    "warm_proof": "not measured; requires a separate resident-service protocol and new epoch"
+  }
+}

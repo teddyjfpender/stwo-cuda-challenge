@@ -9,6 +9,52 @@ from harness.accepted_frontier import apply_frontier
 
 
 class AcceptedFrontierTests(unittest.TestCase):
+    def test_migration_clears_capture_intent_to_add_for_old_frontier_file(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            workspace = root / "source"
+            workspace.mkdir()
+            subprocess.run(["git", "init", "-q", str(workspace)], check=True)
+            original = workspace / "src/backends/cuda/example.zig"
+            original.parent.mkdir(parents=True)
+            original.write_text("base\n")
+            subprocess.run(["git", "-C", str(workspace), "add", "."], check=True)
+            subprocess.run(["git", "-C", str(workspace), "-c", "user.name=Test",
+                            "-c", "user.email=test@example.com", "commit", "-qm", "base"], check=True)
+            commit = subprocess.check_output(["git", "-C", str(workspace), "rev-parse", "HEAD"],
+                                             text=True).strip()
+            baseline = root / "baseline"
+            subprocess.run(["git", "-C", str(workspace), "worktree", "add", "-q", "--detach",
+                            str(baseline), commit], check=True)
+            added = workspace / "src/backends/cuda/ingress.zig"
+            added.write_text("old\n")
+            subprocess.run(["git", "-C", str(workspace), "add", "-N", str(added)], check=True)
+            old_raw = subprocess.check_output(["git", "-C", str(workspace), "diff", "HEAD"])
+            added.write_text("new\n")
+            new_raw = subprocess.check_output(["git", "-C", str(workspace), "diff", "HEAD"])
+            added.write_text("old\n")
+            frontier = root / "frontier"
+            history = frontier / "history"
+            history.mkdir(parents=True)
+            old_digest = hashlib.sha256(old_raw).hexdigest()
+            new_digest = hashlib.sha256(new_raw).hexdigest()
+            (history / f"{old_digest}.patch").write_bytes(old_raw)
+            (frontier / "changes.patch").write_bytes(new_raw)
+            (frontier / "manifest.json").write_text(json.dumps({
+                "schema": "stwo-cuda-frontier-v1", "sourceCommit": commit,
+                "patchSha256": new_digest, "parentPatchSha256": old_digest,
+                "prNumber": 17}) + "\n")
+            marker = Path(subprocess.check_output([
+                "git", "-C", str(workspace), "rev-parse", "--git-path", "stwo-cuda-frontier.json"],
+                text=True).strip())
+            if not marker.is_absolute():
+                marker = workspace / marker
+            marker.write_text(json.dumps({"patchSha256": old_digest}) + "\n")
+            apply_frontier(root, workspace, baseline,
+                           {"sourceCommit": commit, "editablePaths": ["src/backends/cuda"]})
+            self.assertEqual(added.read_text(), "new\n")
+            self.assertEqual(json.loads(marker.read_text())["patchSha256"], new_digest)
+
     def test_setup_advances_only_an_unmodified_previous_frontier(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

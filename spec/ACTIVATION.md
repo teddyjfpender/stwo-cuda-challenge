@@ -27,7 +27,7 @@ missing. The funded Runpod session qualified the public proofs directly but
 did not change these live-service gates. A 2026-10-02 inspection of the
 available H200 pod found neither Docker nor `CAP_SYS_ADMIN`; it cannot mount
 the judge's per-case output images or qualify the isolated rank workflow.
-The pod is retained for separate research use, not registered as a judge.
+That research pod was stopped; it was never registered as a judge.
 The later independent PR #6 comparison added three direct ABBA rounds across
 all ten public cases, with exact canonical proofs and Rust verification. It
 improved every PIE's full command but did not supply isolation, private
@@ -35,6 +35,11 @@ holdouts, or a signed rank receipt; its three-family direct gain was also
 below that session's A/A noise threshold. PR #6 is promoted in the public
 research record, not the ranked leaderboard. The paid H200 pod was stopped
 after these measurements.
+On 2026-10-03, challenge PR #17 passed an independent direct H200 comparison
+against the frozen pin with three full-basket passes per arm and exact public
+proof/root checks. It was accepted as the unranked cumulative source frontier;
+its [measurements](../data/reports/README.md) and locally copied service
+artifacts do not satisfy sandbox, private-holdout, or signed-receipt gates.
 
 | Gate | Current evidence | Required activation evidence |
 | --- | --- | --- |

@@ -1,0 +1,9 @@
+{
+  "companion_case": "recursion:eight-distinct-pie-fold",
+  "companion_command_gain": 0.11558073224250831,
+  "full_basket_requested": true,
+  "passes": true,
+  "target_case": "pie:15588777_15588780",
+  "target_command_gain": 0.27181970555822665,
+  "target_stage_gain": 0.3759340020417654
+}

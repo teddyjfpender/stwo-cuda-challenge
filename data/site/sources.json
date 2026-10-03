@@ -6,7 +6,7 @@
   "report": "data/reports/h200-direct-2026-10-02.json",
   "summary": "data/reports/h200-direct-2026-10-02-summary.tsv",
   "runs": "data/reports/h200-direct-2026-10-02-runs.tsv",
-  "reviews": "data/reports/submission-review-2026-10-02.tsv",
-  "research": "data/reports/submission-research-2026-10-02.tsv",
+  "reviews": "data/reports/submission-review-2026-10-03.tsv",
+  "research": "data/reports/submission-research-2026-10-03.tsv",
   "scorecards": "data/site/scorecards.json"
 }

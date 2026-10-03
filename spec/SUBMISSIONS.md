@@ -37,7 +37,8 @@ whole-device peaks, regressions, and exact proof checks.
    [accepted frontier](../frontier/manifest.json) applied over the immutable
    source pin. `workspace/baseline` remains clean. `setup --base` leaves a
    fresh checkout at the original pin for comparison. The current cumulative
-   frontier includes challenge PR #6 and upstream `stwo-zig` PR #205. Pull
+   frontier is challenge PR #17, including challenge PR #6 and upstream
+   `stwo-zig` PR #205. Pull
    challenge `main` and rerun `setup` to advance an unchanged older frontier.
    If you have source edits, capture them first and apply them to a fresh
    checkout; setup will not overwrite participant work.

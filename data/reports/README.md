@@ -1,4 +1,53 @@
-# H200 direct qualification, 2026-10-02
+# H200 direct qualification
+
+## Challenge PR #17, 2026-10-03
+
+[PR #17](https://github.com/teddyjfpender/stwo-cuda-challenge/pull/17) was
+independently built from its cumulative 65,253-byte patch and measured on one
+H200 against the frozen source pin. The [raw direct runs](h200-pr17-direct-2026-10-03-runs.jsonl),
+[experiment identity](h200-pr17-direct-2026-10-03-experiment.json),
+[preflight](h200-pr17-direct-2026-10-03-preflight.json), and
+[smoke gate](h200-pr17-direct-2026-10-03-gate.json) retain three interleaved
+full-basket passes per arm, plus repeated PIE/fold smoke. All 60 full proof
+commands matched the exact canonical proof or root/output digests; the pinned
+Rust Cairo verifiers accepted every applicable PIE and pipeline leaf. No CUDA
+trial fell back to CPU. The direct qualifier does not run an independent
+circuit verifier, but recursive bytes matched the pinned references. These are
+unranked, unsandboxed research results, not judge receipts.
+
+The median paired external-command ratio is 0.716 for six PIEs, 0.928 for two
+folds, and 0.826 for two pipelines. With equal family weights, the research
+basket ratio is 0.819 (1.22× inverse-latency gain) relative to the frozen pin.
+The large PIE's median command fell from 12.509 to 9.246 s and its ingress
+from 9.389 to 5.981 s. The eight-leaf fold fell from 10.802 to 9.447 s, with
+circuit-resident proof time from 4.265 to 3.146 s. Whole-device sampled peak
+was unchanged on nine cases; the integrated batch rose from 38.445 to 40.445
+GiB because its fixed device image retains about 2 GiB. All per-case command,
+proof-stage, ingress, and memory medians are in the
+[research TSV](submission-research-2026-10-03.tsv), selected for the website
+by [`data/site/sources.json`](../site/sources.json).
+
+A separate [accepted-frontier comparison](h200-pr17-frontier-2026-10-03-runs.jsonl)
+on the same H200 used four interleaved observations per arm of the large PIE
+and eight-leaf fold. Its [gate](h200-pr17-frontier-2026-10-03-gate.json)
+records 18.4% lower PIE command time, 11.6% lower fold command time, and 27.7%
+lower fold circuit-resident time. The incremental comparison is not mixed
+into the website's frozen-pin improvement trajectory. Absolute command times
+on this pod are higher than the PR author's pod; paired same-host ratios are
+the relevant comparison. The author also reports a smaller integrated-batch
+command regression relative to the intermediate PR #17 version; the
+independent pin-relative pass here still shows a large cumulative gain.
+
+Before the H200 pod was shut down, its PR #17 Linux prover binaries, generated
+CUDA AOT packs and native archives, canonical fixed assets, required Cairo and
+circuit vectors, pinned Rust verifiers, CUDA runtime library, and exact source
+patch were copied to the **local, Git-ignored**
+`.cache/pr17-service-h200-sm90/` bundle. Its `README.md` gives the runtime
+environment and its `MANIFEST.json` hashes all 566 files. The committed
+[artifact record](h200-pr17-service-artifacts-2026-10-03.json) binds the bundle
+manifest and principal binaries/assets to the reviewed PR and direct evidence.
+This bundle is for an H200-class Linux service; it is not a macOS executable
+or a ranked submission artifact.
 
 ## Reviewed challenge PRs, 2026-10-02
 

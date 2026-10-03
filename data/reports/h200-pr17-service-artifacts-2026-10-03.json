@@ -1,0 +1,60 @@
+{
+  "bundleManifestSha256": "8fee52355122210244506693cdbde226571f0862da0ec915c55866060df3374c",
+  "directEvidenceSha256": "dc18106cb6be90fd954eed3cf06270ea82b7197a50ddf8d539c7f81d5e858220",
+  "headSha": "63aecaf7a4f9c918176cca51ef9799d2a7dbc466",
+  "keyFiles": {
+    "assets/preprocessed-canonical.bin": {
+      "bytes": 2172407516,
+      "sha256": "4d4fda06dfa3bca19554510a158f6c50abad06a74d29c17885ed4cbb88ada34d"
+    },
+    "bin/stwo-cairo-cuda": {
+      "bytes": 72760128,
+      "sha256": "6fceb9ce8cd669089c637e522db147061c345e07ce644cc7077d28753c9e2001"
+    },
+    "bin/stwo-circuit-recursion-cuda": {
+      "bytes": 91206672,
+      "sha256": "c04d19bcfef9bda0d4d1e766bbe9f2a58c05206bdeb5263816bba25347aa584a"
+    },
+    "build/cairo/cuda_aot_pack.bin": {
+      "bytes": 51646176,
+      "sha256": "a78f0212c6e1ef3f0a3c187a51c0aa8ac17628c0ed4ece47763cce0a814623dc"
+    },
+    "build/cairo/libstwo_cuda_kernels.a": {
+      "bytes": 58226598,
+      "sha256": "05d951193c75b0095abcf3dd4318ffe889315faa8aad5e20ce353341a96506c4"
+    },
+    "build/circuit/cuda_aot_pack.bin": {
+      "bytes": 52399136,
+      "sha256": "efdca306ccea399d0f60adbd8aeb1ee0af9b93934a9be7e4908f2743d7ced655"
+    },
+    "build/circuit/libstwo_cuda_kernels.a": {
+      "bytes": 58981022,
+      "sha256": "2f3796f6d670772e106df8fc2025a4ef26cb2824fb940a340b60a8d30361cc43"
+    },
+    "lib/libcudart.so.12": {
+      "bytes": 728800,
+      "sha256": "c3a75b33af334a3486d197dbd1584a2985183ba4688d237a2be5f2f679329920"
+    },
+    "source/changes.patch": {
+      "bytes": 65253,
+      "sha256": "4caa691e3a215c8300a725b0f7ff6d5357a3e760b2a8f4dfb0441894e43a283e"
+    },
+    "verifiers/stwo-cairo-official-verifier": {
+      "bytes": 6939376,
+      "sha256": "2a8b805031d48d9b94a78a1491e3b6dd0c5a4d8075760a9d0cb6e3d83837ba88"
+    },
+    "verifiers/verify_cairo_cuda_json": {
+      "bytes": 7495760,
+      "sha256": "779e0a9b3ba46069f8fe3d94469ba2eb5e1855ab9438912ef119d7a0f728af67"
+    }
+  },
+  "localBundle": ".cache/pr17-service-h200-sm90",
+  "patchSha256": "4caa691e3a215c8300a725b0f7ff6d5357a3e760b2a8f4dfb0441894e43a283e",
+  "payloadBytes": 2897550659,
+  "payloadFileCount": 566,
+  "pr": 17,
+  "qualification": "direct-unranked-unsandboxed",
+  "schema": "stwo-pr17-h200-local-service-artifact-record-v1",
+  "sourceCommit": "b2873365dc28ed4bc4b27de10e01ea0beeef7c93",
+  "target": "linux-x86_64-sm_90-cuda-12.8"
+}

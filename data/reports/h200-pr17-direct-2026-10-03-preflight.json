@@ -1,0 +1,467 @@
+{
+  "baseline": {
+    "binary_sha256": {
+      "stwo-cairo-cuda": "a94b57bc0b821ae2dca158020ee12b974ecc70934085cf07564d762754dcd9b6",
+      "stwo-cairo-official-verifier": "2a8b805031d48d9b94a78a1491e3b6dd0c5a4d8075760a9d0cb6e3d83837ba88",
+      "stwo-circuit-recursion-cuda": "34b62a8ccb8ec66c693ca9a6e566141c652e6ce0fa198079395259871374247e",
+      "verify_cairo_cuda_json": "779e0a9b3ba46069f8fe3d94469ba2eb5e1855ab9438912ef119d7a0f728af67"
+    },
+    "build_cache": {
+      "archive": "/root/stwo-build-cache/cuda-archives",
+      "ccache": "/root/.cache/ccache"
+    },
+    "cases": [
+      "pie:15582797_15582797",
+      "pie:15603744_15603744",
+      "pie:15581148_15581148",
+      "pie:15590913_15590913",
+      "pie:15588777_15588780",
+      "pie:15591789_15591789",
+      "recursion:two-leaf-wrap-fold",
+      "recursion:eight-distinct-pie-fold",
+      "pipeline:two-leaf-root",
+      "pipeline:two-leaf-batch-integrated"
+    ],
+    "contract_epoch": "h200-v1",
+    "cuda_build_options": [
+      "-Dcuda-nvcc=/root/stwo-build-cache/toolchain/nvcc",
+      "-Dcuda-host-cxx=/usr/bin/x86_64-linux-gnu-g++-13",
+      "-Dcuda-host-runtime=/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+      "-Dcuda-host-unwind-runtime=/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "-Dcuda-ar=/usr/bin/x86_64-linux-gnu-ar",
+      "-Dcuda-home=/usr/local/cuda-12.8",
+      "-Dcuda-library-dir=/usr/local/cuda-12.8/targets/x86_64-linux/lib",
+      "-Dcuda-arch=90",
+      "-Dcuda-build-jobs=6"
+    ],
+    "idle_device_bytes": 634060800,
+    "mode": "direct",
+    "preprocessed_sha256": "4d4fda06dfa3bca19554510a158f6c50abad06a74d29c17885ed4cbb88ada34d",
+    "qualification": "prerequisites-only",
+    "schema": "stwo-h200-preflight-v1",
+    "shared_asset_snapshot": {
+      "fixtures": {
+        "15581148_15581148.cpi": {
+          "bytes": 377015036,
+          "ctime_ns": 1791003659679230204,
+          "device": 70,
+          "inode": 18198284395318227043,
+          "mtime_ns": 1791003659679230204,
+          "path": "/workspace/challenge/data/inputs/15581148_15581148.cpi"
+        },
+        "15582797_15582797.cpi": {
+          "bytes": 408205744,
+          "ctime_ns": 1791003657238514780,
+          "device": 70,
+          "inode": 11597220818154274716,
+          "mtime_ns": 1791003657238514780,
+          "path": "/workspace/challenge/data/inputs/15582797_15582797.cpi"
+        },
+        "15588777_15588780.cpi": {
+          "bytes": 662633424,
+          "ctime_ns": 1791003692959404275,
+          "device": 70,
+          "inode": 238382177791084495,
+          "mtime_ns": 1791003692959404275,
+          "path": "/workspace/challenge/data/inputs/15588777_15588780.cpi"
+        },
+        "15590913_15590913.cpi": {
+          "bytes": 443939388,
+          "ctime_ns": 1791003664002924182,
+          "device": 70,
+          "inode": 12103201563443459255,
+          "mtime_ns": 1791003664002924182,
+          "path": "/workspace/challenge/data/inputs/15590913_15590913.cpi"
+        },
+        "15591789_15591789.cpi": {
+          "bytes": 494945496,
+          "ctime_ns": 1791003673361411320,
+          "device": 70,
+          "inode": 5199007832453736187,
+          "mtime_ns": 1791003673361411320,
+          "path": "/workspace/challenge/data/inputs/15591789_15591789.cpi"
+        },
+        "15603744_15603744.cpi": {
+          "bytes": 444736304,
+          "ctime_ns": 1791003666835178732,
+          "device": 70,
+          "inode": 7432107123005340848,
+          "mtime_ns": 1791003666835178732,
+          "path": "/workspace/challenge/data/inputs/15603744_15603744.cpi"
+        },
+        "15627902-15627904.leaf.json": {
+          "bytes": 734783,
+          "ctime_ns": 1791003387327210310,
+          "device": 70,
+          "inode": 14220721275987490700,
+          "mtime_ns": 1791003387327210310,
+          "path": "/workspace/challenge/data/inputs/15627902-15627904.leaf.json"
+        },
+        "15627902-15627904.preimage.hex.json": {
+          "bytes": 6648,
+          "ctime_ns": 1791003387332717544,
+          "device": 70,
+          "inode": 15561746972814465373,
+          "mtime_ns": 1791003387332717544,
+          "path": "/workspace/challenge/data/inputs/15627902-15627904.preimage.hex.json"
+        },
+        "15627902-15627904.prover_input.cpi": {
+          "bytes": 32988292,
+          "ctime_ns": 1791003631135997107,
+          "device": 70,
+          "inode": 9186056652517838981,
+          "mtime_ns": 1791003631135997107,
+          "path": "/workspace/challenge/data/inputs/15627902-15627904.prover_input.cpi"
+        },
+        "15627905-15627907.leaf.json": {
+          "bytes": 734290,
+          "ctime_ns": 1791003387361447647,
+          "device": 70,
+          "inode": 18248527337680100655,
+          "mtime_ns": 1791003387361447647,
+          "path": "/workspace/challenge/data/inputs/15627905-15627907.leaf.json"
+        },
+        "15627905-15627907.preimage.hex.json": {
+          "bytes": 6128,
+          "ctime_ns": 1791003387366927266,
+          "device": 70,
+          "inode": 2123858374226573944,
+          "mtime_ns": 1791003387366927266,
+          "path": "/workspace/challenge/data/inputs/15627905-15627907.preimage.hex.json"
+        },
+        "15627905-15627907.prover_input.cpi": {
+          "bytes": 23565556,
+          "ctime_ns": 1791003634205539401,
+          "device": 70,
+          "inode": 7760474075558637354,
+          "mtime_ns": 1791003634205539401,
+          "path": "/workspace/challenge/data/inputs/15627905-15627907.prover_input.cpi"
+        },
+        "_tree8_proofs/15578420_15578429.leaf.json": {
+          "bytes": 735532,
+          "ctime_ns": 1791003387394363065,
+          "device": 70,
+          "inode": 8226086572418836407,
+          "mtime_ns": 1791003387394363065,
+          "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578420_15578429.leaf.json"
+        },
+        "_tree8_proofs/15578430_15578439.leaf.json": {
+          "bytes": 734453,
+          "ctime_ns": 1791003387416296189,
+          "device": 70,
+          "inode": 10989612108269080742,
+          "mtime_ns": 1791003387416296189,
+          "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578430_15578439.leaf.json"
+        },
+        "_tree8_proofs/15578440_15578449.leaf.json": {
+          "bytes": 740937,
+          "ctime_ns": 1791003387438294843,
+          "device": 70,
+          "inode": 911057549143251955,
+          "mtime_ns": 1791003387438294843,
+          "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578440_15578449.leaf.json"
+        },
+        "_tree8_proofs/15578450_15578459.leaf.json": {
+          "bytes": 734904,
+          "ctime_ns": 1791003387460705896,
+          "device": 70,
+          "inode": 8509513876927047387,
+          "mtime_ns": 1791003387460705896,
+          "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578450_15578459.leaf.json"
+        },
+        "_tree8_proofs/15578460_15578469.leaf.json": {
+          "bytes": 737748,
+          "ctime_ns": 1791003387482947173,
+          "device": 70,
+          "inode": 17247255190048737586,
+          "mtime_ns": 1791003387482947173,
+          "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578460_15578469.leaf.json"
+        },
+        "_tree8_proofs/15578470_15578479.leaf.json": {
+          "bytes": 735438,
+          "ctime_ns": 1791003387504867004,
+          "device": 70,
+          "inode": 17947146979105238085,
+          "mtime_ns": 1791003387504867004,
+          "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578470_15578479.leaf.json"
+        },
+        "_tree8_proofs/15578480_15578489.leaf.json": {
+          "bytes": 736404,
+          "ctime_ns": 1791003387526184404,
+          "device": 70,
+          "inode": 16480313421841705314,
+          "mtime_ns": 1791003387526184404,
+          "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578480_15578489.leaf.json"
+        },
+        "_tree8_proofs/15578490_15578499.leaf.json": {
+          "bytes": 735983,
+          "ctime_ns": 1791003387547876525,
+          "device": 70,
+          "inode": 7058397620550111617,
+          "mtime_ns": 1791003387547876525,
+          "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578490_15578499.leaf.json"
+        }
+      },
+      "manifest": {
+        "bytes": 12610,
+        "ctime_ns": 1791003387824534021,
+        "device": 70,
+        "inode": 14238083012515231906,
+        "mtime_ns": 1791003387824534021,
+        "path": "/workspace/challenge/fixtures/public-v1.json"
+      },
+      "preprocessed": {
+        "bytes": 2172407516,
+        "ctime_ns": 1791003645056402970,
+        "device": 70,
+        "inode": 16494777469588208512,
+        "mtime_ns": 1791003645052417684,
+        "path": "/workspace/challenge/.cache/preprocessed-canonical.bin"
+      }
+    },
+    "shared_asset_verification": "full-sha256",
+    "sources": {
+      "runtime_files": 12,
+      "source_commit": "b2873365dc28ed4bc4b27de10e01ea0beeef7c93",
+      "verified_cuda_artifacts": 8
+    },
+    "toolchain": {
+      "cargo": "cargo 1.75.0",
+      "nvcc": "nvcc: NVIDIA (R) Cuda compiler driver"
+    },
+    "verified_fixture_files": 20
+  },
+  "candidate": {
+    "binary_sha256": {
+      "stwo-cairo-cuda": "6fceb9ce8cd669089c637e522db147061c345e07ce644cc7077d28753c9e2001",
+      "stwo-cairo-official-verifier": "2a8b805031d48d9b94a78a1491e3b6dd0c5a4d8075760a9d0cb6e3d83837ba88",
+      "stwo-circuit-recursion-cuda": "c04d19bcfef9bda0d4d1e766bbe9f2a58c05206bdeb5263816bba25347aa584a",
+      "verify_cairo_cuda_json": "779e0a9b3ba46069f8fe3d94469ba2eb5e1855ab9438912ef119d7a0f728af67"
+    },
+    "build_cache": {
+      "archive": "/root/stwo-build-cache/cuda-archives",
+      "ccache": "/root/.cache/ccache"
+    },
+    "cases": [
+      "pie:15582797_15582797",
+      "pie:15603744_15603744",
+      "pie:15581148_15581148",
+      "pie:15590913_15590913",
+      "pie:15588777_15588780",
+      "pie:15591789_15591789",
+      "recursion:two-leaf-wrap-fold",
+      "recursion:eight-distinct-pie-fold",
+      "pipeline:two-leaf-root",
+      "pipeline:two-leaf-batch-integrated"
+    ],
+    "contract_epoch": "h200-v1",
+    "cuda_build_options": [
+      "-Dcuda-nvcc=/root/stwo-build-cache/toolchain/nvcc",
+      "-Dcuda-host-cxx=/usr/bin/x86_64-linux-gnu-g++-13",
+      "-Dcuda-host-runtime=/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+      "-Dcuda-host-unwind-runtime=/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+      "-Dcuda-ar=/usr/bin/x86_64-linux-gnu-ar",
+      "-Dcuda-home=/usr/local/cuda-12.8",
+      "-Dcuda-library-dir=/usr/local/cuda-12.8/targets/x86_64-linux/lib",
+      "-Dcuda-arch=90",
+      "-Dcuda-build-jobs=6"
+    ],
+    "idle_device_bytes": 634060800,
+    "mode": "direct",
+    "newly_hashed_fixture_files": 0,
+    "preprocessed_sha256": "4d4fda06dfa3bca19554510a158f6c50abad06a74d29c17885ed4cbb88ada34d",
+    "qualification": "prerequisites-only",
+    "schema": "stwo-h200-preflight-v1",
+    "shared_asset_snapshot": {
+      "fixtures": {
+        "15581148_15581148.cpi": {
+          "bytes": 377015036,
+          "ctime_ns": 1791003659679230204,
+          "device": 70,
+          "inode": 18198284395318227043,
+          "mtime_ns": 1791003659679230204,
+          "path": "/workspace/challenge/data/inputs/15581148_15581148.cpi"
+        },
+        "15582797_15582797.cpi": {
+          "bytes": 408205744,
+          "ctime_ns": 1791003657238514780,
+          "device": 70,
+          "inode": 11597220818154274716,
+          "mtime_ns": 1791003657238514780,
+          "path": "/workspace/challenge/data/inputs/15582797_15582797.cpi"
+        },
+        "15588777_15588780.cpi": {
+          "bytes": 662633424,
+          "ctime_ns": 1791003692959404275,
+          "device": 70,
+          "inode": 238382177791084495,
+          "mtime_ns": 1791003692959404275,
+          "path": "/workspace/challenge/data/inputs/15588777_15588780.cpi"
+        },
+        "15590913_15590913.cpi": {
+          "bytes": 443939388,
+          "ctime_ns": 1791003664002924182,
+          "device": 70,
+          "inode": 12103201563443459255,
+          "mtime_ns": 1791003664002924182,
+          "path": "/workspace/challenge/data/inputs/15590913_15590913.cpi"
+        },
+        "15591789_15591789.cpi": {
+          "bytes": 494945496,
+          "ctime_ns": 1791003673361411320,
+          "device": 70,
+          "inode": 5199007832453736187,
+          "mtime_ns": 1791003673361411320,
+          "path": "/workspace/challenge/data/inputs/15591789_15591789.cpi"
+        },
+        "15603744_15603744.cpi": {
+          "bytes": 444736304,
+          "ctime_ns": 1791003666835178732,
+          "device": 70,
+          "inode": 7432107123005340848,
+          "mtime_ns": 1791003666835178732,
+          "path": "/workspace/challenge/data/inputs/15603744_15603744.cpi"
+        },
+        "15627902-15627904.leaf.json": {
+          "bytes": 734783,
+          "ctime_ns": 1791003387327210310,
+          "device": 70,
+          "inode": 14220721275987490700,
+          "mtime_ns": 1791003387327210310,
+          "path": "/workspace/challenge/data/inputs/15627902-15627904.leaf.json"
+        },
+        "15627902-15627904.preimage.hex.json": {
+          "bytes": 6648,
+          "ctime_ns": 1791003387332717544,
+          "device": 70,
+          "inode": 15561746972814465373,
+          "mtime_ns": 1791003387332717544,
+          "path": "/workspace/challenge/data/inputs/15627902-15627904.preimage.hex.json"
+        },
+        "15627902-15627904.prover_input.cpi": {
+          "bytes": 32988292,
+          "ctime_ns": 1791003631135997107,
+          "device": 70,
+          "inode": 9186056652517838981,
+          "mtime_ns": 1791003631135997107,
+          "path": "/workspace/challenge/data/inputs/15627902-15627904.prover_input.cpi"
+        },
+        "15627905-15627907.leaf.json": {
+          "bytes": 734290,
+          "ctime_ns": 1791003387361447647,
+          "device": 70,
+          "inode": 18248527337680100655,
+          "mtime_ns": 1791003387361447647,
+          "path": "/workspace/challenge/data/inputs/15627905-15627907.leaf.json"
+        },
+        "15627905-15627907.preimage.hex.json": {
+          "bytes": 6128,
+          "ctime_ns": 1791003387366927266,
+          "device": 70,
+          "inode": 2123858374226573944,
+          "mtime_ns": 1791003387366927266,
+          "path": "/workspace/challenge/data/inputs/15627905-15627907.preimage.hex.json"
+        },
+        "15627905-15627907.prover_input.cpi": {
+          "bytes": 23565556,
+          "ctime_ns": 1791003634205539401,
+          "device": 70,
+          "inode": 7760474075558637354,
+          "mtime_ns": 1791003634205539401,
+          "path": "/workspace/challenge/data/inputs/15627905-15627907.prover_input.cpi"
+        },
+        "_tree8_proofs/15578420_15578429.leaf.json": {
+          "bytes": 735532,
+          "ctime_ns": 1791003387394363065,
+          "device": 70,
+          "inode": 8226086572418836407,
+          "mtime_ns": 1791003387394363065,
+          "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578420_15578429.leaf.json"
+        },
+        "_tree8_proofs/15578430_15578439.leaf.json": {
+          "bytes": 734453,
+          "ctime_ns": 1791003387416296189,
+          "device": 70,
+          "inode": 10989612108269080742,
+          "mtime_ns": 1791003387416296189,
+          "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578430_15578439.leaf.json"
+        },
+        "_tree8_proofs/15578440_15578449.leaf.json": {
+          "bytes": 740937,
+          "ctime_ns": 1791003387438294843,
+          "device": 70,
+          "inode": 911057549143251955,
+          "mtime_ns": 1791003387438294843,
+          "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578440_15578449.leaf.json"
+        },
+        "_tree8_proofs/15578450_15578459.leaf.json": {
+          "bytes": 734904,
+          "ctime_ns": 1791003387460705896,
+          "device": 70,
+          "inode": 8509513876927047387,
+          "mtime_ns": 1791003387460705896,
+          "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578450_15578459.leaf.json"
+        },
+        "_tree8_proofs/15578460_15578469.leaf.json": {
+          "bytes": 737748,
+          "ctime_ns": 1791003387482947173,
+          "device": 70,
+          "inode": 17247255190048737586,
+          "mtime_ns": 1791003387482947173,
+          "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578460_15578469.leaf.json"
+        },
+        "_tree8_proofs/15578470_15578479.leaf.json": {
+          "bytes": 735438,
+          "ctime_ns": 1791003387504867004,
+          "device": 70,
+          "inode": 17947146979105238085,
+          "mtime_ns": 1791003387504867004,
+          "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578470_15578479.leaf.json"
+        },
+        "_tree8_proofs/15578480_15578489.leaf.json": {
+          "bytes": 736404,
+          "ctime_ns": 1791003387526184404,
+          "device": 70,
+          "inode": 16480313421841705314,
+          "mtime_ns": 1791003387526184404,
+          "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578480_15578489.leaf.json"
+        },
+        "_tree8_proofs/15578490_15578499.leaf.json": {
+          "bytes": 735983,
+          "ctime_ns": 1791003387547876525,
+          "device": 70,
+          "inode": 7058397620550111617,
+          "mtime_ns": 1791003387547876525,
+          "path": "/workspace/challenge/data/inputs/_tree8_proofs/15578490_15578499.leaf.json"
+        }
+      },
+      "manifest": {
+        "bytes": 12610,
+        "ctime_ns": 1791003387824534021,
+        "device": 70,
+        "inode": 14238083012515231906,
+        "mtime_ns": 1791003387824534021,
+        "path": "/workspace/challenge/fixtures/public-v1.json"
+      },
+      "preprocessed": {
+        "bytes": 2172407516,
+        "ctime_ns": 1791003645056402970,
+        "device": 70,
+        "inode": 16494777469588208512,
+        "mtime_ns": 1791003645052417684,
+        "path": "/workspace/challenge/.cache/preprocessed-canonical.bin"
+      }
+    },
+    "shared_asset_verification": "reused-full-sha256-with-file-identity",
+    "sources": {
+      "runtime_files": 12,
+      "source_commit": "b2873365dc28ed4bc4b27de10e01ea0beeef7c93",
+      "verified_cuda_artifacts": 8
+    },
+    "toolchain": {
+      "cargo": "cargo 1.75.0",
+      "nvcc": "nvcc: NVIDIA (R) Cuda compiler driver"
+    },
+    "verified_fixture_files": 20
+  }
+}

@@ -17,13 +17,13 @@ can open. The direct 6.90–9.78 s Cairo figures are full-command diagnostics.
 The [staging website](https://autoresearch-web-lac.vercel.app/challenges/stwo-cuda)
 accepts no ranked submissions; it links to this repository for research PRs
 and Discussions.
-The reviewed [PR status](data/reports/submission-review-2026-10-02.tsv) and
-[per-case research measurements](data/reports/submission-research-2026-10-02.tsv)
-for challenge PRs #3, #4, and #6 are published separately from signed scores.
-The current [accepted starting frontier](frontier/manifest.json) includes
-challenge PR #6 and the locally qualified ingress changes merged upstream in
-`stwo-zig` PR #205. PR #205 has no H200 measurement or ranked promotion; its
-optional ingress paths are research starting points, not claimed speedups.
+The reviewed [PR status](data/site/sources.json) and per-case research
+measurements selected by that manifest are published separately from signed
+scores. The [accepted starting frontier](frontier/manifest.json) is a cumulative
+patch: challenge PR #17 builds on challenge PR #6 and the ingress changes
+merged upstream in `stwo-zig` PR #205. PR #17 has direct H200 research
+measurements, but no judged ranking. Pull challenge `main` and rerun setup to
+pick up that reviewed source.
 PR #4's narrower [PoW primitive results](data/reports/submission-pow-primitives-2026-10-02.tsv)
 are retained alongside its full-command regressions.
 

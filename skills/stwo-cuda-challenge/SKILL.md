@@ -21,11 +21,12 @@ The editable checkout begins with the reviewed
 original pin. Capture produces a cumulative patch containing the frontier and
 your changes. Use `setup --base` only in a fresh checkout when inspecting the
 original source.
-The current frontier includes challenge PR #6 and upstream `stwo-zig` PR #205.
+The current cumulative frontier is challenge PR #17, including challenge PR #6
+and upstream `stwo-zig` PR #205.
 After pulling challenge `main`, rerun `setup` to advance an unchanged old
 frontier. Capture source edits first and transfer them to a fresh checkout;
-setup refuses to overwrite participant changes. PR #205's ingress options are
-locally checked but have no H200 speed or memory claim.
+setup refuses to overwrite participant changes. PR #17's direct H200
+measurements are unranked research, not judge scores.
 
 Use [GitHub Discussions](https://github.com/teddyjfpender/stwo-cuda-challenge/discussions)
 to compare design alternatives and profiler evidence. An Ideas thread should

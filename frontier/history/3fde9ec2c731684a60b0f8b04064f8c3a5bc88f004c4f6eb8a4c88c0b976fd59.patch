@@ -1,329 +1,5 @@
-diff --git a/src/backends/cuda/native/commitment/progressive.cu b/src/backends/cuda/native/commitment/progressive.cu
-index b89c77ab..0f0976b4 100644
---- a/src/backends/cuda/native/commitment/progressive.cu
-+++ b/src/backends/cuda/native/commitment/progressive.cu
-@@ -394,12 +394,42 @@ __global__ void mixed_leaf_kernel(uint32_t size, uint32_t count,
-         const uint32_t ratio_log = __ffs(size / input.source_size) - 1;
-         const uint32_t source_row = lifted_column_index(row, ratio_log);
-         const uint32_t columns = input.capacity_words / input.stride_words;
--        for (uint32_t column = 0; column < columns; ++column) {
-+        uint32_t column = 0;
-+        for (; column < columns; ++column) {
-             if (pending == 16) {
-                 compressed_bytes += 64;
-                 STWO_COMPRESS_PROGRESSIVE(compressed_bytes, 0);
-                 pending = 0;
-             }
-+            // A complete non-final block can be absorbed directly into the
-+            // register state. Keep the final block pending for Blake2s's
-+            // distinct final-compression flag.
-+            if (pending == 0 && columns - column > 16) {
-+#define STWO_MIXED_WORD(index) input.columns[                    \
-+                static_cast<size_t>(column + index) *            \
-+                    input.stride_words + source_row]
-+                p0 = STWO_MIXED_WORD(0);
-+                p1 = STWO_MIXED_WORD(1);
-+                p2 = STWO_MIXED_WORD(2);
-+                p3 = STWO_MIXED_WORD(3);
-+                p4 = STWO_MIXED_WORD(4);
-+                p5 = STWO_MIXED_WORD(5);
-+                p6 = STWO_MIXED_WORD(6);
-+                p7 = STWO_MIXED_WORD(7);
-+                p8 = STWO_MIXED_WORD(8);
-+                p9 = STWO_MIXED_WORD(9);
-+                p10 = STWO_MIXED_WORD(10);
-+                p11 = STWO_MIXED_WORD(11);
-+                p12 = STWO_MIXED_WORD(12);
-+                p13 = STWO_MIXED_WORD(13);
-+                p14 = STWO_MIXED_WORD(14);
-+                p15 = STWO_MIXED_WORD(15);
-+#undef STWO_MIXED_WORD
-+                compressed_bytes += 64;
-+                STWO_COMPRESS_PROGRESSIVE(compressed_bytes, 0);
-+                column += 15;
-+                continue;
-+            }
-             const uint32_t word = input.columns[
-                 static_cast<size_t>(column) * input.stride_words + source_row];
-             switch (pending++) {
-diff --git a/src/backends/cuda/native/transform/b2n_fused.cuh b/src/backends/cuda/native/transform/b2n_fused.cuh
-index de7b1d36..10ea09ba 100644
---- a/src/backends/cuda/native/transform/b2n_fused.cuh
-+++ b/src/backends/cuda/native/transform/b2n_fused.cuh
-@@ -15,7 +15,6 @@ __device__ __forceinline__ void b2n_shuffle(
-     uint32_t log_stride,
-     uint32_t lane) {
-     const uint32_t mask = 1u << log_stride;
--    __syncwarp(0xffffffffu);
- #pragma unroll
-     for (uint32_t i = 0; i < 1u << (LogValues - 1u); ++i) {
-         M31 *value = lane & mask ? values + 2u * i : values + 2u * i + 1u;
-@@ -260,12 +259,9 @@ __global__ void b2n_continue(
-         values[i] = column[block_start + i * min_stride + offset];
-     }
- 
--    uint32_t layer_size = 1u << (log_n - 1u);
--    uint32_t layer_offset = 0;
--    for (uint32_t stage = 2; stage < min_stage; ++stage) {
--        layer_size >>= 1;
--        layer_offset += layer_size;
--    }
-+    uint32_t layer_size = 1u << (log_n - min_stage + 1u);
-+    uint32_t layer_offset =
-+        (1u << (log_n - 1u)) - layer_size;
-     uint32_t stage = min_stage;
- #pragma unroll
-     for (; stage < min_stage + LogValues; ++stage) {
-diff --git a/src/backends/cuda/native/transform/lde.cu b/src/backends/cuda/native/transform/lde.cu
-index 36c01599..f83d6d19 100644
---- a/src/backends/cuda/native/transform/lde.cu
-+++ b/src/backends/cuda/native/transform/lde.cu
-@@ -232,6 +232,56 @@ int lde_columns_on(
- 
- }  // namespace
- 
-+// The canonical fixed artifact stores groups of sixteen coefficients in Rust
-+// SIMD order. Swap the two vector-index halves in place after the raw bytes
-+// have been checked and uploaded. Each thread owns one sixteen-word block;
-+// only the lower triangle swaps, so every word has one writer.
-+__global__ void transpose_preprocessed_simd_blocks(
-+    uint32_t *values, uint32_t log_vectors, uint32_t outer,
-+    uint32_t middle, uint32_t vector_count) {
-+    const uint32_t block = blockIdx.x * blockDim.x + threadIdx.x;
-+    if (block >= vector_count) return;
-+    const uint32_t half = log_vectors / 2;
-+    const uint32_t a = block / (middle * outer);
-+    const uint32_t b = (block / outer) % middle;
-+    const uint32_t c = block % outer;
-+    const uint32_t i = (a << (log_vectors - half)) | (b << half) | c;
-+    const uint32_t j = (c << (log_vectors - half)) | (b << half) | a;
-+    if (i >= j) return;
-+    uint32_t *left = values + static_cast<size_t>(i) * 16u;
-+    uint32_t *right = values + static_cast<size_t>(j) * 16u;
-+#pragma unroll
-+    for (uint32_t lane = 0; lane < 16u; ++lane) {
-+        const uint32_t word = left[lane];
-+        left[lane] = right[lane];
-+        right[lane] = word;
-+    }
-+}
-+
-+static int preprocessed_transpose_simd_blocks_on(
-+    uint32_t *values, size_t words, uint32_t log_rows, void *stream_raw,
-+    uint32_t *launches_out) {
-+    if (launches_out != nullptr) *launches_out = 0;
-+    if (values == nullptr || stream_raw == nullptr || launches_out == nullptr ||
-+        log_rows <= 16u || log_rows > 30u ||
-+        words != (static_cast<size_t>(1) << log_rows)) {
-+        return static_cast<int>(cudaErrorInvalidValue);
-+    }
-+    const uint32_t log_vectors = log_rows - 4u;
-+    const uint32_t half = log_vectors / 2u;
-+    const uint32_t outer = 1u << half;
-+    const uint32_t middle = 1u << (log_vectors & 1u);
-+    const uint32_t vector_count = 1u << log_vectors;
-+    constexpr uint32_t threads = 256u;
-+    transpose_preprocessed_simd_blocks<<<
-+        (vector_count + threads - 1u) / threads, threads, 0,
-+        reinterpret_cast<cudaStream_t>(stream_raw)>>>(
-+            values, log_vectors, outer, middle, vector_count);
-+    const cudaError_t status = cudaPeekAtLastError();
-+    if (status == cudaSuccess) *launches_out = 1;
-+    return static_cast<int>(status);
-+}
-+
- extern "C" int stwo_lde_n2b_addressed_on(
-     uint32_t *arena,
-     size_t arena_words,
-@@ -246,6 +296,18 @@ extern "C" int stwo_lde_n2b_addressed_on(
-     uint32_t include_circle,
-     uint32_t *launches_out) {
-     using namespace stwo::cuda::transform;
-+    // Mode 2 is the checked ingress-only in-place fixed-coefficient order
-+    // conversion. Keep the stable Rust-declared transform ABI; no extra
-+    // product symbol or pointer table is needed for this one-column mode.
-+    if (include_circle == 2u) {
-+        if (descriptor_count != 0u || evaluation_tile_offset_words != 0u ||
-+            twiddle_words != 0u || evaluation_domain_size != 0u ||
-+            twiddles != arena) {
-+            return static_cast<int>(cudaErrorInvalidValue);
-+        }
-+        return preprocessed_transpose_simd_blocks_on(
-+            arena, arena_words, log_n, stream_raw, launches_out);
-+    }
-     if (launches_out != nullptr) *launches_out = 0;
-     if (!valid_shape(
-             log_n,
-diff --git a/src/backends/cuda/native/transform/n2b_fused.cuh b/src/backends/cuda/native/transform/n2b_fused.cuh
-index adfcdf84..0de0c578 100644
---- a/src/backends/cuda/native/transform/n2b_fused.cuh
-+++ b/src/backends/cuda/native/transform/n2b_fused.cuh
-@@ -15,7 +15,6 @@ __device__ __forceinline__ void n2b_shuffle(
-     uint32_t log_stride,
-     uint32_t lane) {
-     const uint32_t mask = 1u << log_stride;
--    __syncwarp(0xffffffffu);
- #pragma unroll
-     for (uint32_t i = 0; i < 1u << (LogValues - 1u); ++i) {
-         M31 *value = lane & mask ? values + 2u * i : values + 2u * i + 1u;
-@@ -74,12 +73,9 @@ void n2b_continue(
-         }
-     }
- 
--    uint32_t layer_size = 1;
--    uint32_t layer_offset = (1u << (log_n - 1u)) - 2u;
--    for (uint32_t stage = 1; stage < min_stage; ++stage) {
--        layer_size <<= 1;
--        layer_offset -= layer_size;
--    }
-+    uint32_t layer_size = 1u << (min_stage - 1u);
-+    uint32_t layer_offset =
-+        (1u << (log_n - 1u)) - (1u << min_stage);
- #pragma unroll
-     for (uint32_t stage = min_stage; stage < middle_stage; ++stage) {
-         const uint32_t log_stride =
-@@ -169,12 +165,9 @@ __global__ void n2b_final_warp(
-         values[i] = column[warp_start + (i << kN2bLogWarp)];
-     }
- 
--    uint32_t layer_size = 1;
--    uint32_t layer_offset = (1u << (log_n - 1u)) - 2u;
--    for (uint32_t stage = 1; stage < min_stage; ++stage) {
--        layer_size <<= 1;
--        layer_offset -= layer_size;
--    }
-+    uint32_t layer_size = 1u << (min_stage - 1u);
-+    uint32_t layer_offset =
-+        (1u << (log_n - 1u)) - (1u << min_stage);
-     uint32_t stage = min_stage;
- #pragma unroll
-     for (; stage < min_stage + LogValues; ++stage) {
-@@ -261,12 +254,9 @@ __global__ void n2b_final_block(
-             block_start + (i << (kN2bLogWarp + LogWarps)) + offset];
-     }
- 
--    uint32_t layer_size = 1;
--    uint32_t layer_offset = (1u << (log_n - 1u)) - 2u;
--    for (uint32_t stage = 1; stage < min_stage; ++stage) {
--        layer_size <<= 1;
--        layer_offset -= layer_size;
--    }
-+    uint32_t layer_size = 1u << (min_stage - 1u);
-+    uint32_t layer_offset =
-+        (1u << (log_n - 1u)) - (1u << min_stage);
-     uint32_t stage = min_stage;
- #pragma unroll
-     for (; stage < min_stage + LogWarps; ++stage) {
-diff --git a/src/backends/cuda/runtime/stages/transform.zig b/src/backends/cuda/runtime/stages/transform.zig
-index a3483522..70a11fba 100644
---- a/src/backends/cuda/runtime/stages/transform.zig
-+++ b/src/backends/cuda/runtime/stages/transform.zig
-@@ -78,6 +78,34 @@ pub fn validateAddressedPlan(
- 
- pub fn OpsFor(comptime Api: type) type {
-     return struct {
-+        pub fn transposePreprocessed(
-+            session: anytype,
-+            values: common.Words,
-+            log_rows: u32,
-+        ) runtime_error.Error!void {
-+            try common.requireStage(session, .ingress);
-+            if (log_rows <= 16 or log_rows > 30 or
-+                values.len != @as(usize, 1) << @intCast(log_rows))
-+                return error.InvalidKernelDescriptor;
-+            const resident = try layout.resident(session, u32, values, values.len);
-+            var launches: u32 = 0;
-+            const status = Api.stwo_lde_n2b_addressed_on(
-+                resident.pointer,
-+                values.len,
-+                @ptrCast(@alignCast(resident.pointer)),
-+                0,
-+                0,
-+                log_rows,
-+                resident.pointer,
-+                0,
-+                0,
-+                session.context.stream,
-+                2,
-+                &launches,
-+            );
-+            try common.recordMany(session, .ingress, status, launches);
-+        }
-+
-         /// Extends an authenticated heterogeneous coefficient batch into one
-         /// reusable contiguous evaluation tile in the same proof arena.
-         pub fn extendAddressed(
-diff --git a/src/integrations/cairo_cuda/canonical_input.zig b/src/integrations/cairo_cuda/canonical_input.zig
-index 48c09d35..64e68eb4 100644
---- a/src/integrations/cairo_cuda/canonical_input.zig
-+++ b/src/integrations/cairo_cuda/canonical_input.zig
-@@ -28,9 +28,12 @@ pub fn read(allocator: std.mem.Allocator, path: []const u8) !Capture {
-         if (try file.readAll(bytes) != bytes.len) return error.Truncated;
-         var trailing: [1]u8 = undefined;
-         if (try file.read(&trailing) != 0) return error.CanonicalInputChanged;
-+        var check = BytesHashJob{ .bytes = bytes };
-+        check.start();
-+        defer check.deinit();
-         var input = try cairo.adapter.input.parseSlice(allocator, bytes, limits);
-         errdefer input.deinit(allocator);
--        const digest = sha(bytes);
-+        const digest = check.wait();
-         if (!std.mem.eql(u8, &digest, &try fileSha(path))) return error.CanonicalInputChanged;
-         return .{ .input = input, .encoded = bytes, .file_sha256 = digest, .encoded_sha256 = digest };
-     }
-@@ -44,15 +47,49 @@ pub fn read(allocator: std.mem.Allocator, path: []const u8) !Capture {
-     if (try file.readAll(json_bytes) != json_bytes.len) return error.Truncated;
-     var trailing: [1]u8 = undefined;
-     if (try file.read(&trailing) != 0) return error.CanonicalInputChanged;
--    const file_digest = sha(json_bytes);
-+    var check = BytesHashJob{ .bytes = json_bytes };
-+    check.start();
-+    defer check.deinit();
-     var input = try cairo.adapter.input.parseSlice(allocator, json_bytes, limits);
-     errdefer input.deinit(allocator);
-     const encoded = try cairo.adapter.compact_writer.encode(allocator, &input);
-     errdefer allocator.free(encoded);
-+    const file_digest = check.wait();
-     if (!std.mem.eql(u8, &file_digest, &try fileSha(path))) return error.CanonicalInputChanged;
-     return .{ .input = input, .encoded = encoded, .file_sha256 = file_digest, .encoded_sha256 = sha(encoded) };
- }
- 
-+/// Hash captured immutable bytes while they are parsed. The second path hash
-+/// still runs after parsing, so the replacement check retains its timing.
-+const BytesHashJob = struct {
-+    bytes: []const u8,
-+    thread: ?std.Thread = null,
-+    started: bool = false,
-+    digest: [32]u8 = undefined,
-+
-+    fn start(self: *BytesHashJob) void {
-+        self.thread = std.Thread.spawn(.{}, run, .{self}) catch return;
-+        self.started = true;
-+    }
-+
-+    fn run(self: *BytesHashJob) void {
-+        self.digest = sha(self.bytes);
-+    }
-+
-+    fn wait(self: *BytesHashJob) [32]u8 {
-+        if (!self.started) return sha(self.bytes);
-+        if (self.thread) |thread| {
-+            thread.join();
-+            self.thread = null;
-+        }
-+        return self.digest;
-+    }
-+
-+    fn deinit(self: *BytesHashJob) void {
-+        if (self.thread) |thread| thread.join();
-+    }
-+};
-+
- fn sha(bytes: []const u8) [32]u8 {
-     var digest: [32]u8 = undefined;
-     std.crypto.hash.sha2.Sha256.hash(bytes, &digest, .{});
 diff --git a/src/integrations/cairo_cuda/canonical_source.zig b/src/integrations/cairo_cuda/canonical_source.zig
-index eb93c0e0..d6ced6c5 100644
+index eb93c0e0a..d6ced6c51 100644
 --- a/src/integrations/cairo_cuda/canonical_source.zig
 +++ b/src/integrations/cairo_cuda/canonical_source.zig
 @@ -307,6 +307,51 @@ test "canonical CUDA shared authenticated assets preserve the dynamic request" {
@@ -379,7 +55,7 @@ index eb93c0e0..d6ced6c5 100644
      const params = cairo.proving.leaf_lane.ProverParameters{
          .channel_hash = .blake2s,
 diff --git a/src/integrations/cairo_cuda/executor/ingress/controller_bundle.zig b/src/integrations/cairo_cuda/executor/ingress/controller_bundle.zig
-index 86b8b323..7ddc82f4 100644
+index 86b8b3237..7ddc82f4c 100644
 --- a/src/integrations/cairo_cuda/executor/ingress/controller_bundle.zig
 +++ b/src/integrations/cairo_cuda/executor/ingress/controller_bundle.zig
 @@ -265,6 +265,7 @@ pub const Bound = struct {
@@ -408,7 +84,7 @@ index 86b8b323..7ddc82f4 100644
          if (!std.mem.eql(u8, &preprocessed.commitment_identity, &self.preprocessed_commit.prepared.identity) or
              preprocessed.column_count != inputs.preprocessed_column_identities.len or
 diff --git a/src/integrations/cairo_cuda/executor/preprocessed_cache.zig b/src/integrations/cairo_cuda/executor/preprocessed_cache.zig
-index 213f84b0..fd8510f3 100644
+index 213f84b0e..63daf7a89 100644
 --- a/src/integrations/cairo_cuda/executor/preprocessed_cache.zig
 +++ b/src/integrations/cairo_cuda/executor/preprocessed_cache.zig
 @@ -109,6 +109,38 @@ pub fn deviceImageKey(path: []const u8, identities: []const []const u8, prepared
@@ -494,46 +170,7 @@ index 213f84b0..fd8510f3 100644
      const profile_setting = std.process.getEnvVarOwned(allocator, "STWO_CAIRO_CUDA_PROFILE_PREPROCESSED") catch null;
      defer if (profile_setting) |value| allocator.free(value);
      const profile = profile_setting != null and std.mem.eql(u8, profile_setting.?, "1");
-@@ -202,24 +251,30 @@ pub fn load(
-         const values = staging[0..words];
-         try stream.readSliceAll(std.mem.sliceAsBytes(values));
-         if (profile) read_ns += phase_timer.lap();
--        for (values) |value| {
--            if (value >= 0x7fff_ffff)
--                return error.NonCanonicalPreprocessedCoefficient;
--        }
-+        // Accumulate the entire column before branching so the compiler can
-+        // vectorize the canonical-field check over large fixed columns.
-+        var invalid: u32 = 0;
-+        for (values) |value| invalid |= @intFromBool(value >= 0x7fff_ffff);
-+        if (invalid != 0) return error.NonCanonicalPreprocessedCoefficient;
-         if (profile) validate_ns += phase_timer.lap();
--        if (log_rows > 16)
--            canonicalizeSimdCoefficientBlocks(values, log_rows);
--        if (profile) transpose_ns += phase_timer.lap();
-         const begin: usize = prepared.column_offsets[ordinal];
-         const end: usize = prepared.column_offsets[ordinal + 1];
-         if (end < begin or end - begin != words)
-             return error.InvalidPreprocessedCacheBinding;
-+        const destination = try bound.coefficients.sub(begin, words);
-         try session.context.uploadSlice(
-             u32,
--            try bound.coefficients.sub(begin, words),
-+            destination,
-             values,
-         );
-         if (profile) upload_ns += phase_timer.lap();
-+        if (log_rows > 16)
-+            try cuda.runtime.stages.transform.Native.transposePreprocessed(
-+                session,
-+                destination,
-+                log_rows,
-+            );
-+        if (profile) transpose_ns += phase_timer.lap();
-         coefficient_words = std.math.add(
-             u64,
-             coefficient_words,
-@@ -232,7 +287,7 @@ pub fn load(
+@@ -232,7 +281,7 @@ pub fn load(
      // Hash the same raw bytes that were parsed and uploaded, before SIMD
      // canonicalization. This avoids a separate whole-artifact read and binds
      // the receipt to consumed content rather than an earlier file snapshot.
@@ -542,228 +179,8 @@ index 213f84b0..fd8510f3 100644
      if (profile) std.debug.print("cairo-cuda preprocessed-profile read_ns={} validate_ns={} transpose_ns={} upload_ns={} words={}\n", .{
          read_ns, validate_ns, transpose_ns, upload_ns, coefficient_words,
      });
-diff --git a/src/integrations/circuit_cuda/resident_memory_plan.zig b/src/integrations/circuit_cuda/resident_memory_plan.zig
-index ade7f6dc..d89686b1 100644
---- a/src/integrations/circuit_cuda/resident_memory_plan.zig
-+++ b/src/integrations/circuit_cuda/resident_memory_plan.zig
-@@ -123,6 +123,7 @@ pub const Slot = struct {
- pub const Input = struct {
-     value_count: usize,
-     twiddle_words: usize,
-+    retain_static: bool = false,
-     commitments: *const [4]commit.Plan,
-     interaction: *const interaction.Plan,
-     composition: *const composition.Plan,
-@@ -167,8 +168,36 @@ pub const Plan = struct {
-     pub fn bytes(self: *const Plan) !usize {
-         return mul(self.placement.total_words, 4);
-     }
-+
-+    /// Only an identical physical layout may borrow a process-owned arena.
-+    /// Hash every slot's extent, offset, alignment and stage lifetime so a
-+    /// different fold geometry cannot reuse stale device addresses.
-+    pub fn cacheKey(self: *const Plan) [32]u8 {
-+        var hash = std.crypto.hash.sha2.Sha256.init(.{});
-+        hash.update("stwo-zig/circuit-cuda-arena/v1\x00");
-+        hashInt(u64, &hash, @intCast(self.placement.total_words));
-+        hashInt(u64, &hash, @intCast(self.placement.placements.len));
-+        for (self.placement.placements) |placement| {
-+            const requirement = placement.requirement;
-+            hashInt(u32, &hash, requirement.id);
-+            hashInt(u64, &hash, @intCast(requirement.words));
-+            hashInt(u64, &hash, @intCast(requirement.alignment_words));
-+            hashInt(u8, &hash, @intFromEnum(requirement.live_from));
-+            hashInt(u8, &hash, @intFromEnum(requirement.live_through));
-+            hashInt(u8, &hash, requirement.live_from_phase);
-+            hashInt(u8, &hash, requirement.live_through_phase);
-+            hashInt(u64, &hash, @intCast(placement.offset_words));
-+        }
-+        return hash.finalResult();
-+    }
- };
- 
-+fn hashInt(comptime T: type, hash: *std.crypto.hash.sha2.Sha256, value: T) void {
-+    var bytes: [@sizeOf(T)]u8 = undefined;
-+    std.mem.writeInt(T, &bytes, value, .little);
-+    hash.update(&bytes);
-+}
-+
- const Builder = struct {
-     allocator: std.mem.Allocator,
-     slots: std.ArrayList(Slot) = .empty,
-@@ -200,7 +229,7 @@ const Builder = struct {
-         const source_kinds = [_]Kind{ .preprocessed_source, .base_source, .interaction_source };
-         for (source_kinds, 0..) |kind, tree_index| {
-             for (trees[tree_index].column_logs, 0..) |log, ordinal|
--                try self.add(kind, ordinal, try pow2(log), 64, if (tree_index == 2) .trace_commit else .ingress, .trace_commit);
-+                try self.add(kind, ordinal, try pow2(log), 64, if (tree_index == 2) .trace_commit else .ingress, if (input.retain_static and tree_index == 0) .proof_assembly else .trace_commit);
-         }
-         for (trees, 0..) |tree, ordinal| {
-             const r = tree.requirements;
-@@ -211,8 +240,8 @@ const Builder = struct {
-             try self.add(.commit_hashes, ordinal, try mul(r.merkle_hashes, 8), 64, start, .decommit);
-             try self.add(.commit_layers, ordinal, try mul(r.merkle_layers, @sizeOf(field.MerkleLayerDescriptor) / 4), 2, .ingress, .decommit);
-         }
--        try self.add(.twiddles_forward, 0, input.twiddle_words, 64, .ingress, .quotient);
--        try self.add(.twiddles_inverse, 0, input.twiddle_words, 64, .ingress, .fri_commit);
-+        try self.add(.twiddles_forward, 0, input.twiddle_words, 64, .ingress, if (input.retain_static) .proof_assembly else .quotient);
-+        try self.add(.twiddles_inverse, 0, input.twiddle_words, 64, .ingress, if (input.retain_static) .proof_assembly else .fri_commit);
-         try self.add(.transcript_state, 0, 16, 4, .trace_commit, .decommit);
-         try self.add(.transcript_boundary, 0, 16, 4, .trace_commit, .decommit);
-         try self.add(.transcript_salt, 0, 4, 4, .ingress, .trace_commit);
-diff --git a/src/integrations/circuit_cuda/resident_prover.zig b/src/integrations/circuit_cuda/resident_prover.zig
-index 583772ab..907a53c3 100644
---- a/src/integrations/circuit_cuda/resident_prover.zig
-+++ b/src/integrations/circuit_cuda/resident_prover.zig
-@@ -100,9 +100,16 @@ pub fn prove(allocator: std.mem.Allocator, input: Input) !Result {
-     defer terminal_bundle.deinit(allocator);
-     var logical = try proof_layout.Layout.init(allocator, &geometry, &oods_plan, input.config);
-     defer logical.deinit(allocator);
-+    const reuse_setting = std.posix.getenv("STWO_CIRCUIT_CUDA_REUSE_ARENA");
-+    const reuse_arena = input.runtime != null and
-+        (reuse_setting == null or !std.mem.eql(u8, reuse_setting.?, "0"));
-+    const static_setting = std.posix.getenv("STWO_CIRCUIT_CUDA_STATIC_RESIDENT");
-+    const retain_static = reuse_arena and
-+        (static_setting == null or !std.mem.eql(u8, static_setting.?, "0"));
-     var memory_plan = try memory.Plan.init(allocator, .{
-         .value_count = input.values.len,
-         .twiddle_words = twiddle_words,
-+        .retain_static = retain_static,
-         .commitments = &commit_plans,
-         .interaction = &interaction_plan,
-         .composition = &composition_plan,
-@@ -114,8 +121,6 @@ pub fn prove(allocator: std.mem.Allocator, input: Input) !Result {
-     });
-     defer memory_plan.deinit();
-     const planned_arena_bytes = try memory_plan.bytes();
--    var twiddles = try Twiddles.init(allocator, twiddle_words);
--    defer twiddles.deinit();
-     const plan_ns = phase.lap();
- 
-     // The preprocessed root is circuit-static and may be cached across
-@@ -130,8 +135,32 @@ pub fn prove(allocator: std.mem.Allocator, input: Input) !Result {
-     const hash_words = core.vcs.blake2_hash.digestToU32s(circuit_hash);
-     const static_hash_ns = phase.lap();
- 
--    var placement = try memory_plan.placement.clone(allocator);
-+    const arena_key = if (retain_static)
-+        staticCacheKey(memory_plan.cacheKey(), geometry.identity, core.vcs.blake2_hash.digestToU32s(pp_root), input.preprocessed)
-+    else
-+        memory_plan.cacheKey();
-+    var arena_reused = false;
-     var tx = if (input.runtime) |runtime| blk: {
-+        if (reuse_arena) {
-+            arena_reused = runtime.hasPreparedExecution(arena_key);
-+            if (!arena_reused) {
-+                // Keep only one fold arena resident. Root geometry can differ
-+                // from internal folds, and co-residency would raise peak VRAM.
-+                try runtime.releasePreparedExecution();
-+                try runtime.prepareExecution(
-+                    allocator,
-+                    arena_key,
-+                    try memory_plan.placement.clone(allocator),
-+                );
-+            }
-+            const retained = try runtime.beginProof();
-+            break :blk try cuda.runtime.proof_transaction.ResidentProofTransaction.openPreparedCachedRetained(
-+                allocator,
-+                retained,
-+                arena_key,
-+            );
-+        }
-+        var placement = try memory_plan.placement.clone(allocator);
-         const retained = runtime.beginProof() catch |err| {
-             placement.deinit(allocator);
-             return err;
-@@ -144,7 +173,7 @@ pub fn prove(allocator: std.mem.Allocator, input: Input) !Result {
-     } else try cuda.runtime.proof_transaction.ResidentProofTransaction.openPrepared(
-         allocator,
-         &.{ 80, 90 },
--        placement,
-+        try memory_plan.placement.clone(allocator),
-     );
-     var finished = false;
-     defer if (!finished) tx.abort() catch {};
-@@ -158,7 +187,12 @@ pub fn prove(allocator: std.mem.Allocator, input: Input) !Result {
-         .output_count = input.preprocessed.n_outputs,
-     });
-     defer views.deinit();
--    try ingress(&tx, &memory_plan, input, &views, &terminal_bundle, &twiddles, &hash_words);
-+    const static_reused = retain_static and arena_reused;
-+    var twiddles: Twiddles = undefined;
-+    const have_twiddles = !static_reused;
-+    if (have_twiddles) twiddles = try Twiddles.init(allocator, twiddle_words);
-+    defer if (have_twiddles) twiddles.deinit();
-+    try ingress(&tx, &memory_plan, input, &views, &terminal_bundle, if (have_twiddles) &twiddles else null, &hash_words, !static_reused);
- 
-     var sink = try transcript.NativeSink.init(session, views.transcript, @enumFromInt(@intFromEnum(input.profile)), geometry.identity);
-     try sink.prime(0, input.config);
-@@ -259,8 +293,8 @@ pub fn prove(allocator: std.mem.Allocator, input: Input) !Result {
-     };
-     errdefer decoded.deinit(allocator);
-     const stark = try decoded.decodeStarkProof(allocator, &logical, input.config);
--    std.debug.print("circuit-cuda resident-phase profile={s} plan_ns={} static_hash_ns={} ingress_ns={} schedule_ns={} finish_ns={} decode_ns={}\n", .{
--        @tagName(input.profile), plan_ns, static_hash_ns, ingress_ns, schedule_ns, finish_ns, phase.lap(),
-+    std.debug.print("circuit-cuda resident-phase profile={s} arena_reused={} static_reused={} plan_ns={} static_hash_ns={} ingress_ns={} schedule_ns={} finish_ns={} decode_ns={}\n", .{
-+        @tagName(input.profile), arena_reused, static_reused, plan_ns, static_hash_ns, ingress_ns, schedule_ns, finish_ns, phase.lap(),
-     });
-     return .{
-         .allocator = allocator,
-@@ -278,25 +312,45 @@ fn ingress(
-     input: Input,
-     views: *const binding.Views,
-     bundle: *const terminal.Bundle,
--    twiddles: *const Twiddles,
-+    twiddles: ?*const Twiddles,
-     hash_words: *const [8]u32,
-+    upload_static: bool,
- ) !void {
-     const session = tx.proofSession();
-     const value_words: [*]const u32 = @ptrCast(input.values.ptr);
-     try session.context.uploadSlice(u32, views.values, value_words[0 .. input.values.len * 4]);
--    for (input.preprocessed.columns, views.preprocessed) |column, destination| {
--        if (destination.len != column.values.len) return error.InvalidCircuitResidentInput;
--        const source: [*]const u32 = @ptrCast(column.values.ptr);
--        try session.context.uploadSlice(u32, destination, source[0..column.values.len]);
-+    if (upload_static) {
-+        for (input.preprocessed.columns, views.preprocessed) |column, destination| {
-+            if (destination.len != column.values.len) return error.InvalidCircuitResidentInput;
-+            const source: [*]const u32 = @ptrCast(column.values.ptr);
-+            try session.context.uploadSlice(u32, destination, source[0..column.values.len]);
-+        }
-+        const table = twiddles orelse return error.InvalidCircuitTwiddles;
-+        try session.context.uploadSlice(u32, views.twiddles_forward, table.forwardWords());
-+        try session.context.uploadSlice(u32, views.twiddles_inverse, table.inverseWords());
-     }
--    try session.context.uploadSlice(u32, views.twiddles_forward, twiddles.forwardWords());
--    try session.context.uploadSlice(u32, views.twiddles_inverse, twiddles.inverseWords());
-     try session.context.uploadSlice(u32, views.circuit_hash, hash_words);
-     const terminal_id = (try plan.slot(.terminal_bundle, 0)).requirement.id;
-     try tx.zeroResidentSlice(u32, .ingress, terminal_id, 0, bundle.total_words);
-     try session.context.uploadSlice(u32, try views.proof.bundle.sub(0, bundle.static_header.len), bundle.static_header);
- }
- 
-+fn staticCacheKey(plan_key: [32]u8, geometry_identity: [32]u8, root_words: [8]u32, preprocessed: *const circuit.common.preprocessed.PreprocessedCircuit) [32]u8 {
-+    var hash = std.crypto.hash.sha2.Sha256.init(.{});
-+    hash.update("stwo-zig/circuit-cuda-static-arena/v1\x00");
-+    hash.update(&plan_key);
-+    hash.update(&geometry_identity);
-+    for (root_words) |word| {
-+        var bytes: [4]u8 = undefined;
-+        std.mem.writeInt(u32, &bytes, word, .little);
-+        hash.update(&bytes);
-+    }
-+    var address: [@sizeOf(usize)]u8 = undefined;
-+    std.mem.writeInt(usize, &address, @intFromPtr(preprocessed), .little);
-+    hash.update(&address);
-+    return hash.finalResult();
-+}
-+
- const Twiddles = struct {
-     allocator: std.mem.Allocator,
-     tree: prover.poly.twiddles.TwiddleTree([]M31),
 diff --git a/src/products/cairo_cuda/app.zig b/src/products/cairo_cuda/app.zig
-index 07a15d39..44bde2f5 100644
+index 07a15d395..74e4761bb 100644
 --- a/src/products/cairo_cuda/app.zig
 +++ b/src/products/cairo_cuda/app.zig
 @@ -28,6 +28,10 @@ const ResidentStatic = struct {
@@ -837,7 +254,7 @@ index 07a15d39..44bde2f5 100644
      const receipts = try allocator.alloc(publication.Receipt, items.len);
      defer allocator.free(receipts);
      const executable_digest = if (persistent) |session| blk: {
-@@ -127,17 +138,39 @@ fn runItems(allocator: std.mem.Allocator, items: []const BatchItem, mode: Mode,
+@@ -127,17 +138,34 @@ fn runItems(allocator: std.mem.Allocator, items: []const BatchItem, mode: Mode,
          break :blk try publication.sha256File(executable);
      };
      var startup = try std.time.Timer.start();
@@ -851,13 +268,8 @@ index 07a15d39..44bde2f5 100644
 +    defer prefetch.deinit();
 +    const image_setting = std.process.getEnvVarOwned(allocator, "STWO_CAIRO_CUDA_STATIC_IMAGE") catch null;
 +    defer if (image_setting) |value| allocator.free(value);
-+    // A multi-leaf resident batch evicts its Cairo arena for every circuit
-+    // wrap. Keep the verified fixed coefficients on device across leaves;
-+    // an explicit setting can still disable this when capacity is tighter.
-+    const image_requested = image_setting != null and std.mem.eql(u8, image_setting.?, "1");
-+    const image_default = image_setting == null and mode == .distinct and items.len > 1;
 +    const use_device_image = external_runtime != null and (items.len > 1 or persistent != null) and
-+        (image_requested or image_default);
++        image_setting != null and std.mem.eql(u8, image_setting.?, "1");
 +    // A verified leaf sink lends CUDA to the circuit prover. Its prepared
 +    // Cairo arena may be evicted before the next leaf, so an old static
 +    // receipt alone does not mean later leaves can skip the artifact. Retain
@@ -883,7 +295,7 @@ index 07a15d39..44bde2f5 100644
          assets_slot.* = try CanonicalAssets.load(allocator, first_paths.source);
          asset_init_ns = startup.lap();
      }
-@@ -152,19 +185,37 @@ fn runItems(allocator: std.mem.Allocator, items: []const BatchItem, mode: Mode,
+@@ -152,19 +180,37 @@ fn runItems(allocator: std.mem.Allocator, items: []const BatchItem, mode: Mode,
      }
      const runtime = external_runtime orelse &owned_runtime;
      const runtime_init_ns = if (external_runtime == null) startup.read() else 0;
@@ -926,7 +338,7 @@ index 07a15d39..44bde2f5 100644
          if (mode == .repeated) {
              if (expected_digest) |expected| {
                  if (!std.mem.eql(u8, &expected, &receipt.proof_sha256)) return error.NondeterministicCairoCudaProof;
-@@ -206,6 +257,8 @@ fn proveOnce(
+@@ -206,6 +252,8 @@ fn proveOnce(
      sink: ?VerifiedLeafSink,
      release_arena_for_sink: bool,
      assets: ?*const CanonicalAssets,
@@ -935,7 +347,7 @@ index 07a15d39..44bde2f5 100644
  ) !publication.Receipt {
      var timer = try std.time.Timer.start();
      var phase: []const u8 = "resolve_input";
-@@ -217,8 +270,12 @@ fn proveOnce(
+@@ -217,8 +265,12 @@ fn proveOnce(
  
      phase = "compile_canonical_source";
      const target = try compileTarget(runtime.planningSession());
@@ -949,18 +361,7 @@ index 07a15d39..44bde2f5 100644
      if (diagnostic.request.missing_lowerings.len != 0)
          return error.IncompleteCairoCudaLowering;
      const source_end_ns = timer.read();
-@@ -275,6 +332,10 @@ fn proveOnce(
-     const arena_reused = runtime.hasPreparedExecution(arena_key);
-     if (!arena_reused) {
-         resident_static.* = null;
-+        // A preceding leaf wrap may have left its circuit arena prepared.
-+        // Evict it before admitting the Cairo arena so the two large
-+        // workspaces do not overlap in device memory.
-+        try runtime.releasePreparedExecution();
-         try runtime.prepareExecution(allocator, arena_key, try arena_plan.clone(allocator));
-     }
-     const session = try runtime.beginProof();
-@@ -316,6 +377,11 @@ fn proveOnce(
+@@ -316,6 +368,11 @@ fn proveOnce(
          if (std.mem.eql(u8, &cached.arena_key, &arena_key)) cached.receipt else null
      else
          null;
@@ -972,7 +373,7 @@ index 07a15d39..44bde2f5 100644
      const static_receipt = try controllers.initializeStatic(
          &transaction,
          provider,
-@@ -326,6 +392,7 @@ fn proveOnce(
+@@ -326,6 +383,7 @@ fn proveOnce(
              .inverse_twiddles = twiddles.inverseWords(),
              .preprocessed_path = paths.preprocessed,
              .preprocessed_column_identities = diagnostic.fixed.preprocessed_identities,
@@ -980,7 +381,7 @@ index 07a15d39..44bde2f5 100644
              .resident_preprocessed = cached_preprocessed,
              .device_image = device_image,
          },
-@@ -425,6 +492,8 @@ fn proveOnce(
+@@ -425,6 +483,8 @@ fn proveOnce(
          .prepared_arena_reused = arena_reused,
          .preprocessed_reused = cached_preprocessed != null,
          .ingress_ns = ingress_ns + runtime_init_ns + asset_init_ns,
@@ -989,7 +390,7 @@ index 07a15d39..44bde2f5 100644
          .ingress_timings = .{
              .paths_ns = paths_end_ns,
              .runtime_ns = runtime_init_ns + runtime_end_ns - paths_end_ns,
-@@ -438,7 +507,7 @@ fn proveOnce(
+@@ -438,7 +498,7 @@ fn proveOnce(
              .statement_and_session_ns = ingress_ns - writers_end_ns,
          },
          .proof_execute_and_decode_ns = proof_end_ns - ingress_ns,
@@ -1000,7 +401,7 @@ index 07a15d39..44bde2f5 100644
          .verdict = output.verdict,
 diff --git a/src/products/cairo_cuda/ingress_jobs.zig b/src/products/cairo_cuda/ingress_jobs.zig
 new file mode 100644
-index 00000000..0cf03357
+index 000000000..0cf033574
 --- /dev/null
 +++ b/src/products/cairo_cuda/ingress_jobs.zig
 @@ -0,0 +1,146 @@
@@ -1151,7 +552,7 @@ index 00000000..0cf03357
 +    return stat.kind == .file and stat.size <= 64 << 20;
 +}
 diff --git a/src/products/cairo_cuda/publication.zig b/src/products/cairo_cuda/publication.zig
-index f3a7ed8c..ba03c8d5 100644
+index f3a7ed8ca..ba03c8d58 100644
 --- a/src/products/cairo_cuda/publication.zig
 +++ b/src/products/cairo_cuda/publication.zig
 @@ -27,6 +27,10 @@ pub const Receipt = struct {
@@ -1175,7 +576,7 @@ index f3a7ed8c..ba03c8d5 100644
          .runtime_teardown_ns = runtime_teardown_ns,
          .completed_trials = receipts,
 diff --git a/src/products/circuit_recursion_cuda/main.zig b/src/products/circuit_recursion_cuda/main.zig
-index 6ea12db6..de7c61a7 100644
+index 6ea12db6e..de7c61a7f 100644
 --- a/src/products/circuit_recursion_cuda/main.zig
 +++ b/src/products/circuit_recursion_cuda/main.zig
 @@ -31,6 +31,9 @@ fn leafWrap(allocator: std.mem.Allocator, args: []const []const u8) !void {
