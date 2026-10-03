@@ -1,5 +1,39 @@
 # H200 direct qualification
 
+## Upstream CUDA ingress PR #212, 2026-10-03
+
+Merged upstream [PR #212](https://github.com/teddyjfpender/stwo-zig/pull/212)
+authenticated the owned CPI capture, delayed one-request source lookahead until
+after fixed-data admission, and corrected arena admission to include reusable
+pages retained by CUDA's private async pool. The
+[per-leaf TSV](h200-pr212-ingress-2026-10-03-runs.tsv) has 24 rows across
+two- and four-distinct-PIE ABBA sequences; the
+[summary TSV](h200-pr212-ingress-2026-10-03-summary.tsv) has the four cohort/arm
+means. Both preserve the exact source and binary hashes, CPI identity and size,
+whole-command and per-leaf ingress/proof timings, 10 ms sampled whole-device
+peak, proof hash, and the SHA-256 and line of their original raw receipt in the
+[proving-service evidence](https://github.com/teddyjfpender/proving-service/tree/3e8cd9d/data/h200-ingress-212).
+These TSVs are copied from those saved H200 receipts; no new GPU run or
+revalidation was performed for this challenge-repository import.
+
+| Distinct PIEs | Baseline + pool fix, mean command | PR #212, mean command | Baseline / candidate mean ingress sum | Device peak |
+| --- | ---: | ---: | ---: | ---: |
+| 2 (377/102 MiB) | 11.325 s | 10.458 s | 5.077 / 4.204 s | 97.22 GB |
+| 4 (377/408/102/663 MiB) | 22.820 s | 19.143 s | 10.738 / 6.859 s | 142.65 GB |
+
+The command reductions are 7.7% and 16.1%; summed ingress reductions are
+17.2% and 36.1%. All four leaf proof hashes matched between arms in every
+four-PIE run. The comparison baseline was upstream main `744664585` plus only
+the common pool fix; its receipt's `source_commit` is the underlying main
+commit, and the TSV records that overlay explicitly. The optimized binary was
+built from `ab56a3ff2` and has SHA-256
+`c3d124faa0ce39fd6255da79d8310ba27721e941b6b9b68a406030072921c69b`.
+The 663 MiB leaf needs the pool fix even in an otherwise baseline build to
+finish its circuit wrap. These are fresh-process, direct, unranked diagnostics
+of the circuit leaf lane, **not** the fixed ten-case challenge basket or a
+90% warm-service ingress result. They do not update `benchmark.json`, the
+accepted participant frontier, the website leaderboard, or score denominators.
+
 ## Challenge PR #17, 2026-10-03
 
 [PR #17](https://github.com/teddyjfpender/stwo-cuda-challenge/pull/17) was

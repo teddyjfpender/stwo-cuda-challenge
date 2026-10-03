@@ -26,6 +26,10 @@ measurements, but no judged ranking. Pull challenge `main` and rerun setup to
 pick up that reviewed source.
 PR #4's narrower [PoW primitive results](data/reports/submission-pow-primitives-2026-10-02.tsv)
 are retained alongside its full-command regressions.
+The [upstream PR #212 H200 ingress study](data/reports/README.md#upstream-cuda-ingress-pr-212-2026-10-03)
+records two- and four-distinct-PIE ABBA timings and exact proof hashes as
+unranked research; it does not change this challenge's fixed source pin or
+accepted participant frontier.
 
 The prover's CUDA implementation lives in upstream `stwo-zig`. This challenge
 pins one commit from its `main` branch and checks it out under
