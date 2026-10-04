@@ -2,6 +2,7 @@
 """Prepare isolated source checkouts for the staged proof-only backend epoch."""
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import shutil
@@ -12,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from harness.source_policy import check_patch
 from harness.timer_owner import attest
+from harness.accepted_frontier import apply_frontier
 
 
 def command(*args: str, cwd: Path | None = None) -> None:
@@ -32,6 +34,25 @@ def repin_clean(source: Path, commit: str) -> None:
                       capture_output=True, check=False).returncode != 0:
         command("git", "fetch", "origin", commit, cwd=source)
     command("git", "checkout", "--detach", commit, cwd=source)
+
+
+def clear_other_frontier(source: Path, backend: str) -> None:
+    """Switch backends only when the current diff is exactly a saved frontier."""
+    current = subprocess.check_output(["git", "-C", str(source), "diff", "--binary", "HEAD"])
+    if not current:
+        return
+    digest = hashlib.sha256(current).digest()
+    for other in ("cuda", "metal", "cpu"):
+        if other == backend:
+            continue
+        patch = ROOT / "frontier/proof-v2" / other / "changes.patch"
+        if patch.is_file() and hashlib.sha256(patch.read_bytes()).digest() == digest:
+            status = subprocess.check_output(["git", "-C", str(source), "status", "--porcelain"])
+            if (subprocess.check_output(["git", "-C", str(source), "diff", "--cached", "--name-only"]) or
+                    any(line.startswith("??") for line in status.decode().splitlines())):
+                raise ValueError("workspace has staged or untracked changes; capture them before switching backend")
+            command("git", "apply", "--reverse", str(patch), cwd=source)
+            return
 
 
 def prepare(config: dict, backend: str, *, apply_candidate: bool = False,
@@ -66,12 +87,25 @@ def prepare(config: dict, backend: str, *, apply_candidate: bool = False,
     if subprocess.check_output(["git", "-C", str(baseline), "status", "--porcelain"]):
         raise ValueError("baseline checkout has source changes")
     attest(baseline, config, backend)
+    clear_other_frontier(source, backend)
     if apply_candidate:
-        if subprocess.check_output(["git", "-C", str(source), "status", "--porcelain"]):
-            raise ValueError("candidate application requires a clean editable checkout")
+        dirty = subprocess.check_output(["git", "-C", str(source), "status", "--porcelain"])
+        if dirty:
+            frontier = ROOT / "frontier/proof-v2" / backend / "changes.patch"
+            current = subprocess.check_output(["git", "-C", str(source),
+                                               "diff", "--binary", "HEAD"])
+            if (not frontier.is_file() or
+                    hashlib.sha256(current).digest() != hashlib.sha256(frontier.read_bytes()).digest()):
+                raise ValueError("candidate application requires a clean checkout or only the accepted frontier")
+            command("git", "apply", "--reverse", str(frontier), cwd=source)
         patch = ROOT / "candidate/proof-v2-changes.patch"
         check_patch(patch, source, config, backend=backend)
         command("git", "apply", str(patch), cwd=source)
+    else:
+        apply_frontier(ROOT, source, baseline, config, backend=backend)
+        if (not (ROOT / "frontier/proof-v2" / backend / "manifest.json").is_file() and
+                subprocess.check_output(["git", "-C", str(source), "status", "--porcelain"])):
+            raise ValueError("editable checkout has unrelated changes; capture them before switching backend")
     attest(source, config, backend)
     if build or build_baseline:
         if shutil.which("zig") is None:

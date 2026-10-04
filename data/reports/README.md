@@ -1,5 +1,26 @@
 # Direct qualification reports
 
+## Metal PR #22 research promotion, 2026-10-04
+
+The [nine-case comparison TSV](m5-metal-pr22-2026-10-04.tsv) transcribes the
+M5 Max proof-stage and command times from the merged [submission PR #22](https://github.com/teddyjfpender/stwo-cuda-challenge/pull/22)
+and joins each row to the full-precision published Metal baseline below. The
+submitted patch applies to the pinned source and changes only allowed Metal
+paths. No benchmark or independent verifier was rerun for this promotion, at
+the submitter's request. Candidate timings and exact-output results are
+**author-reported, direct, unpaired, and unranked**. The table uses one run
+per arm; it is not a confidence interval or a signed scorecard.
+
+The reported family-weighted proof-time comparison is **1.5217×**: two-leaf
+fold 10.412 → 4.181 s, eight-leaf fold 73.565 → 29.310 s, and two-leaf
+pipeline 71.350 → 55.653 s. The six Cairo PIEs show a geometric-mean 9.0%
+reduction; the four-block and near-capacity PIEs were nearly flat. Focused
+wrap and fold checks in the PR notes report about 13.8% lower process RSS,
+while the largest PIE's physical footprint was unchanged. The accepted patch
+is [the Metal frontier](../../frontier/proof-v2/metal/manifest.json) for new
+participant work, without changing the pinned clean baseline or activating a
+ranked result.
+
 ## Proof-v2 H200 public basket, 2026-10-03
 
 The [nine-row observation TSV](h200-proof-v2-2026-10-03-full.tsv) and

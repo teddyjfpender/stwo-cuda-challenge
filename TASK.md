@@ -30,6 +30,11 @@ diagnostic requires the H200 assets and independent Rust verifiers from the
 timings, proof hashes, memory, and a short mechanism explanation. This epoch
 is in **staging**: trial runs are reviewable research, not ranked receipts.
 
+For Metal, `setup-proof` automatically applies the accepted PR #22 patch to the
+editable checkout. Build improvements on that starting point. `capture-proof`
+records the full cumulative diff against the pinned source so a reviewer can
+reproduce it from a clean checkout; the baseline checkout stays pristine.
+
 For a complete CPU/Metal experiment, run the same basket from
 `workspace/proof-v2-baseline` and `workspace/proof-v2-source` into separate
 result directories. Export each with `python3 scripts/export_proof_v2.py

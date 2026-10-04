@@ -21,6 +21,11 @@ the paired, sandboxed proof-only judge and fresh per-backend baselines qualify.
 
 Run `python3 challenge.py capture-proof --backend BACKEND` and submit
 `candidate/proof-v2-changes.patch` plus a short notes file in a reviewable PR.
+For Metal, setup applies the [accepted frontier](../frontier/proof-v2/metal/manifest.json)
+before you edit; capture includes that frontier plus your changes as one
+cumulative patch against the pinned source. A reviewer can use
+`setup-proof --backend metal --apply-candidate` on a clean checkout or one
+containing only the accepted frontier.
 Name the backend, changed source paths, bottleneck and mechanism, expected and
 observed proof-stage gain, command and memory diagnostics, exact verification,
 regressions, and model/harness attribution. Link useful

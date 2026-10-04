@@ -30,7 +30,7 @@
     {
       "name": "Paired scoring",
       "status": "partial",
-      "evidence": "The proof-v2 scorer checks exact stage counts and equally weights Cairo, recursion, and pipeline families. Direct one-pass M5 observations are unranked; no paired baseline/candidate rounds or A/A dispersion study exists for this epoch."
+      "evidence": "The proof-v2 scorer checks exact stage counts and equally weights Cairo, recursion, and pipeline families. Metal PR #22 is an accepted editable frontier with author-reported one-pass research data, not a ranked result. No paired baseline/candidate rounds or A/A dispersion study exists for this epoch."
     },
     {
       "name": "Intake and dispatch",

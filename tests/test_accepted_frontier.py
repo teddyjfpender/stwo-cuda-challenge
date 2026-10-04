@@ -9,6 +9,47 @@ from harness.accepted_frontier import apply_frontier
 
 
 class AcceptedFrontierTests(unittest.TestCase):
+    def test_proof_v2_frontier_applies_only_to_selected_backend(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / "source"
+            source.mkdir()
+            subprocess.run(["git", "init", "-q", str(source)], check=True)
+            metal = source / "src/backends/metal/example.zig"
+            metal.parent.mkdir(parents=True)
+            metal.write_text("base\n")
+            subprocess.run(["git", "-C", str(source), "add", "."], check=True)
+            subprocess.run(["git", "-C", str(source), "-c", "user.name=Test",
+                            "-c", "user.email=test@example.com", "commit", "-qm", "base"],
+                           check=True)
+            commit = subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"],
+                                             text=True).strip()
+            baseline = root / "baseline"
+            subprocess.run(["git", "-C", str(source), "worktree", "add", "-q", "--detach",
+                            str(baseline), commit], check=True)
+            metal.write_text("accepted\n")
+            raw = subprocess.check_output(["git", "-C", str(source), "diff", "HEAD"])
+            metal.write_text("base\n")
+            frontier = root / "frontier/proof-v2/metal"
+            frontier.mkdir(parents=True)
+            (frontier / "changes.patch").write_bytes(raw)
+            (frontier / "manifest.json").write_text(json.dumps({
+                "schema": "stwo-proof-v2-frontier-v1", "backend": "metal",
+                "sourceCommit": commit, "patchSha256": hashlib.sha256(raw).hexdigest(),
+                "prNumber": 22}) + "\n")
+            config = {"sourceCommit": commit, "backends": {
+                "metal": {"editablePaths": ["src/backends/metal"]},
+                "cpu": {"editablePaths": ["src/backends/cpu_scalar"]}}}
+            apply_frontier(root, source, baseline, config, backend="cpu")
+            self.assertEqual(metal.read_text(), "base\n")
+            apply_frontier(root, source, baseline, config, backend="metal")
+            apply_frontier(root, source, baseline, config, backend="metal")
+            self.assertEqual(metal.read_text(), "accepted\n")
+            self.assertEqual((baseline / "src/backends/metal/example.zig").read_text(), "base\n")
+            metal.write_text("participant edit\n")
+            with self.assertRaisesRegex(SystemExit, "changes beyond the accepted frontier"):
+                apply_frontier(root, source, baseline, config, backend="metal")
+
     def test_migration_clears_capture_intent_to_add_for_old_frontier_file(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

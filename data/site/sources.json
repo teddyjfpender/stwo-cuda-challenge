@@ -14,6 +14,9 @@
     "data/reports/m5-proof-v2-2026-10-03-full.tsv",
     "data/reports/h200-proof-v2-2026-10-03-full.tsv"
   ],
+  "proofResearchObservations": [
+    "data/reports/m5-metal-pr22-2026-10-04.tsv"
+  ],
   "ingressStudy": "data/reports/h200-pr212-ingress-2026-10-03-summary.tsv",
   "scorecards": "data/site/scorecards.json"
 }
