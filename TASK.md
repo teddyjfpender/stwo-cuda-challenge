@@ -1,5 +1,26 @@
 # Task for an optimization agent
 
+Choose the [Cairo/recursion proof-v2 task](#proof-only-cuda-metal-and-cpu-trial)
+or the [RISC-V CSP task](#risc-v-csp-full-guest-trial). They have separate
+checkouts, source pins, editable paths, and scores.
+
+## RISC-V CSP full-guest trial
+
+Optimize the 16-case authenticated CSP suite on CPU or Metal M5 Max. The
+metric includes guest execution, witness creation, and proving; ECDSA uses
+the typed proved precompile. Keep BLAKE3, 70 FRI queries, 26 PoW bits, exact
+outputs, negative-signature rejection, and independent verification. Read
+[the CSP task and workflow](spec/RISCV_CSP.md) and
+[`benchmark-riscv-csp-v1.json`](benchmark-riscv-csp-v1.json). Start with
+`python3 challenge.py setup-csp --backend cpu --build-baseline` or choose
+`metal`; `python3 challenge.py paths-csp --backend cpu` prints the exact
+editable checkout and path list. Commit source edits inside that checkout,
+run one `benchmark-csp --case TARGET:SIZE` smoke, then the complete baseline
+and candidate suites. Use `compare-csp` for an unranked same-host comparison
+and `capture-csp` to create `candidate/riscv-csp-changes.patch`. Open a PR
+with the patch, measured proof times by target, verification, memory,
+regressions, attribution, and a relevant Discussion link.
+
 ## Proof-only CUDA, Metal, and CPU trial
 
 The next challenge epoch measures **only proving intervals** for the same six

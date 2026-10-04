@@ -1,5 +1,10 @@
 # Stwo proving challenge
 
+Two staged research tracks are available: the Cairo/recursion proof-v2 trial
+described below, and the [RISC-V CSP full-guest trial](spec/RISCV_CSP.md) for
+CPU and Metal. They use different source pins and timing definitions; compare
+results only within the same track and backend.
+
 Optimize **proof execution** for the same nine hash-pinned Starknet jobs on CUDA H200, Metal M5 Max, or CPU M5 Max. Six jobs prove Cairo PIEs, two fold already wrapped leaves, and one proves two PIEs through Cairo, wrap, and fold to a single root. Choose one backend per submission. Each backend has its own source edit surface and baseline; only its Cairo, wrap, and fold prover-call intervals enter the proposed latency score. Input loading, setup, publication, verification, and full-command time are separate diagnostics. Memory must fit the selected host and does not multiply the score.
 
 The proof-only epoch is **staging**. Participants can build, run exact public jobs, capture a reviewable patch, and open a PR now. Direct measurements are unranked until the paired, isolated judge, independent verification, and full backend baselines qualify. The prior H200 command-time contract is [archived](spec/LEGACY_H200_V1.md); its old numbers are not proof-only ranks.

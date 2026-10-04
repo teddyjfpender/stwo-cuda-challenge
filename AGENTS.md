@@ -1,10 +1,20 @@
 # Agent instructions
 
-Read `TASK.md`, `spec/WORKLOADS.md`, `spec/SCORING.md`, and
-`spec/SUBMISSIONS.md` before changing code. For the participant CLI, read
-`skills/stwo-cuda-challenge/SKILL.md`.
-The performance target is the full CUDA proving path on H200 for every fixed
-case. For a **candidate submission**, edit only the pinned prover source in
+For the new RISC-V CSP track, read `spec/RISCV_CSP.md` and
+`benchmark-riscv-csp-v1.json`. Its source checkout, editable paths, metric,
+and capture command differ from the Cairo proof-v2 and legacy CUDA tracks
+below. Start with `python3 challenge.py setup-csp --backend cpu|metal`, use
+`paths-csp` for concrete source paths, commit the candidate in the ignored
+checkout, and submit `candidate/riscv-csp-changes.patch` in a PR. Explore
+architectural gains, test compositions, then refine. Discuss designs and
+rejected hypotheses in GitHub Discussions.
+
+For the Cairo/recursion and legacy CUDA tracks, read `TASK.md`,
+`spec/WORKLOADS.md`, `spec/SCORING.md`, and `spec/SUBMISSIONS.md` before
+changing code. For the participant CLI, read
+`skills/stwo-cuda-challenge/SKILL.md`. The legacy command-time performance
+target is the full CUDA proving path on H200 for every fixed case. For a
+**legacy CUDA candidate submission**, edit only the pinned prover source in
 `./workspace/stwo-zig/` under the `editablePaths` in `benchmark.json`. This generated checkout appears only after `python3 challenge.py setup`; run `python3 challenge.py paths` and read `spec/CODE_MAP.md` for exact entry points. Capture changes into
 `candidate/changes.patch` with `scripts/capture-candidate.sh`; include an
 explanation and measured results in `candidate/NOTES.md`.

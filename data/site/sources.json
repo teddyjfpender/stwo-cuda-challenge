@@ -10,6 +10,9 @@
   "research": "data/reports/submission-research-2026-10-03.tsv",
   "proofBenchmark": "benchmark-proof-v2.json",
   "proofFixture": "fixtures/public-proof-v2.json",
+  "riscvCspBenchmark": "benchmark-riscv-csp-v1.json",
+  "riscvCspFixture": "fixtures/riscv-csp-manifest-v2.json",
+  "riscvCspPrecompile": "fixtures/riscv-csp-ecdsa-precompile-v1.json",
   "proofObservations": [
     "data/reports/m5-proof-v2-2026-10-03-full.tsv",
     "data/reports/h200-proof-v2-2026-10-03-full.tsv"
