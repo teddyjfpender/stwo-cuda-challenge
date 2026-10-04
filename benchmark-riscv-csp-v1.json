@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "status": "staging",
+  "contractEpoch": "riscv-csp-v1",
+  "name": "stwo-riscv-csp-full-guest",
+  "sourceRepository": "https://github.com/teddyjfpender/stwo-zig.git",
+  "sourceCommit": "068b467b71e0b35533409c63a5cc509aefdc9736",
+  "fixtureManifest": "fixtures/riscv-csp-manifest-v2.json",
+  "fixtureManifestSha256": "efd864d8ea3022eb101fbe87e828c5b559a1672cb0a1c50af2582b7dce00a9af",
+  "precompileManifest": "fixtures/riscv-csp-ecdsa-precompile-v1.json",
+  "precompileManifestSha256": "341ca0942317a2c50783941003bc2c8f929188de39693dff1aae5b4b7412547d",
+  "executionMode": "precompile",
+  "proofSuite": "blake3",
+  "security": {"friQueries": 70, "powBits": 26},
+  "metric": {
+    "name": "proof_duration",
+    "unit": "nanoseconds",
+    "scope": "guest execution + witness construction + proof generation",
+    "direction": "minimize",
+    "targetWeights": {"sha256": 0.25, "keccak": 0.25, "poseidon2_m31": 0.25, "ecdsa_secp256k1": 0.25},
+    "verification": "mandatory but measured separately",
+    "memory": "capacity and diagnostic only"
+  },
+  "backends": {
+    "cpu": {
+      "host": "Apple M5 Max 64 GB",
+      "product": "stwo-zig-riscv-cpu",
+      "editablePaths": ["src/frontends/riscv", "src/integrations/riscv_cpu", "src/backends/cpu_scalar", "src/core", "src/prover", "src/prover_api", "src/backend"]
+    },
+    "metal": {
+      "host": "Apple M5 Max 64 GB",
+      "product": "stwo-zig-riscv-metal",
+      "editablePaths": ["src/frontends/riscv", "src/integrations/riscv_metal", "src/backends/metal", "src/core", "src/prover", "src/prover_api", "src/backend"]
+    }
+  }
+}

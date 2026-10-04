@@ -5,6 +5,22 @@ description: Help a participant set up, optimize, validate, and package a CUDA, 
 
 # Stwo CUDA Challenge
 
+## RISC-V CSP full-guest trial
+
+For RISC-V optimization choose `cpu` or `metal` and read
+[`spec/RISCV_CSP.md`](../../spec/RISCV_CSP.md) plus the
+[`riscv-csp-v1` contract](../../benchmark-riscv-csp-v1.json). Run
+`python3 challenge.py setup-csp --backend BACKEND --build-baseline` and
+`python3 challenge.py paths-csp --backend BACKEND`. Edit only the printed
+paths under `workspace/csp-source`, commit the changes in that ignored
+checkout, and rebuild with `setup-csp --build`. Use `benchmark-csp --case
+sha256:128` for a focused exact-proof check before all 16 cases. The suite
+uses BLAKE3, 70 FRI queries, 26 PoW bits, and the proved typed ECDSA
+precompile; the score scope is guest execution plus witness plus proof.
+Compare complete same-host baseline/candidate reports with `compare-csp`,
+then run `capture-csp` and submit the patch and evidence in a PR. Direct
+results are unranked. Do not mix this metric with the Cairo proof-v2 trial.
+
 ## Current proof-only trial
 
 Choose one backend: `cuda` on H200, or `metal`/`cpu` on M5 Max. Read

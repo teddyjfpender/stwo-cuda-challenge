@@ -15,14 +15,19 @@ COMMANDS = {
     "benchmark-proof": ([sys.executable, "scripts/benchmark_proof_v2.py"], "Run exact proof-stage diagnostics for cuda, metal, or cpu."),
     "compare-proof": ([sys.executable, "scripts/compare_proof_v2.py"], "Compare two exact public baskets; research only, never ranked."),
     "capture-proof": ([sys.executable, "scripts/capture_proof_v2.py"], "Capture a proof-v2 backend patch for a review PR."),
+    "setup-csp": ([sys.executable, "scripts/riscv_csp_trial.py", "setup"], "Create the RISC-V CSP CPU or Metal checkout."),
+    "paths-csp": ([sys.executable, "scripts/riscv_csp_trial.py", "paths"], "Show the RISC-V CSP edit surface."),
+    "benchmark-csp": ([sys.executable, "scripts/riscv_csp_trial.py", "benchmark"], "Run canonical full-guest CSP proof measurements."),
+    "compare-csp": ([sys.executable, "scripts/riscv_csp_trial.py", "compare"], "Compare complete CSP reports on one backend and host."),
+    "capture-csp": ([sys.executable, "scripts/riscv_csp_trial.py", "capture"], "Capture a committed RISC-V CSP candidate patch."),
 }
 def main(argv: list[str]) -> int:
     if not argv or argv[0] in ("-h", "--help", "help"):
         print("Usage: python3 challenge.py COMMAND [COMMAND OPTIONS]\n")
         for name, (_, description) in COMMANDS.items():
             print(f"  {name:<12} {description}")
-        print("\nRead TASK.md and spec/SUBMISSIONS.md before editing or benchmarking.")
-        print("Direct trials are unranked; see spec/PROOF_STAGE_EPOCH.md for activation gates.")
+        print("\nRead TASK.md and the track-specific spec before editing or benchmarking.")
+        print("Direct trials are unranked; see spec/PROOF_STAGE_EPOCH.md or spec/RISCV_CSP.md.")
         return 0 if argv else 2
     command, *options = argv
     if command not in COMMANDS:
