@@ -1,0 +1,14 @@
+{
+  "schema": "stwo-proof-v2-frontier-v1",
+  "backend": "metal",
+  "sourceCommit": "1433d61b590058980d02b3f5bc912fe073c1a646",
+  "prNumber": 22,
+  "prUrl": "https://github.com/teddyjfpender/stwo-cuda-challenge/pull/22",
+  "headSha": "3d584b2206d403e4edb560347be756bd3995d831",
+  "patchSha256": "c6b168868ceda71cfb12959698f7a32ad67e8fb9208eb8d2001e73d37faa5bf7",
+  "parentPatchSha256": null,
+  "qualification": "author-reported-direct-unranked",
+  "ranking": "unranked",
+  "reportedProofSpeedup": 1.5217,
+  "evidence": "data/reports/m5-metal-pr22-2026-10-04.tsv"
+}

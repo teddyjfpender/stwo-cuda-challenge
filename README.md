@@ -18,6 +18,8 @@ python3 challenge.py benchmark-proof --backend metal \
 
 Replace `metal` with `cpu` on the M5 Max, or `cuda` on a prepared H200. The editable pinned prover checkout appears at `workspace/proof-v2-source`; the clean reference checkout is `workspace/proof-v2-baseline`. Both are ignored by Git. For CUDA, prepare fixed assets and independent Rust verifiers using the [H200 runbook](spec/H200_RUNBOOK.md). Run a representative PIE and fold before omitting `--case-id` for the full nine-job basket. Each direct receipt records source and binary identities, exact reference output checks, proof time, and command time separately. The [epoch design](spec/PROOF_STAGE_EPOCH.md) specifies stage boundaries and remaining activation gates.
 
+Metal setup now applies the accepted [PR #22 frontier](frontier/proof-v2/metal/manifest.json) to the editable checkout. The clean reference checkout remains at the pinned source, so local comparisons show cumulative improvement. New Metal submissions capture a cumulative patch against that source pin; the [reported nine-job PR #22 data](data/reports/m5-metal-pr22-2026-10-04.tsv) is direct, unpaired research evidence, not a ranked score.
+
 For CPU/Metal, `scripts/export_proof_v2.py` rechecks every on-disk proof or root
 and exports the complete direct basket to TSV. After running the baseline and
 candidate separately, `challenge.py compare-proof --backend metal --baseline

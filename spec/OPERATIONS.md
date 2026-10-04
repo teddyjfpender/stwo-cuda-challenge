@@ -28,3 +28,11 @@ research are never signed ranks. The [activation record](ACTIVATION.md)
 tracks the remaining trusted judge, H200, independent circuit verifier,
 paired baseline, and private-holdout gates. Do not enable a leaderboard until
 those gates pass on the intended host for each backend.
+
+The first Metal improvement, [PR #22](https://github.com/teddyjfpender/stwo-cuda-challenge/pull/22),
+is accepted as an **unranked research frontier**. `setup-proof --backend metal`
+applies its hash-bound cumulative patch to the editable checkout; the clean
+baseline remains at the source pin. The [nine author-reported M5 observations](../data/reports/m5-metal-pr22-2026-10-04.tsv)
+are recorded separately from the measured public baseline. Subsequent Metal
+submissions must include the accepted changes in their cumulative captured
+patch. The 1.5217× family-weighted comparison is not a signed proof-v2 rank.

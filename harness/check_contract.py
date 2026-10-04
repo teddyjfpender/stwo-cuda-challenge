@@ -6,13 +6,39 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from harness.timer_owner import check_protected
+from harness.source_policy import allowed
 HEX = re.compile(r"^[0-9a-f]{64}$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
+
+
+def check_proof_frontiers(config: dict) -> None:
+    for name, backend in config["backends"].items():
+        directory = ROOT / "frontier/proof-v2" / name
+        manifest_path, patch_path = directory / "manifest.json", directory / "changes.patch"
+        if not manifest_path.exists() and not patch_path.exists():
+            continue
+        assert manifest_path.is_file() and patch_path.is_file()
+        manifest = json.loads(manifest_path.read_text())
+        assert manifest["schema"] == "stwo-proof-v2-frontier-v1"
+        assert manifest["backend"] == name
+        assert manifest["sourceCommit"] == config["sourceCommit"]
+        assert COMMIT.fullmatch(manifest["headSha"])
+        assert isinstance(manifest["prNumber"], int) and manifest["prNumber"] > 0
+        assert hashlib.sha256(patch_path.read_bytes()).hexdigest() == manifest["patchSha256"]
+        evidence = Path(manifest["evidence"])
+        assert not evidence.is_absolute() and ".." not in evidence.parts
+        assert (ROOT / evidence).is_file()
+        fields = subprocess.check_output(["git", "apply", "--numstat", "-z", str(patch_path)]).split(b"\0")
+        paths = [field.split(b"\t")[2].decode() for field in fields if field]
+        assert paths and len(paths) == len(set(paths))
+        assert all(allowed(path, backend["editablePaths"]) and
+                   path not in backend.get("protectedPaths", []) for path in paths)
 
 
 def check_v2(config: dict, manifest: dict) -> None:
@@ -32,6 +58,7 @@ def check_v2(config: dict, manifest: dict) -> None:
     for backend in config["backends"].values():
         assert HEX.fullmatch(backend["timerDigest"])
         assert len(backend["editablePaths"]) == len(set(backend["editablePaths"]))
+    check_proof_frontiers(config)
     for case in manifest["cases"]:
         assert case["metric"] == "proof_stage_seconds"
         inputs = [case["input"]] if case["family"] == "pie" else case["inputs"]
