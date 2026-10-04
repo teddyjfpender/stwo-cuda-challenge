@@ -5,7 +5,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from scripts.riscv_csp_trial import contract, expected_cases, validate_report, compare
+from scripts.riscv_csp_trial import contract, expected_cases, validate_report, compare, preflight_binary
 
 
 class CspTrialTests(unittest.TestCase):
@@ -78,6 +78,14 @@ class CspTrialTests(unittest.TestCase):
                                       "candidate": after, "out": result})()
             compare(args, self.config)
             self.assertAlmostEqual(json.loads(result.read_text())["family_weighted_speedup"], 2.0)
+
+    def test_stale_binary_rejected_before_full_matrix(self):
+        registry = {"product": {"backend": "cpu", "optimize": "ReleaseFast",
+                                "source": {"commit": "old", "dirty": False}}}
+        with self.assertRaisesRegex(ValueError, "stale"):
+            preflight_binary(registry, backend="cpu", commit=self.config["sourceCommit"])
+        registry["product"]["source"]["commit"] = self.config["sourceCommit"]
+        preflight_binary(registry, backend="cpu", commit=self.config["sourceCommit"])
 
 
 if __name__ == "__main__":

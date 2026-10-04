@@ -135,6 +135,14 @@ def expected_cases(manifest: dict) -> dict[tuple[str, int], dict]:
             for target, entry in manifest["targets"].items() for case in entry["cases"]}
 
 
+def preflight_binary(registry: dict, *, backend: str, commit: str) -> None:
+    product = registry.get("product", {})
+    source = product.get("source", {})
+    if (product.get("backend") != backend or product.get("optimize") != "ReleaseFast"
+            or source.get("commit") != commit or source.get("dirty") is not False):
+        raise ValueError("CSP binary is stale or has the wrong backend/build; run setup-csp --build")
+
+
 def validate_report(report: dict, config: dict, manifest: dict, *, backend: str,
                     complete: bool, commit: str | None = None) -> dict[tuple[str, int], dict]:
     if (report.get("schema") != "stwo_riscv_csp_accelerated_benchmark_v1"
@@ -199,11 +207,14 @@ def benchmark(args: argparse.Namespace, config: dict) -> None:
     out = args.out.resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
     product = config["backends"][args.backend]["product"]
+    cli = tree / "zig-out/bin" / product
+    preflight_binary(json.loads(subprocess.check_output((str(cli), "applications"))),
+                     backend=args.backend, commit=commit)
     run(sys.executable, "scripts/riscv_csp_benchmark.py", "--backend", args.backend,
         "--execution-mode", config["executionMode"], "--proof-suite", config["proofSuite"],
         "--manifest", "vectors/riscv_csp/manifest-v2.json", "--targets", targets,
         "--sizes", sizes, "--warmups", str(args.warmups), "--samples", str(args.samples),
-        "--cli", str(tree / "zig-out/bin" / product),
+        "--cli", str(cli),
         "--trace-cli", str(tree / "zig-out/bin/riscv-trace-dump"),
         "--report-out", str(out), cwd=tree)
     report = json.loads(out.read_text())

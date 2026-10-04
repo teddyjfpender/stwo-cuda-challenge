@@ -63,7 +63,9 @@ lanes. The suite manifests, guest binaries, input files, benchmark script,
 security settings, and verifier are outside the edit surface. Commit the
 source changes **inside that checkout** before benchmarking: the production
 CSP benchmark requires a clean implementation commit and binds the binary and
-report to it. For example:
+report to it. The wrapper checks the binary's compiled source commit before
+starting the matrix, so rebuild with `setup-csp --build` after each commit.
+For example:
 
 ```sh
 git -C workspace/csp-source add src/frontends/riscv
