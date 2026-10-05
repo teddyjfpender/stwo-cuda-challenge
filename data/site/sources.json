@@ -13,6 +13,9 @@
   "riscvCspBenchmark": "benchmark-riscv-csp-v1.json",
   "riscvCspFixture": "fixtures/riscv-csp-manifest-v2.json",
   "riscvCspPrecompile": "fixtures/riscv-csp-ecdsa-precompile-v1.json",
+  "riscvCspObservations": [
+    "data/reports/m5-csp-v1-2026-10-04.tsv"
+  ],
   "proofObservations": [
     "data/reports/m5-proof-v2-2026-10-03-full.tsv",
     "data/reports/h200-proof-v2-2026-10-03-full.tsv"

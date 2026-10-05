@@ -21,6 +21,27 @@ is [the Metal frontier](../../frontier/proof-v2/metal/manifest.json) for new
 participant work, without changing the pinned clean baseline or activating a
 ranked result.
 
+## RISC-V CSP M5 Max baseline, 2026-10-04
+
+[`m5-csp-v1-2026-10-04.tsv`](m5-csp-v1-2026-10-04.tsv) records the first
+complete RISC-V CSP suite on the pinned `stwo-zig` source
+(`068b467b71e0b35533409c63a5cc509aefdc9736`) for both lanes of
+[`benchmark-riscv-csp-v1.json`](../../benchmark-riscv-csp-v1.json): all 16
+cases on CPU and on Metal, Apple M5 Max 64 GB, on AC power.
+`proof_duration_s` is the CSP report's `proof_duration` (guest execution,
+witness construction and proof generation); verification, execution, witness
+and proving phases are listed separately. CPU proof durations are
+0.48–1.64 s and Metal 0.47–1.59 s per case.
+
+Every proof verified, every output matched its pinned digest, and the
+invalid-signature fixture was proved and rejected on both backends. Each
+case is a **single sample with no warm-up**, so this is a direct, unranked
+starting baseline, not a paired score. The Metal report flags that not every
+resident-polynomial dispatch was verified
+(`metal_resident_dispatches_verified=false`), and both reports are
+`host-qualified-non-comparable`: the M5 Max is not the EthProofs M1
+publication host. `report_sha256` binds each row to its local harness report.
+
 ## Proof-v2 H200 public basket, 2026-10-03
 
 The [nine-row observation TSV](h200-proof-v2-2026-10-03-full.tsv) and
